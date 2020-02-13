@@ -7,8 +7,8 @@ from shutil import rmtree
 
 
 # Package meta-data.
-NAME = "grbfunk"
-DESCRIPTION = "A notifier for broadcasting GRB information from GCNs"
+NAME = "morgoth"
+DESCRIPTION = "The BALROG pipeline"
 URL = "https://github.com/grburgess/popsynth"
 EMAIL = "jmichaelburgess@gmail.com"
 AUTHOR = "J. Michael Burgess"
@@ -18,11 +18,9 @@ VERSION = None
 REQUIRED = [
     "numpy",
     "python-telegram-bot",
-    "pygcn",
     "pyyaml",
     "coloredlogs",
     "requests",
-    "astropy",
 
     
 
@@ -102,7 +100,7 @@ def find_data_files(directory):
     return paths
 
 
-extra_files = find_data_files("grbfunk/data")
+extra_files = find_data_files("morgoth/data")
 
 
 setup(
@@ -115,7 +113,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    scripts=['bin/grbfunk'],
+    scripts=['bin/morgoth'],
     packages=find_packages(exclude=("tests",)),
     install_requires=REQUIRED,
     extras_require=EXTRAS,
