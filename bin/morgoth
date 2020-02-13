@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import time
+from watchdog.observers import Observer
+from morgoth import GRBEventHandler
+
+
+observer = Observer()
+
+
+main_path = '/Users/jburgess/scratch/gcn_bot/data_test/'
+
+handle = GRBEventHandler(main_path)
+
+observer.schedule(handle, path=main_path)
+
+observer.start()
+
+try:
+    while True:
+        time.sleep(1)
+except KeyboardInterrupt:
+    observer.stop()
+
+    observer.join()
