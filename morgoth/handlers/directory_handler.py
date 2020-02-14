@@ -8,12 +8,12 @@ import morgoth.utils.log
 logger = logging.getLogger("morgoth.folderevent")
 
 
-class DirectoryHandler(SmartHandler):
+class GBBHandler(SmartHandler):
     def __init__(self, base_directory, *args, **kwargs):
 
         self._base_directory = base_directory
 
-        super(DirectoryHandler, self).__init__(*args, **kwargs)
+        super(GRBHandler, self).__init__(*args, **kwargs)
 
         logger.debug(f'I am new directory handler at {base_directory}')
         
