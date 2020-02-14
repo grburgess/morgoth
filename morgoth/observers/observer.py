@@ -1,10 +1,18 @@
 import time
-from watchdog.observer import Observer
+from watchdog.observers import Observer
+
+import coloredlogs, logging
+import morgoth.utils.log
+
+logger = logging.getLogger('morgoth.observer')
 
 
 class ObserverBuilder(object):
     def __init__(self, handler, path, interval=1, max_time=60 * 60):
 
+
+        logger.debug('Building a new observer')
+        
         self._interval = interval
         self._max_time = max_time
 
@@ -12,7 +20,9 @@ class ObserverBuilder(object):
 
         self._handler = handler
 
-        self._observer.schedule(self._handler, path)
+        self._handler.set_observer(self)
+        
+        self._observer.schedule(self._handler, path, recursive=False)
 
         self._observer.start()
 
