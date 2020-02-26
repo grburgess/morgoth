@@ -58,14 +58,14 @@ def test_pipeline():
     grb = parse_trigger_file_and_write(root)
 
     
-    # assert luigi.build(
-    #     [CreateAllPages(grb_name=grb)], local_scheduler=False,
-    #     scheduler_host='localhost', workers=12
-    #)
-    luigi.build(
-        [CreateAllPages(grb_name=grb)], local_scheduler=True,
-        workers=6, no_lock=False
+    assert luigi.build(
+        [CreateAllPages(grb_name=grb)], local_scheduler=False,
+        scheduler_host='localhost', workers=4
     )
+    # luigi.build(
+    #     [CreateAllPages(grb_name=grb)], local_scheduler=True,
+    #     workers=6, no_lock=False
+    # )
 
     
     shutil.rmtree(grb)
