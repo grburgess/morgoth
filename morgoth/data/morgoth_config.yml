@@ -1,0 +1,39 @@
+# Morgoth configuration file
+
+
+# specify the download time outs and checking intervals
+downloads:
+
+  trigdat:
+    
+    v00:
+
+      interval: 5
+      max_time: 60*60
+
+    v01:
+
+      interval: 5
+      max_time: 60*60
+
+    v02:
+
+      interval: 5
+      max_time: 60*60
+
+  tte:
+  
+    v00:
+
+      interval: 5
+      max_time: 2*60*60
+
+    v01:
+
+      interval: 5
+      max_time: 60*60
+
+    v02:
+
+      interval: 5
+      max_time: 60*60
