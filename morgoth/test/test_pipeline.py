@@ -58,7 +58,7 @@ def test_pipeline():
     grb = parse_trigger_file_and_write(root)
 
     time.sleep(5)
-    assert luigi.build(
+    luigi.build(
         [CreateAllPages(grb_name=grb)], local_scheduler=False,
         scheduler_host='localhost', workers=4
     )
