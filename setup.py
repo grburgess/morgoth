@@ -15,16 +15,7 @@ AUTHOR = "J. Michael Burgess"
 REQUIRES_PYTHON = ">=3.5.0"
 VERSION = None
 
-REQUIRED = [
-    "numpy",
-    "python-telegram-bot",
-    "pyyaml",
-    "coloredlogs",
-    "requests",
-
-    
-
-]
+REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy"]
 
 # What packages are optional?
 EXTRAS = {
@@ -113,7 +104,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    scripts=['bin/morgoth'],
+    scripts=["bin/morgoth"],
     packages=find_packages(exclude=("tests",)),
     install_requires=REQUIRED,
     extras_require=EXTRAS,
