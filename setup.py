@@ -15,7 +15,7 @@ AUTHOR = "J. Michael Burgess"
 REQUIRES_PYTHON = ">=3.5.0"
 VERSION = None
 
-REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy"]
+REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy" ,"lxml",]
 
 # What packages are optional?
 EXTRAS = {
