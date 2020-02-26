@@ -6,6 +6,15 @@ import shutil
 
 
 class MorgothConfig(object):
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            #    print('Creating the object')
+            cls._instance = super(MorgothConfig, cls).__new__(cls)
+            # Put any initialization here.
+        return cls._instance
+
     def __init__(self):
 
         usr_path = get_path_of_user_dir()
