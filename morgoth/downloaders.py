@@ -8,9 +8,14 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class DownloadTrigdat(luigi.Task):
+    """
+    Downloads a Trigdat file of a given
+    version
+    
+
+    """
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
-    # uri = luigi.Parameter()
 
     def requires(self):
 
@@ -23,17 +28,16 @@ class DownloadTrigdat(luigi.Task):
 
     def run(self):
 
+        # get the info from the stored yaml file
         info = GBMTriggerFile.from_file(self.input())
 
-        print(info)
-
+        # parse the trigdat
         trigdat = f"glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit"
 
-        print(trigdat)
+
 
         uri = os.path.join(info.uri, trigdat)
 
-        print(uri)
         store_path = os.path.join(base_dir, info.name)
         dl = BackgroundDownload(
             uri,

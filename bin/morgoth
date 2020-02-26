@@ -6,11 +6,4 @@ from morgoth import handler
 import os
 
 
-with open(path) as f:
-     access = yaml.load(f, Loader=yaml.SafeLoader)
-
-     token = access["token"]
-     chat_id = access["chat_id"]
-
-
 gcn.listen(handler=handler)
