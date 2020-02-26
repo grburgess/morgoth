@@ -1,0 +1,1 @@
+from morgoth.configuration import morgoth_config

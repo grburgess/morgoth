@@ -19,7 +19,7 @@ class MorgothConfig(object):
 
         usr_path = get_path_of_user_dir()
 
-        self._file_name = os.path.join(usr_path, "morgoth_config.yml")
+        self._filename = os.path.join(usr_path, "morgoth_config.yml")
 
         # create the usr path if it is not there
         
@@ -27,25 +27,25 @@ class MorgothConfig(object):
         
         # copy the default config to the usr directory if there is not
         # one
-        if not file_existing_and_readable(self._file_name):
+        if not file_existing_and_readable(self._filename):
 
             print("morgoth config was not detected, creating a default one")
 
             default_file = get_path_of_data_file("morgoth_config.yml")
 
-            shutil.copyfile(default_file, self._file_name)
+            shutil.copyfile(default_file, self._filename)
 
         # now load the configuration
         
-        with open(self._file_name, "r") as f:
-            self._configuration = yaml.load(f)
+        with open(self._filename, "r") as f:
+            self._configuration = yaml.load(f,Loader=yaml.SafeLoader)
 
         # it is currently not safe and can easily be corrupted
 
             
     def __getitem__(self, key):
 
-        if key in self._configuration.keys():
+        if key in self._configuration:
 
             return self._configuration[key]
 
@@ -61,7 +61,7 @@ class MorgothConfig(object):
 
 
 
-morgith_config = MorgothConfig()
+morgoth_config = MorgothConfig()
 
 
-__all__=['morgith_config']
+__all__=['morgoth_config']

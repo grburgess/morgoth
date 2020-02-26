@@ -2,7 +2,7 @@
 
 
 # specify the download time outs and checking intervals
-downloads:
+download:
 
   trigdat:
     
