@@ -5,7 +5,7 @@ os.environ['GBM_TRIGGER_DATA_DIR'] = './'
 import lxml.etree
 import time
 from morgoth.trigger import parse_trigger_file_and_write, OpenGBMFile
-from morgoth.pipeline import CreateAllPages
+from morgoth.reports import CreateAllPages
 from morgoth.downloaders import DownloadTrigdat
 from morgoth.utils.package_data import get_path_of_data_file
 
@@ -57,7 +57,7 @@ def test_pipeline():
 
     grb = parse_trigger_file_and_write(root)
 
-    
+    time.sleep(5)
     assert luigi.build(
         [CreateAllPages(grb_name=grb)], local_scheduler=False,
         scheduler_host='localhost', workers=4

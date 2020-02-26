@@ -9,13 +9,13 @@ from shutil import rmtree
 # Package meta-data.
 NAME = "morgoth"
 DESCRIPTION = "The BALROG pipeline"
-URL = "https://github.com/grburgess/popsynth"
+URL = "https://github.com/grburgess/morgoth"
 EMAIL = "jmichaelburgess@gmail.com"
 AUTHOR = "J. Michael Burgess"
 REQUIRES_PYTHON = ">=3.5.0"
 VERSION = None
 
-REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy" ,"lxml",]
+REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy" ,"lxml", "pygcn"]
 
 # What packages are optional?
 EXTRAS = {
