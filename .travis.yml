@@ -7,6 +7,6 @@ install:
 - python setup.py install
 
 script:
-- luigid &
+- luigid --background
 - python -m pytest -vv --cov=morgoth/
 - codecov --token=92cb7f46-16e6-4a3d-beb6-9e2da9684d07
