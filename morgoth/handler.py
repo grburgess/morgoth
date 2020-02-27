@@ -14,11 +14,27 @@ n_workers = int(morgoth_config["n_workers"])
     gcn.notice_types.FERMI_GBM_FLT_POS,  # Fermi GBM localization (flight)
 )
 def handler(payload, root):
+    """
+    The pygcn handler
 
+    :param payload: 
+    :param root: 
+    :returns: 
+    :rtype: 
+
+    """
+
+    # parse the trigger XML file
+    # and write to yaml
+    
     grb = parse_trigger_file_and_write(root)
 
+    # form the luigi command
+    
     cmd = form_morgoth_cmd_string(grb)
 
+    # launch luigi
+    
     subprocess.Popen(cmd)
 
 
