@@ -1,9 +1,44 @@
 #!/usr/bin/env python
-import time
-#!/usr/bin/env python
+
 import gcn
-from morgoth import handler
+import time
+import sys
+from morgoth.start import form_morgoth_cmd_string
+
+
 import os
+import glob
+flag = True
 
+import subprocess
 
-gcn.listen(handler=handler)
+base_dir = os.environ.get('GBM_TRIGGER_DATA_DIR')
+
+while flag:
+
+    try:
+
+        triggers_to_process = glob.glob(os.path.join(base_dir,'GRB*','ready'))
+
+        if triggers_to_process:
+
+            grbs = []
+
+            for trigger in triggers_to_process:
+
+                head, tail = os.path.split(trigger)
+
+                _, tail = os.path.split(head)
+
+                grbs.append(grb)
+
+            cmd_string = form_morgoth_cmd_string(*grbs)
+            
+            subprocess.Popen(cmd_string)
+
+        time.sleep(5)
+
+    except(KeyboardInterrupt):
+
+        flag = False
+        print("Shutting down morgoth")

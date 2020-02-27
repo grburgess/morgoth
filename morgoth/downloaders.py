@@ -14,6 +14,7 @@ class DownloadTrigdat(luigi.Task):
     
 
     """
+
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
 
@@ -34,16 +35,18 @@ class DownloadTrigdat(luigi.Task):
         # parse the trigdat
         trigdat = f"glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit"
 
-
-
         uri = os.path.join(info.uri, trigdat)
 
         store_path = os.path.join(base_dir, info.name)
         dl = BackgroundDownload(
             uri,
             store_path,
-            wait_time=morgoth_config["download"]["trigdat"][self.version]["interval"],
-            max_time=morgoth_config["download"]["trigdat"][self.version]["max_time"],
+            wait_time=float(
+                morgoth_config["download"]["trigdat"][self.version]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["download"]["trigdat"][self.version]["max_time"]
+            ),
         )
         dl.run()
 
@@ -77,7 +80,7 @@ class DownloadTTEFile(luigi.Task):
         dl = BackgroundDownload(
             uri,
             store_path,
-            wait_time=morgoth_config["download"]["tte"][self.version]["interval"],
-            max_time=morgoth_config["download"]["tte"][self.version]["max_time"],
+            wait_time = float(morgoth_config["download"]["tte"][self.version]["interval"]),
+            max_time = float(morgoth_config["download"]["tte"][self.version]["max_time"]),
         )
         dl.run()
