@@ -51,9 +51,6 @@ class BackgroundDownload(object):
 
         self._store_path = store_path
 
-
-
-
     def run(self):
 
         # set a flag to kill the job
@@ -69,9 +66,7 @@ class BackgroundDownload(object):
 
             try:
 
-
                 path = download_file(self._url)
-
 
                 # create the directory
 

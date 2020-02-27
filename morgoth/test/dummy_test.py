@@ -42,7 +42,7 @@
 
 
 #     time.sleep(2)
-    
+
 #     obs.stop()
 
 #     obs.join()

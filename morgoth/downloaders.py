@@ -80,7 +80,9 @@ class DownloadTTEFile(luigi.Task):
         dl = BackgroundDownload(
             uri,
             store_path,
-            wait_time = float(morgoth_config["download"]["tte"][self.version]["interval"]),
-            max_time = float(morgoth_config["download"]["tte"][self.version]["max_time"]),
+            wait_time=float(
+                morgoth_config["download"]["tte"][self.version]["interval"]
+            ),
+            max_time=float(morgoth_config["download"]["tte"][self.version]["max_time"]),
         )
         dl.run()
