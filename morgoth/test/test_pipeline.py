@@ -1,18 +1,16 @@
 import luigi
 import os
 import shutil
-import glob
-
-os.environ["GBM_TRIGGER_DATA_DIR"] = "./"
+import subprocess
 import lxml.etree
 import time
+
+os.environ["GBM_TRIGGER_DATA_DIR"] = "./"
 from morgoth.trigger import parse_trigger_file_and_write, OpenGBMFile
 from morgoth.reports import CreateAllPages
 from morgoth.downloaders import DownloadTrigdat
 from morgoth.utils.package_data import get_path_of_data_file
 from morgoth.handler import form_morgoth_cmd_string
-import subprocess
-
 from morgoth.configuration import morgoth_config
 
 for i in range(3):
@@ -23,17 +21,17 @@ for i in range(3):
 #morgoth_config["n_workers"] = 2
     
 
-# def test_parse_trigger():
+def test_parse_trigger():
 
-#     ff = get_path_of_data_file("gbm_flt.xml")
-#     with open(ff, "r") as f:
-#         root = lxml.etree.parse(f)
+    ff = get_path_of_data_file("gbm_flt.xml")
+    with open(ff, "r") as f:
+        root = lxml.etree.parse(f)
 
-#     grb = parse_trigger_file_and_write(root)
+    grb = parse_trigger_file_and_write(root)
 
-#     assert luigi.build(
-#         [OpenGBMFile(grb=grb)], local_scheduler=False, scheduler_host="localhost"
-#     )
+    assert luigi.build(
+        [OpenGBMFile(grb=grb)], local_scheduler=False, scheduler_host="localhost"
+    )
 
 
 
