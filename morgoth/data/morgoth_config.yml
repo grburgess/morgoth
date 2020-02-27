@@ -9,31 +9,31 @@ download:
     v00:
 
       interval: 5
-      max_time: 60*60
+      max_time: 1800
 
     v01:
 
       interval: 5
-      max_time: 60*60
+      max_time: 1800
 
     v02:
 
       interval: 5
-      max_time: 60*60
+      max_time: 1800
 
   tte:
   
     v00:
 
       interval: 5
-      max_time: 2*60*60
+      max_time: 7200
 
     v01:
 
       interval: 5
-      max_time: 60*60
+      max_time: 7200
 
     v02:
 
       interval: 5
-      max_time: 60*60
+      max_time: 7200
