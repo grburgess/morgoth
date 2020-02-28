@@ -1,4 +1,6 @@
 #!/usr/bin/env python
 import gcn
 from morgoth.handler import handler
-gcn.listen(handler=handler)
+from morgoth import morgoth_config
+
+gcn.listen(handler=handler, port=morgoth_config["pygcn"]["port"])
