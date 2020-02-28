@@ -18,7 +18,7 @@ for i in range(3):
     v = f"v0{i}"
     morgoth_config["download"]["trigdat"][v]["max_time"] = 10
 
-# morgoth_config["n_workers"] = 2
+morgoth_config['luigi']["n_workers"] = 2
 
 
 def test_parse_trigger():
@@ -58,7 +58,7 @@ def test_auto_pipe():
 
     subprocess.Popen(cmd)
 
-    time.sleep(60 * 2)
+    time.sleep(60 * 3)
 
     shutil.rmtree(grb)
 
