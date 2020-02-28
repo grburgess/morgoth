@@ -5,7 +5,7 @@
 
 pygcn:
 
-  port: 8085
+  port: 8099
 
 # luigi details
 
