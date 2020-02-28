@@ -8,7 +8,6 @@ from morgoth.balrog_handlers import ProcessFitResults
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
-
 # work backwards for the moment
 
 
@@ -68,5 +67,3 @@ class CreateReportTrigdat(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, filename)
 
         os.system(f"touch {tmp}")
-
-
