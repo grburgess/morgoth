@@ -1,8 +1,17 @@
 # Morgoth configuration file
 
-# number of workers per task
 
-n_workers: 4
+# GCN listen
+
+pygcn:
+
+  port: 8085
+
+# luigi details
+
+luigi:
+
+  n_workers: 4
 
 
 # specify the download time outs and checking intervals
