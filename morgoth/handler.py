@@ -8,7 +8,7 @@ import subprocess
 from morgoth.trigger import parse_trigger_file_and_write
 from morgoth import morgoth_config
 
-n_workers = int(morgoth_config["n_workers"])
+n_workers = int(morgoth_config['luigi']["n_workers"])
 
 
 @gcn.include_notice_types(
