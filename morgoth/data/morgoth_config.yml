@@ -11,7 +11,7 @@ pygcn:
 
 luigi:
 
-  n_workers: 4
+  n_workers: 18
 
 
 # specify the download time outs and checking intervals
