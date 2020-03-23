@@ -30,6 +30,7 @@ class MorgothConfig(object):
 
         # copy the default config to the usr directory if there is not
         # one
+
         if not file_existing_and_readable(self._filename):
 
             print("morgoth config was not detected, creating a default one")

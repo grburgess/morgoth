@@ -87,7 +87,7 @@ def parse_trigger_file_and_write(root):
         frac = f"0{frac}"
 
     burst_name = f"GRB{yy}{mm}{dd}{frac}"
-
+    
     burst_number = f"{yy}{mm}{dd}{frac}"
 
     pos2d = root.find(".//{*}Position2D")

@@ -35,7 +35,6 @@ def handler(payload, root):
     cmd = form_morgoth_cmd_string(grb)
 
     # launch luigi
-
     subprocess.Popen(cmd)
 
 
