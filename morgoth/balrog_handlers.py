@@ -1,9 +1,7 @@
 import luigi
 import os
-from morgoth.utils.download_file import BackgroundDownload
-from morgoth.trigger import OpenGBMFile, GBMTriggerFile
-from morgoth.configuration import morgoth_config
-from morgoth.downloaders import DownloadTTEFile, DownloadTrigdat
+
+from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
@@ -65,10 +63,8 @@ class RunBalrogTTE(luigi.ExternalTask):
 
     def requires(self):
 
-        return [
-            DownloadTTEFile(grb_name=self.grb_name, version=self.version, detector=d)
-            for d in _gbm_detectors
-        ]
+        return [BackgroundFitTTE(grb_name=self.grb_name, version=self.version, detector=d) for d in _gbm_detectors]
+        
 
     def output(self):
 
@@ -89,7 +85,7 @@ class RunBalrogTrigdat(luigi.ExternalTask):
 
     def requires(self):
 
-        return DownloadTrigdat(grb_name=self.grb_name, version=self.version)
+        return BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version)
 
     def output(self):
 
@@ -102,3 +98,5 @@ class RunBalrogTrigdat(luigi.ExternalTask):
         tmp = os.path.join(base_dir, self.grb_name, filename)
 
         os.system(f"touch {tmp}")
+        
+
