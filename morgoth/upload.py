@@ -2,12 +2,13 @@ import luigi
 import os
 import yaml
 
+from morgoth.utils.env import get_env_value
 from morgoth.utils.upload_utils import (
     upload_grb_report,
     upload_plot,
     upload_datafile
 )
-from morgoth.reports import CreateReportTTE, CreateReportTrigdat
+from morgoth.balrog_handlers import ProcessFitResults
 from morgoth.plots import (
     CreateLightcurve,
     CreateLocationPlot,
@@ -18,63 +19,24 @@ from morgoth.plots import (
     Create3DLocationPlot
 )
 
-base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
-
-class UploadAllPages(luigi.WrapperTask):
-    grb_name = luigi.Parameter()
-
-    def requires(self):
-        yield UploadPage(grb_name=self.grb_name, report_type="tte")
-        yield UploadPage(grb_name=self.grb_name, report_type="trigdat", version="v00")
-        yield UploadPage(grb_name=self.grb_name, report_type="trigdat", version="v01")
-        yield UploadPage(grb_name=self.grb_name, report_type="trigdat", version="v02")
-
-
-class UploadPage(luigi.Task):
-    grb_name = luigi.Parameter()
-    report_type = luigi.Parameter()
-    version = luigi.Parameter(default="v00")
-
-    def requires(self):
-        yield UploadAllPlots(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-
-    def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_page.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
-
-    def run(self):
-        filename = f"{self.report_type}_{self.version}_upload_page.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
-
-        os.system(f"touch {tmp}")
+base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class UploadReport(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
-    version = luigi.Parameter(default="v00")
+    version = luigi.Parameter()
 
     def requires(self):
-        if self.report_type.lower() == "tte":
-            return CreateReportTTE(grb_name=self.grb_name)
-
-        elif self.report_type.lower() == "trigdat":
-            return CreateReportTrigdat(grb_name=self.grb_name, version=self.version)
-
-        else:
-            return None
+        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type)
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_report.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        report_name = f"{self.report_type}_{self.version}_report.yml"
-        report_file = os.path.join(base_dir, self.grb_name, report_name)
-
-        with open(report_file) as f:
-            report = yaml.load(f)
+        with self.input()['report'].open() as f:
+            report = yaml.safe_load(f)
 
         upload_grb_report(grb_name=self.grb_name, report=report)
 
@@ -140,6 +102,7 @@ class UploadAllLightcurves(luigi.Task):
 
         os.system(f"touch {tmp}")
 
+
 class UploadLightcurve(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
@@ -147,16 +110,17 @@ class UploadLightcurve(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector=self.detector, version=self.version)
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector=self.detector, version=self.version),
+            'plot_file': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_{self.detector}_upload_plot_lightcurve.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -179,16 +143,17 @@ class UploadLocationPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield CreateLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': CreateLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_location.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_location_{self.report_type}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -210,16 +175,17 @@ class UploadCornerPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield CreateCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': CreateCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_corner.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_allcorner_{self.report_type}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -241,16 +207,17 @@ class UploadMollLocationPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield CreateMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': CreateMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_molllocation_{self.report_type}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -272,16 +239,17 @@ class UploadSatellitePlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield CreateSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': CreateSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_satellite.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_satellite_{self.report_type}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -303,16 +271,17 @@ class UploadSpectrumPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield CreateSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': CreateSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        plot_name = f"{self.grb_name}_spectrum_{self.report_type}_plot_{self.version}.png"
-        plot_file = os.path.join(base_dir, self.grb_name, plot_name)
+        plot_file = self.input()['plot_file']
 
         upload_plot(
             grb_name=self.grb_name,
@@ -334,22 +303,23 @@ class Upload3DLocationPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        yield UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
-        yield Create3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'create_report': UploadReport(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'plot_file': Create3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
         filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.txt"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        data_file_name = f"{self.grb_name}_3dlocation_{self.report_type}_plot_{self.version}.png"
-        data_file = os.path.join(base_dir, self.grb_name, data_file_name)
+        plot_file = self.input()['plot_file']
 
-        upload_datafile(
+        upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
-            data_file=data_file,
-            file_type='3dlocation',
+            plot_file=plot_file,
+            plot_type='3dlocation',
             version=self.version
         )
 
@@ -357,4 +327,3 @@ class Upload3DLocationPlot(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, filename)
 
         os.system(f"touch {tmp}")
-

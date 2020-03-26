@@ -3,12 +3,12 @@ import os
 import requests
 import json
 import time
+from morgoth.utils.env import get_env_value
+from morgoth.exceptions.custom_exceptions import GRBNotFound, DBConflict, EmptyFileError
 
-from morgoth.exceptions.custom_exceptions import GRBNotFound
-
-base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
-base_url = os.environ.get("MORGOTH_BASE_URL")
-auth_token = os.environ.get("MORGOTH_AUTH_TOKEN")
+base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
+base_url = get_env_value("MORGOTH_BASE_URL")
+auth_token = get_env_value("MORGOTH_AUTH_TOKEN")
 
 
 def check_grb_on_website(grb_name):
@@ -24,11 +24,11 @@ def check_grb_on_website(grb_name):
 
     # GRB not in DB
     if response.status_code == 204:
-        return True
+        return False
 
     # GRB already in DB
     elif response.status_code == 200:
-        return False
+        return True
 
     # This should not happen, but we will try to upload anyway
     else:
@@ -42,12 +42,13 @@ def upload_grb_report(grb_name, report):
         'Content-Type': 'application/json',
 
     }
-
+    do_update = False
     grb_on_website = check_grb_on_website(grb_name)
 
     # Upload new version of report
     if grb_on_website:
-        url = f"{base_url}/'api/grbs/{grb_name}/params/"
+        do_update = True
+        url = f"{base_url}/api/grbs/{grb_name}/params/"
 
     # Create GRB entry on website and upload report
     else:
@@ -61,6 +62,14 @@ def upload_grb_report(grb_name, report):
             if response.status_code == 201:
                 print('Uploaded new GRB')
                 send = True
+
+            elif response.status_code == 409 and not do_update:
+                print('GRB already existing')
+                url = f"{base_url}/api/grbs/{grb_name}/params/"
+
+            elif response.status_code == 409 and do_update:
+                # The report for this version is already in the DB
+                break
 
         except:
 
@@ -130,21 +139,31 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name=N
 
     # Update the GRB report on the website
     if check_grb_on_website(grb_name):
-        url = f"{base_url}/'api/grbs/{grb_name}/plot/"
+        url = f"{base_url}/api/grbs/{grb_name}/plot/"
 
     # Update of not possible if GRB is not already there
     else:
         raise GRBNotFound(f"Upload of plot for {grb_name} not possible, because GRB is missing")
 
+    error_class = None
     send = False
     with open(plot_file, 'rb') as file_:
 
         while not send:
             try:
-
                 response = requests.post(url=url, data=payload, headers=headers,
                                          files={"file": file_}, verify=False)
-                send = True
+                if response.status_code == 201:
+                    print('Uploaded new plot')
+                    send = True
+
+                elif response.status_code == 204:
+                    error_class = EmptyFileError
+                    break
+
+                elif response.status_code == 409:
+                    # The plot for this version is already in the Database
+                    break
 
             except:
 
@@ -154,6 +173,10 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name=N
             else:
 
                 print('{}: {}'.format(response.status_code, response.text))
+
+    if error_class is not None:
+       raise error_class('The plot file was empty')
+
 
 
 def upload_datafile(grb_name, report_type, data_file, file_type, version):
@@ -174,12 +197,13 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
 
     # Update the GRB report on the website
     if check_grb_on_website(grb_name):
-        url = f"{base_url}/'api/grbs/{grb_name}/datafile/"
+        url = f"{base_url}/api/grbs/{grb_name}/datafile/"
 
     # Update of not possible if GRB is not already there
     else:
-        raise GRBNotFound(f"Upload of plot for {grb_name} not possible, because GRB is missing")
+        raise GRBNotFound(f"Upload of datafile for {grb_name} not possible, because GRB is missing")
 
+    error_class = None
     send = False
     with open(data_file, 'rb') as file_:
 
@@ -189,7 +213,18 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
 
                 response = requests.post(url=url, data=payload, headers=headers,
                                          files={"file": file_}, verify=False)
-                send = True
+                if response.status_code == 201:
+                    print('Uploaded new datafile')
+                    send = True
+
+                elif response.status_code == 204:
+                    error_class = EmptyFileError
+                    break
+
+                elif response.status_code == 409:
+                    # The data file for this version is already in the DB
+                    break
+
 
             except:
 
@@ -198,3 +233,6 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
             else:
 
                 print('{}: {}'.format(response.status_code, response.text))
+
+    if error_class is not None:
+       raise error_class('The datafile was empty')
