@@ -80,3 +80,28 @@ def create_corner_loc_plot(grb_name, report_type, version, datapath, model):
 
     c1.plotter.plot(filename=filename,
                     figsize="column")
+
+
+def create_corner_all_plot(grb_name, report_type, version, datapath, model):
+    """
+    load fit results and create corner plots for all parameters
+    :return:
+    """
+    chain = loadtxt2d(datapath)
+
+    # Get parameter for model
+    parameter = model_param_lookup[model]
+
+    # RA-DEC plot
+    c2 = ChainConsumer()
+
+    c2.add_chain(chain[:, :-1], parameters=parameter).configure(plot_hists=False, contour_labels='sigma',
+                                                                colors="#cd5c5c", flip=False, max_ticks=3)
+
+    filename = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_allcorner_plot_{report_type}_{version}.png'
+
+    c2.plotter.plot(filename=filename,
+                    figsize="column")
+
+
+
