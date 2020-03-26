@@ -8,7 +8,7 @@ from morgoth.balrog_handlers import ProcessFitResults
 from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
     create_corner_all_plot,
-    mollweide_plot, azimuthal_plot_sat_frame)
+    mollweide_plot, azimuthal_plot_sat_frame, interactive_3D_plot)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -192,3 +192,30 @@ class CreateSpectrumPlot(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
 
         os.system(f"touch {tmp}")
+
+
+class Create3DLocationPlot(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+
+    def output(self):
+        filename = f"{self.grb_name}_3dlocation_plot_{self.report_type}_{self.version}.html"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
+
+    def run(self):
+        with self.input()['result'].open() as f:
+            result = yaml.safe_load(f)
+
+        interactive_3D_plot(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
+            post_equal_weigts_file=self.input()['post_equal_weights'].path,
+            used_dets=result['localization']['used_detectors'],
+            model=result['localization']['model'],
+        )

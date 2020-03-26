@@ -316,6 +316,343 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
+def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, trigdat_file, used_dets, model):
+
+    # Plot 10 degree grid
+    trace_grid = []
+    phi_l = np.arange(-180, 181, 10)  # file size!#
+    theta_l = np.arange(-90, 91, 10)  # file size!#
+    scale_factor_grid = 1.02
+    b_side_angle = 45  # has to be <90
+    for phi in phi_l:
+        x, y, z = xyz(phi, theta_l)
+        trace_grid.append(go.Scatter3d(x=scale_factor_grid * x, y=scale_factor_grid * y, z=scale_factor_grid * z,
+                                       legendgroup='group', showlegend=False, mode='lines', line=dict(
+                color='black',
+                width=1,
+                dash='dash'
+            ), hoverinfo=None))
+
+    for theta in theta_l:
+        theta_m = np.ones_like(phi_l) * theta
+        x, y, z = xyz(phi_l, theta_m)
+        trace_grid.append(go.Scatter3d(x=scale_factor_grid * x, y=scale_factor_grid * y, z=scale_factor_grid * z,
+                                       legendgroup='group', showlegend=False, mode='lines', line=dict(
+                color='black',
+                width=1,
+                dash='dash'
+            ), hoverinfo=None))
+    # equator
+    theta_m = np.ones_like(phi_l) * 0
+    x, y, z = xyz(phi_l, theta_m)
+    trace_grid.append(go.Scatter3d(x=np.array(scale_factor_grid * x), y=np.array(scale_factor_grid * y),
+                                   z=np.array(scale_factor_grid * z), legendgroup='group',
+                                   name='Spherical Grid (10 deg steps)', mode='lines', line=dict(
+            color='black',
+            width=3
+        ), hoverinfo=None))
+
+    # PLOT B0 and B1 Side and Solar panel
+    phi = np.concatenate([np.arange(0, b_side_angle - 1, (b_side_angle - 1) / 10),
+                          np.arange(b_side_angle - 1, b_side_angle + 1, 0.1),
+                          np.arange(b_side_angle + 1, 180 - (b_side_angle + 1), 2 * b_side_angle / 4),
+                          np.arange(180 - (b_side_angle + 1), 180 - (b_side_angle - 1), 0.1),
+                          np.arange(180 - (b_side_angle - 1), 181, (b_side_angle - 1.) / 10.)])  # file size!#
+    phi = np.concatenate([phi, -np.flip(phi[:-1], 0)])
+    theta = np.arange(-90, 91, 5)  # file size!#
+    # phi, theta = np.mgrid[-180:180:720j, -90:90:18j]
+    phi, theta = np.meshgrid(phi, theta)
+    x, y, z = xyz(phi, theta)
+    points = np.array([x, y, z])
+
+    b0_zen = 0
+    b0_azi = 0
+    b1_zen = 0
+    b1_azi = 180
+    b0_x, b0_y, b0_z = xyz(b0_azi, b0_zen)
+    b1_x, b1_y, b1_z = xyz(b1_azi, b1_zen)
+
+    idx_b0 = np.abs(phi) < b_side_angle
+    idx_b1 = np.abs(phi) > 180 - b_side_angle
+    xin_b0, yin_b0, zin_b0 = xyz(phi, theta)
+    xin_b1, yin_b1, zin_b1 = xyz(phi, theta)
+    xin_s, yin_s, zin_s = xyz(phi, theta)
+
+    xin_b0[~idx_b0] = np.nan
+    yin_b0[~idx_b0] = np.nan
+    zin_b0[~idx_b0] = np.nan
+
+    xin_b1[~idx_b1] = np.nan
+    yin_b1[~idx_b1] = np.nan
+    zin_b1[~idx_b1] = np.nan
+
+    xin_s[idx_b1] = np.nan
+    yin_s[idx_b1] = np.nan
+    zin_s[idx_b1] = np.nan
+    xin_s[idx_b0] = np.nan
+    yin_s[idx_b0] = np.nan
+    zin_s[idx_b0] = np.nan
+
+    contours = go.surface.Contours(
+        x=go.surface.contours.X(highlight=False),
+        y=go.surface.contours.Y(highlight=False),
+        z=go.surface.contours.Z(highlight=False),
+    )
+
+    theta = np.arcsin(z) * 180 / np.pi
+    phi = np.arctan2(x, y) * 180 / np.pi
+    my_text = []
+    for i in range(len(phi)):
+        te = []
+        for j in range(len(phi[0])):
+            te.append('phi:{}<br>theta:{}'.format(phi[i, j], theta[i, j]))
+        my_text.append(te)
+    my_text = np.array(my_text)
+    colorscale_b0 = [[0, 'rgb(117,201,196)'], [1, 'rgb(117,201,196)']]
+    trace_b0 = go.Surface(x=xin_b0, y=yin_b0, z=zin_b0, name='b0-side', showscale=False, colorscale=colorscale_b0,
+                          surfacecolor=np.ones_like(z), opacity=1, contours=contours, text=my_text,
+                          hoverinfo='text+name')
+    colorscale_b1 = [[0, 'rgb(201,117,117)'], [1, 'rgb(201,117,117)']]
+    trace_b1 = go.Surface(x=xin_b1, y=yin_b1, z=zin_b1, name='b1-side', showscale=False, colorscale=colorscale_b1,
+                          surfacecolor=np.ones_like(z), opacity=1, contours=contours, text=my_text,
+                          hoverinfo='text+name')
+    colorscale_s = [[0, 'grey'], [1, 'grey']]
+    trace_s = go.Surface(x=xin_s, y=yin_s, z=zin_s, name='solar_panel side', showscale=False,
+                         colorscale=colorscale_s, surfacecolor=np.ones_like(z), opacity=1, contours=contours,
+                         text=my_text, hoverinfo='text+name')
+
+    # PLOT DETS - dets in list used dets will be plotted solid all other dashed
+    trace_dets = []
+    color_dict = {'n0': 'blue', 'n1': 'navy', 'n2': 'crimson', 'n3': 'lightgreen', 'n4': 'orchid', 'n5': 'brown',
+                  'n6': 'firebrick', 'n7': 'plum', 'n8': 'darkgreen', 'n9': 'olive', 'na': 'aqua',
+                  'nb': 'darkorange', 'b0': 'darkmagenta', 'b1': 'indigo'}
+    det_pointing = {'n0': [45.9, 90 - 20.6], 'n1': [45.1, 90 - 45.3], 'n2': [58.4, 90 - 90.2],
+                    'n3': [314.9, 90 - 45.2], 'n4': [303.2, 90 - 90.3], 'n5': [3.4, 90 - 89.8],
+                    'n6': [224.9, 90 - 20.4], 'n7': [224.6, 90 - 46.2], 'n8': [236.6, 90 - 90],
+                    'n9': [135.2, 90 - 45.6], 'na': [123.7, 90 - 90.4], 'nb': [183.7, 90 - 90.3],
+                    'b0': [0.01, 90 - 90.01], 'b1': [180.01, 90 - 90.01]}
+    for keys in det_pointing:
+        det_opening = 40  # in deg
+        pointing = det_pointing[keys]
+        ra_d = pointing[0] * np.pi / 180
+        dec_d = pointing[1] * np.pi / 180
+        scale_factor_d = 1.01
+        theta_l = np.linspace(-np.pi / 2, np.pi / 2, 720)  # file size!#
+        phi_res_0 = []
+        phi_res_1 = []
+        for theta in theta_l:
+            phi_res_0.append(phi_0(theta, ra_d, dec_d, det_opening * np.pi / 180))
+            phi_res_1.append(phi_1(theta, ra_d, dec_d, det_opening * np.pi / 180))
+
+        phi_res_0 = np.array(phi_res_0)
+        phi_res_1 = np.array(phi_res_1)
+        theta_all = np.concatenate([theta_l, np.flip(theta_l, 0)])
+        phi_all = np.concatenate([phi_res_0, np.flip(phi_res_1, 0)])
+        mask = phi_all < 100
+        theta_all = theta_all[mask]
+        phi_all = phi_all[mask]
+        theta_all = np.concatenate([theta_all, theta_all[0:1]])
+        phi_all = np.concatenate([phi_all, phi_all[:1]])
+        x = np.cos(theta_all) * np.cos(phi_all)
+        y = np.cos(theta_all) * np.sin(phi_all)
+        z = np.sin(theta_all)
+        # plot earth
+        name = str(keys)
+        color = str(color_dict[keys])
+        if name in used_dets:
+            trace_dets.append(
+                go.Scatter3d(x=scale_factor_d * x, y=scale_factor_d * y, z=scale_factor_d * z, name=name,
+                             legendgroup='used detectors', mode='lines', line=dict(
+                        color=color,
+                        width=5,
+                        dash='solid'
+                    ), hoverinfo='name'))
+        else:
+            trace_dets.append(
+                go.Scatter3d(x=scale_factor_d * x, y=scale_factor_d * y, z=scale_factor_d * z, name=name,
+                             mode='lines', legendgroup='unused detectors', line=dict(
+                        color=color,
+                        width=5,
+                        dash='dash'
+                    ), hoverinfo='name'))
+
+
+    with fits.open(trigdat_file) as f:
+        quat = f['TRIGRATE'].data['SCATTITD'][0]
+        sc_pos = f['TRIGRATE'].data['EIC'][0]
+        times = f['TRIGRATE'].data['TIME'][0]
+
+    # Plot Earth Shadow
+    det = gbm_detector_list['n0'](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    earth_pos_sat = det.earth_position
+    ra_earth_sat = earth_pos_sat.lon.deg
+    dec_earth_sat = earth_pos_sat.lat.deg
+    # earth_pos
+    xe, ye, ze = xyz(ra_earth_sat, dec_earth_sat)
+    earth_vec = np.array([xe, ye, ze])
+    opening_angle = 67
+    # points on sphere
+    theta_l = np.concatenate(
+        [np.linspace(-np.pi / 2, -np.pi / 2 + 0.1, 30), np.linspace(-np.pi / 2 + 0.1, np.pi / 2 - 0.1, 400),
+         np.linspace(np.pi / 2 - 0.1, np.pi / 2, 30)])  # file size!#
+    theta_final = []
+    phi_final = []
+    phi_l = np.arange(-np.pi, np.pi + 0.1, 0.1)
+    for theta in theta_l:
+        for phi in phi_l:
+            x, y, z = xyz(phi * 180 / np.pi, theta * 180 / np.pi)
+            angle = np.arccos(np.dot(np.array([x, y, z]), earth_vec))
+            if angle < opening_angle * np.pi / 180:
+                theta_final.append(theta)
+                phi_final.append(phi)
+    theta_final = np.array(theta_final)
+    phi_final = np.array(phi_final)
+
+    x = np.cos(theta_final) * np.cos(phi_final)
+    y = np.cos(theta_final) * np.sin(phi_final)
+    z = np.sin(theta_final)
+    scale_factor_earth = 1.005
+    colorscale = [[0, 'navy'], [1, 'navy']]
+
+    theta = np.arcsin(z) * 180 / np.pi
+    phi = np.arctan2(x, y) * 180 / np.pi
+    my_text = []
+    for i in range(len(phi)):
+        my_text.append('phi:{}<br>theta:{}'.format(phi[i], theta[i]))
+    my_text = np.array(my_text)
+    trace_earth = go.Mesh3d(x=scale_factor_earth * x, y=scale_factor_earth * y, z=scale_factor_earth * z,
+                            showscale=False, name='earth', color='navy', alphahull=0, text=my_text,
+                            hoverinfo='text+name')
+
+    # Plot Balrog ERROR CONTOURS
+    # Load data from chain with chain consumer
+    chain = loadtxt2d(post_equal_weigts_file)
+
+    # Get parameter for model
+    parameter = model_param_lookup[model]
+
+    c1 = ChainConsumer()
+    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(contour_labels='sigma', colors="#cd5c5c",
+                                                                           label_font_size=20)
+    # ra_contour, dec_contour, val_contour = c1.plotter.get_contours_list('ra', 'dec')  # ra, dec in deg here
+    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
+    hist, ra_contour, dec_contour = c1.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)', 'dec (deg)')  # ra, dec in deg here
+    hist[hist == 0] = 1E-16
+    val_contour = c1.plotter._convert_to_stdev(hist.T)
+    ra_con, dec_con = np.meshgrid(ra_contour, dec_contour)
+    a = np.array([ra_con, dec_con]).T
+    res = []
+    q1, q2, q3, q4 = quat
+    scx, scy, scz = sc_pos
+    for a_inter in a:
+        loc_icrs = SkyCoord(ra=a_inter[:, 0], dec=a_inter[:, 1], unit='deg', frame="icrs")
+        loc_sat = loc_icrs.transform_to(GBMFrame(quaternion_1=q1,
+                                                 quaternion_2=q2,
+                                                 quaternion_3=q3,
+                                                 quaternion_4=q4,
+                                                 sc_pos_X=scx,
+                                                 sc_pos_Y=scy,
+                                                 sc_pos_Z=scz,
+                                                 ))
+        ra_sat = Angle(loc_sat.lon.deg * unit.degree).value
+        dec_sat = Angle(loc_sat.lat.deg * unit.degree).value
+        res.append(np.stack((ra_sat, dec_sat), axis=-1))
+    res = np.array(res)
+    scale_factor_con = 1.02
+    x, y, z = xyz(res[:, :, 0], res[:, :, 1])
+    x = scale_factor_con * x
+    y = y * scale_factor_con
+    z = z * scale_factor_con
+    colorscale = [[0, 'green'], [1. / 3., 'orange'], [2. / 3., "red"], [1, 'grey']]
+    conf_levels = [0.68, 0.95, 0.99]
+    trace_conf_l = []
+    theta = np.arcsin(z) * 180 / np.pi
+    phi = np.arctan2(x, y) * 180 / np.pi
+    my_text = []
+    for i in range(len(phi)):
+        te = []
+        for j in range(len(phi[0])):
+            te.append('phi:{}<br>theta:{}'.format(phi[i, j], theta[i, j]))
+        my_text.append(te)
+    my_text = np.array(my_text)
+    for conf in conf_levels:
+        x2n, y2n, z2n = np.where(val_contour < conf, x, None), np.where(val_contour < conf, y, None), np.where(
+            val_contour < conf, z, None)
+        trace_conf = go.Surface(x=x2n, y=y2n, z=z2n, cmin=0, cmax=3, showscale=False, colorscale=colorscale,
+                                surfacecolor=z2n, name='Balrog {} confidence level'.format(conf), text=my_text,
+                                hoverinfo='text+name')
+        lx = len(trace_conf['z'])
+        ly = len(trace_conf['z'][0])
+        out = []
+        x_sigma1 = []
+        for i in range(lx):
+            temp = []
+            for j in range(ly):
+                if val_contour[i, j] < 0.68:
+                    temp.append(0)
+                elif val_contour[i, j] < 0.95:
+                    temp.append(1)
+                elif val_contour[i, j] < 0.99:
+                    temp.append(2)
+                else:
+                    temp.append(3)
+            out.append(temp)
+        # PLOT BESTFIT and SWIFT (if given)
+        trace_conf['surfacecolor'] = out
+        trace_conf_l.append(trace_conf)
+
+    # TODO add swift position
+
+    # add data together
+    data = [trace_b0, trace_b1, trace_s, trace_earth] + trace_grid + trace_dets + trace_conf_l
+    # change layout
+    layout = go.Layout(dict(
+        hovermode='closest',
+        autosize=True,
+        # width=1000,
+        height=800,
+        scene=dict(
+            xaxis=dict(
+                title='',
+                autorange=True,
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+                ticks='',
+                showticklabels=False,
+                showspikes=False
+            ),
+            yaxis=dict(
+                title='',
+                autorange=True,
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+                ticks='',
+                showticklabels=False,
+                showspikes=False
+            ),
+            zaxis=dict(
+                title='',
+                autorange=True,
+                showgrid=False,
+                zeroline=False,
+                showline=False,
+                ticks='',
+                showticklabels=False,
+                showspikes=False
+            )))
+    )
+    # create figure
+    fig = go.Figure(data=data, layout=layout)
+
+    output = plotly.offline.plot(fig, auto_open=False, output_type='div', include_plotlyjs=False, show_link=False)
+
+    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_3dlocation_plot_{report_type}_{version}.html"
+
+    with open(save_path, "w") as text_file:
+        text_file.write(output)
+
 
 
 def loadtxt2d(intext):
