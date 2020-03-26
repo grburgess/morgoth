@@ -8,7 +8,7 @@ from morgoth.balrog_handlers import ProcessFitResults
 from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
     create_corner_all_plot,
-    mollweide_plot)
+    mollweide_plot, azimuthal_plot_sat_frame)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
