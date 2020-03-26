@@ -51,7 +51,6 @@ class DownloadTrigdat(luigi.Task):
         )
         dl.run()
 
-
 class DownloadTTEFile(luigi.Task):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -85,5 +84,42 @@ class DownloadTTEFile(luigi.Task):
                 morgoth_config["download"]["tte"][self.version]["interval"]
             ),
             max_time=float(morgoth_config["download"]["tte"][self.version]["max_time"]),
+        )
+        dl.run()
+
+        
+class DownloadCSPECFile(luigi.Task):
+    grb_name = luigi.Parameter()
+    version = luigi.Parameter(default="v01")
+    detector = luigi.Parameter()
+
+    def requires(self):
+
+        return OpenGBMFile(grb=self.grb_name)
+
+    def output(self):
+
+        cspec = f"glg_cspec_{self.detector}_bn{self.grb_name[3:]}_{self.version}.pha"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, cspec))
+
+    def run(self):
+
+        info = GBMTriggerFile.from_file(self.input())
+
+        print(info)
+
+        cspec = f"glg_cspec_{self.detector}_bn{self.grb_name[3:]}_{self.version}.pha"
+
+        uri = os.path.join(info.uri, cspec)
+        print(uri)
+
+        store_path = os.path.join(base_dir, info.name)
+        dl = BackgroundDownload(
+            uri,
+            store_path,
+            wait_time=float(
+                morgoth_config["download"]["cspec"][self.version]["interval"]
+            ),
+            max_time=float(morgoth_config["download"]["cspec"][self.version]["max_time"]),
         )
         dl.run()

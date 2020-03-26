@@ -13,6 +13,10 @@ luigi:
 
   n_workers: 18
 
+multinest:
+
+  n_cores: 4
+  path_to_python: python
 
 # specify the download time outs and checking intervals
 download:
