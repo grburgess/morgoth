@@ -283,10 +283,7 @@ class ResultReader(object):
             }
         }
 
-    def save_result_yml(self):
-        filename = f"{self.report_type}_{self.version}_fit_result.yml"
-        file_path = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
-
+    def save_result_yml(self, file_path):
         with open(file_path, "w") as f:
             yaml.dump(self._report, f, default_flow_style=False)
 
