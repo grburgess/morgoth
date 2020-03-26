@@ -1,19 +1,18 @@
 import luigi
 import os
-import yaml
-from datetime import datetime
 import shutil
 
 from morgoth.utils.file_utils import if_directory_not_existing_then_make
 from morgoth.utils.package_data import get_path_of_data_file
-from morgoth.utils.download_file import BackgroundDownload
-from morgoth.trigger import OpenGBMFile, GBMTriggerFile
-from morgoth.configuration import morgoth_config
 from morgoth.utils.env import get_env_value
-from morgoth.downloaders import DownloadTTEFile, DownloadTrigdat
 from morgoth.utils.result_reader import ResultReader
+from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
+from morgoth.configuration import morgoth_config
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
+n_cores_multinest = morgoth_config["multinest"]["n_cores"]
+path_to_python = morgoth_config["multinest"]["path_to_python"]
+
 
 _gbm_detectors = (
     "n0",
@@ -61,6 +60,7 @@ class ProcessFitResults(luigi.Task):
             'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat'))
         }
 
+
     def run(self):
         out_dir = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'chains')
         if_directory_not_existing_then_make(out_dir)
@@ -88,35 +88,42 @@ class RunBalrogTTE(luigi.ExternalTask):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return [
-            DownloadTTEFile(grb_name=self.grb_name, version=self.version, detector=d)
-            for d in _gbm_detectors
-        ]
-
+        return BackgroundFitTTE(grb_name=self.grb_name, version=self.version)
+        
     def output(self):
-        filename = f"tte_{self.version}_fit.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
+        
+        filename = f"tte_{self.version}_loc_results.fits"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, "fit_results", filename))
 
     def run(self):
-        filename = f"tte_{self.version}_fit.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
+        fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
-        os.system(f"touch {tmp}")
+        time_selection_file_path = os.path.join(base_dir, self.grb_name, "time_selection.yml")
+
+        bkg_fit_file_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
+        
+        os.system(f"mpiexec -n {n_cores_multinest} {path_to_python} {fit_script_path} {self.grb_name} {self.version} {bkg_fit_file_path} {time_selection_file_path} tte")
 
 
 class RunBalrogTrigdat(luigi.ExternalTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
-
+    
     def requires(self):
-        return DownloadTrigdat(grb_name=self.grb_name, version=self.version)
+        return BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version)
 
     def output(self):
-        filename = f"trigdat_{self.version}_fit.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
+        filename = f"trigdat_{self.version}_loc_results.fits"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, "fit_results",filename))
 
     def run(self):
-        filename = f"trigdat_{self.version}_fit.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
 
-        os.system(f"touch {tmp}")
+        fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
+
+        time_selection_file_path = os.path.join(base_dir, self.grb_name, "time_selection.yml")
+
+        bkg_fit_file_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
+        
+        os.system(f"mpiexec -n {n_cores_multinest} {path_to_python} {fit_script_path} {self.grb_name} {self.version} {bkg_fit_file_path} {time_selection_file_path} trigdat")
+
+

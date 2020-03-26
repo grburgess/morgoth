@@ -63,7 +63,6 @@ class BackgroundDownload(object):
         while flag:
 
             # try to download the file
-
             try:
 
                 path = download_file(self._url)
