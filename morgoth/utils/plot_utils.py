@@ -316,6 +316,77 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
+def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weigts_file, swift=None):
+    """
+    If swift postion known make a small area plot with grb position, error contours and Swift position (in deg)
+    This Plot has to be made AFTER the mollweide plot.
+    :return:
+    """
+    if swift is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        ra_center = ra * np.pi / 180
+        dec_center = dec * np.pi / 180
+        if ra_center > np.pi:
+            ra_center = ra_center - 2 * np.pi
+
+        # Get contours
+        x_contour, y_contour, val_contour, x_contour_1, x_contour_2, val_contour_1, \
+        val_contour_2 = get_contours(model, post_equal_weigts_file)
+
+        x_contour_1 = x_contour[x_contour < np.pi]
+        x_contour_2 = x_contour[x_contour > np.pi] - 2 * np.pi
+
+        val_contour_1 = val_contour[:, x_contour < np.pi]
+        val_contour_2 = val_contour[:, x_contour > np.pi]
+
+        if swift['ra'] > 180:
+            swift_ra = float(swift['ra']) - 360
+        else:
+            swift_ra = float(swift['ra'])
+        # plot Balrog position with errors and swift position
+        if len(x_contour_1):
+            ax.contourf(x_contour_1 * 180 / np.pi, y_contour * 180 / np.pi, val_contour_1,
+                        levels=[0, 0.68268949, 0.9545], colors=['navy', 'lightgreen'])
+        if len(x_contour_2):
+            ax.contourf(x_contour_2 * 180 / np.pi, y_contour * 180 / np.pi, val_contour_2,
+                        levels=[0, 0.68268949, 0.9545], colors=['navy', 'lightgreen'])
+        ax.scatter(swift_ra, swift['dec'], label='SWIFT Position', s=40, marker="X",
+                   color='magenta', alpha=0.5)
+        ax.scatter(ra_center * 180 / np.pi, dec_center * 180 / np.pi, label='Balrog Position', s=40, marker="*",
+                   color='green', alpha=0.5)
+        ra_diff = np.abs(ra_center - swift_ra * np.pi / 180)
+        dec_diff = np.abs(dec_center - swift['dec'] * np.pi / 180)
+        print(ra_diff)
+        print(dec_diff)
+        # choose a decent plotting range
+        if ra_diff * 180 / np.pi > 2:
+            ax.set_xlim((ra_center * 180 / np.pi - (1.1) * ra_diff * 180 / np.pi,
+                         ra_center * 180 / np.pi + (1.1) * ra_diff * 180 / np.pi))
+        else:
+            ax.set_xlim((ra_center * 180 / np.pi - 2, ra_center * 180 / np.pi + 2))
+        if dec_diff * 180 / np.pi > 2:
+            ax.set_ylim((dec_center * 180 / np.pi - (1.1) * dec_diff * 180 / np.pi,
+                         dec_center * 180 / np.pi + (1.1) * dec_diff * 180 / np.pi))
+        else:
+            ax.set_ylim((dec_center * 180 / np.pi - 2, dec_center * 180 / np.pi + 2))
+        # plot error contours
+        ax.set_xlabel('RA (deg)')
+        ax.set_ylabel('DEC (deg)')
+        plt.title(f'{grb_name} Position (J2000)', y=1.08)
+        # Shrink current axis by 20%
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        # Put a legend to the right of the current axis
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
+        ax.grid(True)
+
+        # save plot
+        save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_balrogswift_plot_{report_type}_{version}.png"
+        fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+
+
 def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, trigdat_file, used_dets, model):
 
     # Plot 10 degree grid
