@@ -2,7 +2,7 @@ import luigi
 import os
 
 from morgoth.downloaders import DownloadTrigdat
-from auto_loc.fit.time_selection import TimeSelection
+from morgoth.auto_loc.time_selection import TimeSelection
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
@@ -17,7 +17,7 @@ class TimeSelectionHandler(luigi.ExternalTask):
 
     def output(self):
         
-        filename = "time_selection.json"
+        filename = "time_selection.yml"
 
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
@@ -25,9 +25,9 @@ class TimeSelectionHandler(luigi.ExternalTask):
 
         time_selection = TimeSelection(self.grb_name, self.version)
         
-        filename = "time_selection.json"
+        filename = "time_selection.yml"
 
         tmp = os.path.join(base_dir, self.grb_name, filename) 
         
-        time_selection.save_json(tmp)
+        time_selection.save_yaml(tmp)
         
