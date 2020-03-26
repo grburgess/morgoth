@@ -7,8 +7,8 @@ from morgoth.balrog_handlers import ProcessFitResults
 
 from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
-    create_corner_all_plot
-)
+    create_corner_all_plot,
+    mollweide_plot)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -116,4 +116,34 @@ class CreateCornerPlot(luigi.Task):
             version=self.version,
             datapath=self.input()['post_equal_weights'].path,
             model=result['localization']['model']
+        )
+
+class CreateMollLocationPlot(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+
+    def output(self):
+        filename = f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/plots/" \
+            f"{self.grb_name}_molllocation_plot_{self.report_type}_{self.version}.png"
+        return luigi.LocalTarget(filename)
+
+    def run(self):
+        with self.input()['result'].open() as f:
+            result = yaml.safe_load(f)
+
+        mollweide_plot(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
+            post_equal_weigts_file=self.input()['post_equal_weights'].path,
+            used_dets=result['localization']['used_detectors'],
+            model=result['localization']['model'],
+            ra=result['localization']['ra'],
+            dec=result['localization']['dec'],
+            swift=result['general']['swift']
         )

@@ -104,6 +104,138 @@ def create_corner_all_plot(grb_name, report_type, version, datapath, model):
                     figsize="column")
 
 
+def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weigts_file, used_dets, model, ra, dec, swift=None):
+    # get earth pointing in icrs and the pointing of dets in icrs
+
+    with fits.open(trigdat_file) as f:
+        quat = f['TRIGRATE'].data['SCATTITD'][0]
+        sc_pos = f['TRIGRATE'].data['EIC'][0]
+        times = f['TRIGRATE'].data['TIME'][0]
+
+    # get a det object and calculate with this the position of the earth, the moon and the sun seen from the satellite
+    # in the icrs system
+    det_1 = gbm_detector_list[used_dets[-1]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    earth_pos = det_1.earth_position_icrs
+    sun_pos = det_1.sun_position_icrs
+    moon_pos = det_1.moon_position_icrs
+    # get pointing of all used dets
+    det_pointing = {}
+    for det_name in used_dets:
+        det = gbm_detector_list[det_name](quaternion=quat, sc_pos=sc_pos)
+        det_pointing[det_name] = det.det_ra_dec_icrs
+
+    # set a figure with a hammer projection
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='hammer')
+
+    # plot EARTH shadow
+    ra_e = earth_pos.ra.rad
+    dec_e = earth_pos.dec.rad
+    if ra_e > np.pi:
+        ra_e = ra_e - 2 * np.pi
+
+    earth_opening = 67  # degree
+    earth = FOV(ra_e, dec_e, earth_opening * np.pi / 180)
+    if len(earth) == 2:
+        ax.fill(earth[0], earth[1], 'b', alpha=0.2, label='EARTH')
+    else:
+        ax.fill(earth[0], earth[1], 'b', alpha=0.2, label='EARTH')
+        ax.fill(earth[2], earth[3], 'b', alpha=0.2)
+
+    # Plot GRB contours from fit
+    # Get contours
+    x_contour, y_contour, val_contour, x_contour_1, x_contour_2,\
+    val_contour_1, val_contour_2 = get_contours(model, post_equal_weigts_file)
+
+    if len(x_contour_1) > 0:
+        ax.contourf(x_contour_1, y_contour, val_contour_1, levels=[0, 0.68268949, 0.9545],
+                    colors=['navy', 'lightgreen'])
+    if len(x_contour_2) > 0:
+        ax.contourf(x_contour_2, y_contour, val_contour_2, levels=[0, 0.68268949, 0.9545],
+                    colors=['navy', 'lightgreen'])
+
+    # Plot GRB best fit
+    ra_center = ra * np.pi / 180
+    dec_center = dec * np.pi / 180
+    if ra_center > np.pi:
+        ra_center = ra_center - 2 * np.pi
+
+    ax.scatter(ra_center, dec_center, label='Balrog Position', s=40, color='green', marker="*")
+    ax.annotate(f'Balrog Position {grb_name}',
+                xy=(ra_center, dec_center),  # theta, radius
+                xytext=(0.55, 0.15),  # fraction, fraction
+                textcoords='figure fraction',
+                arrowprops=dict(facecolor='black', shrink=0.02, width=1, headwidth=5, headlength=5),
+                horizontalalignment='left',
+                verticalalignment='bottom',
+                )
+
+    # Plot 60 degree FOV of DETS
+    color_dict = {'n0': 'blue', 'n1': 'navy', 'n2': 'crimson', 'n3': 'lightgreen', 'n4': 'orchid', 'n5': 'brown',
+                  'n6': 'firebrick', 'n7': 'plum', 'n8': 'darkgreen', 'n9': 'olive', 'na': 'aqua',
+                  'nb': 'darkorange', 'b0': 'darkmagenta', 'b1': 'indigo'}
+    FOV_opening = 60  # degree
+    for keys in det_pointing:
+        pointing = det_pointing[keys]
+        ra_d = pointing[0] * np.pi / 180
+        dec_d = pointing[1] * np.pi / 180
+        if ra_d > np.pi:
+            ra_d = ra_d - 2 * np.pi
+        name = str(keys)
+        fov = FOV(ra_d, dec_d, FOV_opening * np.pi / 180)
+        color = str(color_dict[keys])
+        if len(fov) == 2:
+            ax.plot(fov[0], fov[1], color=color, label=name, linewidth=0.5)
+        else:
+            ax.plot(fov[0], fov[1], color=color, label=name, linewidth=0.5)
+            ax.plot(fov[2], fov[3], color=color, linewidth=0.5)
+
+    # Plot Sun
+    ra_s = sun_pos.ra.rad
+    dec_s = sun_pos.dec.rad
+    if ra_s > np.pi:
+        ra_s = ra_s - 2 * np.pi
+    ax.scatter(ra_s, dec_s, label='SUN', s=30, color='yellow')
+
+    # MOON
+    ra_m = moon_pos.ra.rad
+    dec_m = moon_pos.dec.rad
+    if ra_m > np.pi:
+        ra_m = ra_m - 2 * np.pi
+    ax.scatter(ra_m, dec_m, label='MOON', s=30, color='grey')
+
+    # if we have a swift position plot it here
+    if swift is not None:
+        # Plot SWIFT position if there is one
+        ra_swift = float(swift['ra']) * np.pi / 180
+        dec_swift = float(swift['dec']) * np.pi / 180
+        if ra_swift > np.pi:
+            ra_swift = ra_swift - 2 * np.pi
+        ax.scatter(ra_swift, dec_swift, label='SWIFT Position', s=40, marker="X", color='magenta', alpha=0.2)
+        ax.annotate('SWIFT Position SWIFT-trigger {}'.format(swift['trigger']),
+                    xy=(ra_swift, dec_swift),  # theta, radius
+                    xytext=(0.55, 0.78),  # fraction, fraction
+                    textcoords='figure fraction',
+                    arrowprops=dict(facecolor='black', shrink=0.02, width=1, headwidth=5, headlength=5),
+                    horizontalalignment='left',
+                    verticalalignment='bottom',
+                    )
+
+    # set title, legend and grid
+    plt.title(f'{grb_name} Position (J2000)', y=1.08)
+    ax.grid()
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
+
+    # save figure
+    save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_molllocation_plot_{report_type}_{version}.png'
+
+    fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+
+
 
 
 
