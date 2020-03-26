@@ -1,24 +1,21 @@
+import os
 import numpy as np
-from astropy.coordinates import Angle
 import matplotlib.pyplot as plt
 from chainconsumer import ChainConsumer
 import astropy.io.fits as fits
-from gbmgeometry.utils.gbm_time import GBMTime
 import astropy.time as astro_time
-import requests
-import shutil
-from gbmgeometry.gbm_frame import GBMFrame
-from gbmgeometry import gbm_detector_list
-from astropy.coordinates import SkyCoord
 import astropy.units as unit
+from astropy.coordinates import SkyCoord
+from astropy.coordinates import Angle
 import plotly
 import plotly.graph_objs as go
-import os
+from gbmgeometry.utils.gbm_time import GBMTime
+from gbmgeometry.gbm_frame import GBMFrame
+from gbmgeometry import gbm_detector_list
 from gbm_drm_gen.io.balrog_healpix_map import BALROGHealpixMap
-from threeML import *
 
 from morgoth.utils.env import get_env_value
-from morgoth.balrog_handlers import ProcessFitResults
+
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
