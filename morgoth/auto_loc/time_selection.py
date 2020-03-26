@@ -19,14 +19,14 @@ class TimeSelection(object):
         self._version = version
 
         self.trigdata_time_selection()
-        
+
     def trigdata_time_selection(self):
         """
         Function to calcuate the time selection for a given trigger event. This is done iterative.
         :return:
         """
         trigger_path = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_{self._version}.fit")
-        
+
         trig_reader = TrigReader(trigger_path,
                                  fine=False,
                                  verbose=False)
@@ -38,7 +38,7 @@ class TimeSelection(object):
 
         # In several steps cut away data from background section that are at least in one
         # detector above the sigma_lim value
-        
+
         sigma_lims = [100, 50, 30, 10, 7, 5, 3]
         for sigma_lim in sigma_lims:
             new_background_selection_neg, new_background_selection_pos, active_time, max_time = \
@@ -46,7 +46,7 @@ class TimeSelection(object):
             # set active_time new and set background selection new => new background fit with this selection                                                                                                                                                               
             trig_reader.set_active_time_interval(active_time)
             trig_reader.set_background_selections(new_background_selection_neg, new_background_selection_pos)
-            
+
         self._background_time_neg = new_background_selection_neg
         self._background_time_pos = new_background_selection_pos
         self._active_time = active_time
@@ -59,7 +59,7 @@ class TimeSelection(object):
         :return:
         """
         time_select = {}
-        
+
         time_select['Active_Time'] = self._active_time
         time_select['Background_Time'] = {'Time_Before': self._background_time_neg,
                                           'Time_After': self._background_time_pos}
@@ -69,10 +69,10 @@ class TimeSelection(object):
         # yaml file to give us the possibility to alter it if we see that it screws up one of
         # the det fits
         time_select['Poly_Order'] = -1
-        
-        with open(path, "w") as outfile: 
+
+        with open(path, "w") as outfile:
             yaml.dump(time_select, outfile)
-        
+
     @property
     def background_time_neg(self):
 
@@ -92,22 +92,22 @@ class TimeSelection(object):
     def max_time(self):
 
         return self._max_time
-    
+
     def set_background_time_pos(self, tstart=None, tstop=None, string=None):
 
-        assert string==None or (tstart==None and tstop==None), 'Only use string definition or start and stop time definition!'
-        assert string!=None or (tstart!=None and tstop!=None), 'String definition and start and stop time are both set to None!'
-        
+        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
+        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
+
         if string is not None:
             self._background_time_pos = string
         else:
-            self._background_time_pos = '{}-{}'.format(tstart,tstop)
+            self._background_time_pos = '{}-{}'.format(tstart, tstop)
 
     def set_background_time_neg(self, tstart=None, tstop=None, string=None):
 
-        assert string==None or (tstart==None and tstop==None), 'Only use string definition or start and stop time definition!'
-        assert string!=None or (tstart!=None and tstop!=None), 'String definition and start and stop time are both set to None!'
-        
+        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
+        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
+
         if string is not None:
             self._background_time_neg = string
         else:
@@ -115,8 +115,8 @@ class TimeSelection(object):
 
     def set_active_time(self, tstart=None, tstop=None, string=None):
 
-        assert string==None or (tstart==None and tstop==None), 'Only use string definition or start and stop time definition!'
-        assert string!=None or (tstart!=None and tstop!=None), 'String definition and start and stop time are both set to None!'
+        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
+        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
 
         if string is not None:
             self._active_time = string

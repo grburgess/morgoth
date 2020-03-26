@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.special import erfinv
 
+
 class PoissonResiduals(object):
     """                                                                                                                                                                                                                                                                        
     This class implements a way to compute residuals for a Poisson distribution mapping them to residuals of a standard                                                                                                                                                        
@@ -31,12 +32,11 @@ class PoissonResiduals(object):
     # Make the interpolator here so we do it only once. Also use ext=3 so that the interpolation                                                                                                                                                                               
     # will return the maximum value instead of extrapolating                                                                                                                                                                                                                   
 
-
     _interpolator = scipy.interpolate.InterpolatedUnivariateSpline(_logy[::-1], _x[::-1], k=1, ext=3)
 
     def __init__(self, Non, Noff, alpha=1.0):
 
-        assert alpha > 0 and alpha <= 1, 'alpha was %f' %alpha
+        assert alpha > 0 and alpha <= 1, 'alpha was %f' % alpha
 
         self.Non = np.array(Non, dtype=float, ndmin=1)
 
@@ -69,6 +69,7 @@ class PoissonResiduals(object):
             out[~idx] = self._using_cdf(self.Non[~idx], self.expected[~idx])
 
         return out
+
     def _using_sf(self, x, exp):
 
         sf = scipy.stats.poisson.sf(x, exp)
@@ -103,14 +104,15 @@ class PoissonResiduals(object):
         out[~idx] = -1 * self._interpolator(np.log10(cdf[~idx]))
 
         return out
+
+
 class Significance(object):
     """                                                                                                                                                                                                                                                                        
     Implements equations in Li&Ma 1983                                                                                                                                                                                                                                         
     """
 
     def __init__(self, Non, Noff, alpha=1):
-
-        assert alpha > 0 and alpha <= 1,  'alpha was %f' %alpha
+        assert alpha > 0 and alpha <= 1, 'alpha was %f' % alpha
 
         self.Non = np.array(Non, dtype=float, ndmin=1)
 
@@ -142,16 +144,17 @@ class Significance(object):
 
         return poisson_probability
 
+
 def time_with_less_sigma(residuals, tstart, tstop, sigma_lim):
     j = 0
     time_intervals_all = []
-    tstart_save=tstart
-    tstop_save=tstop
+    tstart_save = tstart
+    tstop_save = tstop
     while j < len(residuals):
-        tstart=tstart_save
-        tstop=tstop_save
+        tstart = tstart_save
+        tstop = tstop_save
         i = 0
-        #get the indices of the bins that are above the threshold
+        # get the indices of the bins that are above the threshold
         index_del = []
         while i < len(residuals[j]):
             if residuals[j][i] > sigma_lim:
@@ -159,29 +162,27 @@ def time_with_less_sigma(residuals, tstart, tstop, sigma_lim):
             i += 1
         # get the indices of single bins that are above threshold => leave them out later on
 
-
         i = 0
         while i < len(index_del):
             if i == 0 and len(index_del) > 1:
                 if index_del[i + 1] != index_del[i] + 1:
                     del index_del[i]
                 else:
-                    i+=1
-            elif i==len(index_del)-1 and len(index_del)>1:
-                if index_del[i-1]!=index_del[i]-1:
+                    i += 1
+            elif i == len(index_del) - 1 and len(index_del) > 1:
+                if index_del[i - 1] != index_del[i] - 1:
                     del index_del[i]
                 else:
-                    i+=1
-            elif len(index_del)>2:
-                if index_del[i-1]!=index_del[i]-1 and index_del[i+1]!=index_del[i]+1:
+                    i += 1
+            elif len(index_del) > 2:
+                if index_del[i - 1] != index_del[i] - 1 and index_del[i + 1] != index_del[i] + 1:
                     del index_del[i]
                 else:
-                    i+=1
+                    i += 1
             else:
-                i+=1
-        if len(index_del)==1:
-            index_del=[]
-
+                i += 1
+        if len(index_del) == 1:
+            index_del = []
 
         tstart = tstart.tolist()
         tstop = tstop.tolist()
@@ -194,7 +195,7 @@ def time_with_less_sigma(residuals, tstart, tstop, sigma_lim):
                 tstartadd.append(tstop[i])
                 tstopadd.append(tstart[i + 1])
             i += 1
-        #delete the bins that are above the threshold
+        # delete the bins that are above the threshold
         sub = 0
         for i in index_del:
             del tstart[i - sub]
@@ -230,7 +231,7 @@ def time_with_less_sigma(residuals, tstart, tstop, sigma_lim):
             else:
                 i += 1
 
-        #only use the result when it is not one time section from the beginning to the end
+        # only use the result when it is not one time section from the beginning to the end
         if len(time_bins) > 1:
             time_intervals_all.append(time_bins)
         j += 1
@@ -252,13 +253,13 @@ def new_intervals(time_intervals_all):
     # choose max_time (time up to which the bkg selection is made) to be 150 seconds or if the lower boundary for
     # bkg selection after the burst is to close such that we use at least a period of 50 seconds
     max_time = 150
-    end_of_active=sr_large_min
-    if sr_large_min<10:
-        sr_large_min=50
-    if sr_large_min<25:
-        sr_large_min=75
+    end_of_active = sr_large_min
+    if sr_large_min < 10:
+        sr_large_min = 50
+    if sr_large_min < 25:
+        sr_large_min = 75
     else:
-        sr_large_min=1.5*sr_large_min
+        sr_large_min = 1.5 * sr_large_min
     if sr_large_min > 100:
         max_time = sr_large_min + 50
     # new bkg selection
@@ -268,8 +269,9 @@ def new_intervals(time_intervals_all):
     # defined max value (to make sure to not be in the tail of the burst) to max_time
     return sr_large_min, sr_small_max, max_time, end_of_active
 
+
 def newIntervalWholeCalc(sigma_lim, trig_reader):
-    #get data and bkg rate for all bins
+    # get data and bkg rate for all bins
     observed, background = trig_reader.observed_and_background()
     residuals = []
     i = 0
@@ -284,109 +286,111 @@ def newIntervalWholeCalc(sigma_lim, trig_reader):
     # this is done for each detector (ignore when only one time bin is above)
     time_intervals_all = time_with_less_sigma(residuals, tstart, tstop, sigma_lim)
     # get new intervals out of the new time_intervals_all
-    sr_large_min, sr_small_max, max_time, end_of_active  = new_intervals(time_intervals_all)
+    sr_large_min, sr_small_max, max_time, end_of_active = new_intervals(time_intervals_all)
     # define the new selection
     new_background_selection_neg = str(-150) + '-' + str(sr_small_max - 20)
     new_background_selection_pos = str(sr_large_min) + '-' + str(max_time)
     # define active time + cut it down to 15 sec if it is too long
-    #if end_of_active - sr_small_max < 2:
+    # if end_of_active - sr_small_max < 2:
     #    active_time = str(sr_small_max) + '-' + str(sr_small_max + 2)
-    #else:
-    active_time = active_time_selection(observed,background,sr_small_max, end_of_active, tstart, tstop)
+    # else:
+    active_time = active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop)
     return new_background_selection_neg, new_background_selection_pos, active_time, max_time
+
 
 def active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop):
     observed = np.sum(observed, axis=0)
     background = np.sum(background, axis=0)
     rate = observed - background
     sr_small_max -= 5
-    i=0
-    found_low=False                                                                                                                                                                                                                                                           
-    found_high=False
-    print("sr_small_max: {}, end_of_active:{}".format(sr_small_max,end_of_active))
-    while i<len(tstart)-1:                                                                                                                                                                                                                                                     
-        if tstart[i]>sr_small_max and not found_low:                                                                                                                                                                                                                           
-            low_index=i                                                                                                                                                                                                                                                        
-            found_low = True                                                                                                                                                                                                                                                   
-        if tstart[i+1]>end_of_active and not found_high:                                                                                                                                                                                                                       
-            high_index=i                                                                                                                                                                                                                                                       
-            found_high = True                                                                                                                                                                                                                                                  
-        i+=1
-    if low_index<high_index:
-        max_index = low_index+np.argmax(rate[low_index:high_index])
+    i = 0
+    found_low = False
+    found_high = False
+    print("sr_small_max: {}, end_of_active:{}".format(sr_small_max, end_of_active))
+    while i < len(tstart) - 1:
+        if tstart[i] > sr_small_max and not found_low:
+            low_index = i
+            found_low = True
+        if tstart[i + 1] > end_of_active and not found_high:
+            high_index = i
+            found_high = True
+        i += 1
+    if low_index < high_index:
+        max_index = low_index + np.argmax(rate[low_index:high_index])
         print("max_index {}".format(max_index))
 
     else:
-        max_index=low_index
-        high_index=low_index
-    index_list = []                                                                                                                                                                                                                                                            
-    index = max_index-1
-    while index>=low_index:
-        if -tstart[index]+tstart[max_index]<10 and rate[index]>0:
-            if rate[index-1]>rate[index]:                                                                                                                                                                                                                      
-                test1 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test1 = True                                                                                                                                                                                                                                                   
-            if rate[index-2]>rate[index]:                                                                                                                                                                                                                      
-                test2 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test2 = True                                                                                                                                                                                                                                                   
-            if rate[index-5]>rate[index]:                                                                                                                                                                                                                      
-                test3 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test3 = True                                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                                                               
-            if test1 or test2 or test3:                                                                                                                                                                                                                                        
-                index_list.append(index)                                                                                                                                                                                                                                       
-                index-=1                                                                                                                                                                                                                                                       
-            else:                                                                                                                                                                                                                                                              
-                index=0                                                                                                                                                                                                                                                        
-        else:                                                                                                                                                                                                                                                                  
-            index=0                                                                                                                                                                                                                                                            
-        if rate[index]<(rate[max_index])/10 and rate[index-1]<(rate[max_index])/10:                                                                
-            index=0
+        max_index = low_index
+        high_index = low_index
+    index_list = []
+    index = max_index - 1
+    while index >= low_index:
+        if -tstart[index] + tstart[max_index] < 10 and rate[index] > 0:
+            if rate[index - 1] > rate[index]:
+                test1 = False
+            else:
+                test1 = True
+            if rate[index - 2] > rate[index]:
+                test2 = False
+            else:
+                test2 = True
+            if rate[index - 5] > rate[index]:
+                test3 = False
+            else:
+                test3 = True
 
-    index = max_index+1                                                                                                                                                                                                                                                         
-    while index<=high_index:                                                                                                                                                                                                                                                   
-        if tstart[index]-tstart[max_index]<10 and rate[index]>0:                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                               
-            if rate[index+1]>rate[index]:                                                                                                                                                                                                                      
-                test1 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test1 = True                                                                                                                                                                                                                                                   
-            if rate[index+2]>rate[index]:                                                                                                                                                                                                                      
-                test2 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test2 = True                                                                                                                                                                                                                                                   
-            if rate[index+3]>rate[index]:                                                                                                                                                                                                                      
-                test3 = False                                                                                                                                                                                                                                                  
-            else:                                                                                                                                                                                                                                                              
-                test3 = True                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
-            if  test1 or test2 or test3:                                                                                                                                                                                                                                        
-                index_list.append(index)                                                                                                                                                                                                                                       
-                index+=1                                                                                                                                                                                                                                                       
-            else:                                                                                                                                                                                                                                                              
-                index=100*high_index
-
-            if index<=high_index:
-
-                if rate[index]<(rate[max_index])/10 and rate[index+1]<(rate[max_index])/10:
-
-                    index=100*high_index
-        else:                                                                                                                                                                                                                                                                  
-            index=100*high_index                                                                                                                                                                                                                                               
-
-    if len(index_list)>0:
-        if tstop[index_list[np.argmax(index_list)]]-tstart[index_list[np.argmin(index_list)]]<10:
-            active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstop[index_list[np.argmax(index_list)]])
-        elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index]>5 and tstart[max_index]-tstart[index_list[np.argmin(index_list)]]>5:
-            active_time = str(tstart[max_index]-5)+ '-'+ str(tstart[max_index]+5)
-        elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index]<5:
-            active_time = str(tstart[max_index]-(10-(tstop[index_list[np.argmax(index_list)]]-tstart[max_index])))+ '-'+ str(tstop[index_list[np.argmax(index_list)]])
+            if test1 or test2 or test3:
+                index_list.append(index)
+                index -= 1
+            else:
+                index = 0
         else:
-            active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstart[max_index]+(10-(tstart[max_index]-tstart[index_list[np.argmin(index_list)]])))
+            index = 0
+        if rate[index] < (rate[max_index]) / 10 and rate[index - 1] < (rate[max_index]) / 10:
+            index = 0
+
+    index = max_index + 1
+    while index <= high_index:
+        if tstart[index] - tstart[max_index] < 10 and rate[index] > 0:
+
+            if rate[index + 1] > rate[index]:
+                test1 = False
+            else:
+                test1 = True
+            if rate[index + 2] > rate[index]:
+                test2 = False
+            else:
+                test2 = True
+            if rate[index + 3] > rate[index]:
+                test3 = False
+            else:
+                test3 = True
+            if test1 or test2 or test3:
+                index_list.append(index)
+                index += 1
+            else:
+                index = 100 * high_index
+
+            if index <= high_index:
+
+                if rate[index] < (rate[max_index]) / 10 and rate[index + 1] < (rate[max_index]) / 10:
+                    index = 100 * high_index
+        else:
+            index = 100 * high_index
+
+    if len(index_list) > 0:
+        if tstop[index_list[np.argmax(index_list)]] - tstart[index_list[np.argmin(index_list)]] < 10:
+            active_time = str(tstart[index_list[np.argmin(index_list)]]) + '-' + str(tstop[index_list[np.argmax(index_list)]])
+        elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] > 5 and tstart[max_index] - tstart[index_list[np.argmin(index_list)]] > 5:
+            active_time = str(tstart[max_index] - 5) + '-' + str(tstart[max_index] + 5)
+        elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] < 5:
+            active_time = str(tstart[max_index] - (10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index]))) + '-' + str(
+                tstop[index_list[np.argmax(index_list)]])
+        else:
+            active_time = str(tstart[index_list[np.argmin(index_list)]]) + '-' + str(
+                tstart[max_index] + (10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]])))
     else:
-        active_time = str(tstart[max_index])+ '-'+ str(tstop[max_index])
+        active_time = str(tstart[max_index]) + '-' + str(tstop[max_index])
     print("Active Time: {}".format(active_time))
     return active_time
     """
@@ -532,9 +536,4 @@ def active_time_selection(observed, background, sr_small_max, end_of_active, tst
     else:
         active_time = str(tstart[br_index]-1)+ '-'+ str(tstop[br_index]+1)
     return active_time
-    """    
-    
-    
-                           
-    
-        
+    """
