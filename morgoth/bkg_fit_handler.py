@@ -29,42 +29,39 @@ _gbm_detectors = (
 class BackgroundFitTTE(luigi.ExternalTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
-    #detector = luigi.Parameter()
+
+    # detector = luigi.Parameter()
 
     def requires(self):
-
         return {'Time_Selection': TimeSelectionHandler(grb_name=self.grb_name),
-                'Trigdat_Bkg':BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),#CHANGE THIS TO v00
+                'Trigdat_Bkg': BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),  # CHANGE THIS TO v00
                 'TTE_File': [DownloadTTEFile(grb_name=self.grb_name,
-                                            version=self.version,
+                                             version=self.version,
                                              detector=d) for d in _gbm_detectors],
-                'CSPEC_File':[DownloadCSPECFile(grb_name=self.grb_name,
-                                               version=self.version,
-                                               detector=d) for d in _gbm_detectors]}
-    
+                'CSPEC_File': [DownloadCSPECFile(grb_name=self.grb_name,
+                                                 version=self.version,
+                                                 detector=d) for d in _gbm_detectors]}
+
     def output(self):
-        
         yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
-        
+
         return luigi.LocalTarget(yml_path)
 
     def run(self):
-
-
         time_selection_filename = "time_selection.yml"
-        
+
         time_selection_path = os.path.join(base_dir, self.grb_name, time_selection_filename)
 
-        bkg_trigdat_filename = "bkg_fit_trigdat_v01.yml" #TODO change this to v00
+        bkg_trigdat_filename = "bkg_fit_trigdat_v01.yml"  # TODO change this to v00
 
-        bkg_trigdat_path = os.path.join(base_dir, self.grb_name, bkg_trigdat_filename) 
-        
+        bkg_trigdat_path = os.path.join(base_dir, self.grb_name, bkg_trigdat_filename)
+
         bkg_fit = BkgFittingTTE(self.grb_name, self.version, time_selection_path, bkg_trigdat_path)
 
         bkg_files_dir = os.path.join(base_dir, self.grb_name, f"bkg_files_tte_{self.version}")
 
         lightcurves_dir = os.path.join(base_dir, self.grb_name, f"lightcurves_tte_{self.version}")
-        
+
         bkg_fit.save_bkg_file(bkg_files_dir)
 
         bkg_fit.save_lightcurves(lightcurves_dir)
@@ -72,35 +69,34 @@ class BackgroundFitTTE(luigi.ExternalTask):
         yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
 
         bkg_fit.save_yaml(yml_path)
-    
+
+
 class BackgroundFitTrigdat(luigi.ExternalTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
-    #detector = luigi.Parameter()
-    def requires(self):
 
+    # detector = luigi.Parameter()
+    def requires(self):
         return {'Time_Selection': TimeSelectionHandler(grb_name=self.grb_name),
                 'Data_File:': DownloadTrigdat(grb_name=self.grb_name,
                                               version=self.version)}
 
     def output(self):
-
         yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
-        
+
         return luigi.LocalTarget(yml_path)
 
     def run(self):
-
         time_selection_filename = "time_selection.yml"
 
         time_selection_path = os.path.join(base_dir, self.grb_name, time_selection_filename)
-        
+
         bkg_fit = BkgFittingTrigdat(self.grb_name, self.version, time_selection_path)
 
         bkg_files_dir = os.path.join(base_dir, self.grb_name, f"bkg_files_trigdat_{self.version}")
 
         lightcurves_dir = os.path.join(base_dir, self.grb_name, f"lightcurves_trigdat_{self.version}")
-        
+
         bkg_fit.save_bkg_file(bkg_files_dir)
 
         bkg_fit.save_lightcurves(lightcurves_dir)
@@ -108,4 +104,3 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
         yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
 
         bkg_fit.save_yaml(yml_path)
-        
