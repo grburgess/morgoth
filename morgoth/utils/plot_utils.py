@@ -144,7 +144,7 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
 
     # Plot GRB contours from fit
     # Get contours
-    x_contour, y_contour, val_contour, x_contour_1, x_contour_2,\
+    x_contour, y_contour, val_contour, x_contour_1, x_contour_2, \
     val_contour_1, val_contour_2 = get_contours(model, post_equal_weigts_file)
 
     if len(x_contour_1) > 0:
@@ -388,7 +388,6 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
 
 
 def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, trigdat_file, used_dets, model):
-
     # Plot 10 degree grid
     trace_grid = []
     phi_l = np.arange(-180, 181, 10)  # file size!#
@@ -546,7 +545,6 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, 
                         width=5,
                         dash='dash'
                     ), hoverinfo='name'))
-
 
     with fits.open(trigdat_file) as f:
         quat = f['TRIGRATE'].data['SCATTITD'][0]
@@ -725,12 +723,22 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, 
         text_file.write(output)
 
 
+def healpix(self, nside=32):
+    result_file = '{}/GRB{}/v0{}/fit_result/GRB{}_v0{}_loc_results.fits'.format(self._save_folder, self._trigger, self._version, self._trigger, self._version)
+    save_file = '{}/GRB{}/v0{}/fit_files/GRB{}_healpix_v0{}.fits'.format(self._save_folder, self._trigger, self._version, self._trigger, self._version)
+    if os.path.exists(save_file):
+        os.remove(save_file)
+    results = load_analysis_results(result_file)
+    healpix = BALROGHealpixMap(results, nside=nside)
+    healpix.write_map(save_file)
+
 
 def loadtxt2d(intext):
     try:
         return np.loadtxt(intext, ndmin=2)
     except:
         return np.loadtxt(intext)
+
 
 def utc(met):
     """
@@ -739,6 +747,7 @@ def utc(met):
     """
     time = GBMTime.from_MET(met)
     return time.time.fits
+
 
 def seperation_smaller_angle(center, phi, theta, angle):
     """
@@ -751,6 +760,7 @@ def seperation_smaller_angle(center, phi, theta, angle):
     c1, c2, c3 = center
     sep = np.arccos(c1 * np.cos(theta) * np.cos(phi) + c2 * np.cos(theta) * np.sin(phi) + c3 * np.sin(theta))
     return phi[sep < angle], theta[sep < angle]
+
 
 def FOV(center_ra, center_dec, angle):  # in rad!
     """
@@ -813,6 +823,7 @@ def FOV(center_ra, center_dec, angle):  # in rad!
         theta_circle = np.concatenate((theta_min, np.flip(theta_max, 0), np.array([theta_min[0]])))
         return [phi_circle, theta_circle]
 
+
 def xyz(phi, theta):
     """
     gives xyz of point on unit sphere defined by theta and phi
@@ -826,6 +837,7 @@ def xyz(phi, theta):
     y = np.cos(theta) * np.sin(phi)
     z = np.sin(theta)
     return x, y, z
+
 
 def phi_0(theta, ra_c, dec_c, rad_r):
     """
@@ -850,6 +862,7 @@ def phi_0(theta, ra_c, dec_c, rad_r):
         a ** 2 * b ** 2 + b ** 4 - b ** 2 * c ** 2 + 2 * b ** 2 * c * d - b ** 2 * d ** 2)) / (a ** 2 + b ** 2)
     phi = np.arctan2(z, n)
     return phi
+
 
 def phi_1(theta, ra_c, dec_c, rad_r):
     """

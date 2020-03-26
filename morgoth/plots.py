@@ -1,6 +1,6 @@
-import luigi
 import os
 import yaml
+import luigi
 
 from morgoth.utils.env import get_env_value
 from morgoth.balrog_handlers import ProcessFitResults
@@ -8,7 +8,11 @@ from morgoth.balrog_handlers import ProcessFitResults
 from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
     create_corner_all_plot,
-    mollweide_plot, azimuthal_plot_sat_frame, interactive_3D_plot, swift_gbm_plot)
+    mollweide_plot,
+    azimuthal_plot_sat_frame,
+    interactive_3D_plot,
+    swift_gbm_plot
+)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -20,14 +24,14 @@ class CreateAllPlots(luigi.Task):
 
     def requires(self):
         return {
-        'lightcurves' : CreateAllLightcurves(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'location' : CreateLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'corner' : CreateCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'molllocation' : CreateMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'satellite' : CreateSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'spectrum' : CreateSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        '3dlocation' : Create3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        'balrogswift' : CreateBalrogSwiftPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+            'lightcurves': CreateAllLightcurves(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'location': CreateLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'corner': CreateCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'molllocation': CreateMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'satellite': CreateSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'spectrum': CreateSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            '3dlocation': Create3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'balrogswift': CreateBalrogSwiftPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
         }
 
     def output(self):
@@ -39,7 +43,6 @@ class CreateAllPlots(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
 
         os.system(f"touch {tmp}")
-
 
 
 class CreateAllLightcurves(luigi.Task):
@@ -76,6 +79,7 @@ class CreateAllLightcurves(luigi.Task):
 
         os.system(f"touch {tmp}")
 
+
 class CreateLightcurve(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
@@ -90,13 +94,11 @@ class CreateLightcurve(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-
         filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
 
         tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
 
         os.system(f"touch {tmp}")
-
 
 
 class CreateLocationPlot(luigi.Task):
@@ -123,6 +125,7 @@ class CreateLocationPlot(luigi.Task):
             model=result['localization']['model']
         )
 
+
 class CreateCornerPlot(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
@@ -146,6 +149,7 @@ class CreateCornerPlot(luigi.Task):
             datapath=self.input()['post_equal_weights'].path,
             model=result['localization']['model']
         )
+
 
 class CreateMollLocationPlot(luigi.Task):
     grb_name = luigi.Parameter()
