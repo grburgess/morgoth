@@ -236,6 +236,85 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
+def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec):
+    """
+    plot azimuth plot in sat frame to check if burst comes from the solar panel sides
+    :return:
+    """
+    ra_center = ra * np.pi / 180
+    dec_center = dec * np.pi / 180
+    if ra_center > np.pi:
+        ra_center = ra_center - 2 * np.pi
+
+    with fits.open(trigdat_file) as f:
+        quat = f['TRIGRATE'].data['SCATTITD'][0]
+        sc_pos = f['TRIGRATE'].data['EIC'][0]
+        times = f['TRIGRATE'].data['TIME'][0]
+
+    cone_opening = 45.0  # cone opening for solar panel side in deg
+    loc_icrs = SkyCoord(ra=ra_center * 180 / np.pi, dec=dec_center * 180 / np.pi, unit='deg', frame="icrs")
+    q1, q2, q3, q4 = quat
+    scx, scy, scz = sc_pos
+    loc_sat = loc_icrs.transform_to(GBMFrame(quaternion_1=q1,
+                                             quaternion_2=q2,
+                                             quaternion_3=q3,
+                                             quaternion_4=q4,
+                                             sc_pos_X=scx,
+                                             sc_pos_Y=scy,
+                                             sc_pos_Z=scz,
+                                             ))
+    ra_sat = Angle(loc_sat.lon.deg * unit.degree)
+    dec_sat = Angle(loc_sat.lat.deg * unit.degree)
+    ra_sat.wrap_at('180d', inplace=True)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='polar')
+
+    # Fill area where the solar panels may cause a systematic error
+
+    r_bound = np.arange(0, 200, 0.5)
+    phi_bound = np.ones_like(r_bound)
+    ax.fill_betweenx(r_bound, phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)),
+                     phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)), color='grey', alpha=0.2,
+                     label='solar panel sides')
+    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
+                     phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)), color='grey', alpha=0.2)
+
+    # Fill other area and label with b0 and b1 side
+    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)),
+                     phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)), color='lime', alpha=0.2,
+                     label='b0 side')
+    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
+                     phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)), color='blue', alpha=0.2,
+                     label='b1 side')
+
+    # SAT coordinate system#
+    ax.quiver(np.pi / 2, 0, 0, 1, scale=2.)
+    ax.text((np.pi / 2) * 1.07, 0.9, "y")
+    ax.quiver(0, 0, 1, 0, scale=2.)
+    ax.text(-(np.pi / 2) * 0.07, 0.9, "x")
+    ax.set_rlim((0, 1))
+    ax.set_yticklabels([])
+
+    # Plot Burst direction in Sat-Coord#
+    phi_b = ra_sat.value * np.pi / 180
+    u = np.cos(phi_b)
+    v = np.sin(phi_b)
+
+    q = ax.quiver(0, 0, u, v, scale=2., color='yellow', linewidth=1)
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.8))
+    ax.quiverkey(q, X=1.3, Y=0.5, U=0.4,
+                 label=f'{grb_name}', labelpos='N')
+    ax.set_title(f'{grb_name} direction in the sat. frame', y=1.08)
+
+    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_satellite_plot_{report_type}_{version}.png"
+
+    fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+
 
 
 

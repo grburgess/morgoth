@@ -147,3 +147,29 @@ class CreateMollLocationPlot(luigi.Task):
             dec=result['localization']['dec'],
             swift=result['general']['swift']
         )
+
+
+class CreateSatellitePlot(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+
+    def output(self):
+        filename = f"{self.grb_name}_satellite_plot_{self.report_type}_{self.version}.png"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
+
+    def run(self):
+        with self.input()['result'].open() as f:
+            result = yaml.safe_load(f)
+
+        azimuthal_plot_sat_frame(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
+            ra=result['localization']['ra'],
+            dec=result['localization']['dec'],
+        )
