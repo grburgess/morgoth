@@ -8,31 +8,38 @@ from morgoth.balrog_handlers import ProcessFitResults
 from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
     create_corner_all_plot,
-    mollweide_plot, azimuthal_plot_sat_frame, interactive_3D_plot)
+    mollweide_plot, azimuthal_plot_sat_frame, interactive_3D_plot, swift_gbm_plot)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
-class CreateLightcurve(luigi.Task):
+class CreateAllPlots(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
-    detector = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+        'lightcurves' : CreateAllLightcurves(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'location' : CreateLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'corner' : CreateCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'molllocation' : CreateMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'satellite' : CreateSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'spectrum' : CreateSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        '3dlocation' : Create3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+        'balrogswift' : CreateBalrogSwiftPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        }
 
     def output(self):
-        filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
+        filename = f"{self.report_type}_{self.version}_plot_all.txt"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
 
     def run(self):
-
-        filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
-
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
+        filename = f"{self.report_type}_{self.version}_plot_all.txt"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
 
         os.system(f"touch {tmp}")
+
 
 
 class CreateAllLightcurves(luigi.Task):
@@ -68,6 +75,28 @@ class CreateAllLightcurves(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
 
         os.system(f"touch {tmp}")
+
+class CreateLightcurve(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    detector = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+
+    def output(self):
+        filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
+
+    def run(self):
+
+        filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
+
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
+
+        os.system(f"touch {tmp}")
+
 
 
 class CreateLocationPlot(luigi.Task):
