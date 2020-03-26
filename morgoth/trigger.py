@@ -4,10 +4,10 @@ import os
 import re
 import numpy as np
 from datetime import datetime, timedelta
-
+from morgoth.utils.env import get_env_value
 from morgoth.utils.file_utils import if_directory_not_existing_then_make
 
-base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
+base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 _gbm_detectors = (
@@ -134,6 +134,10 @@ def parse_trigger_file_and_write(root):
 
     directory = os.path.join(base_dir, burst_name)
     if_directory_not_existing_then_make(directory)
+    if_directory_not_existing_then_make(os.path.join(directory, 'tte', 'v00', 'plots'))
+    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v00', 'plots'))
+    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v01', 'plots'))
+    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v02', 'plots'))
 
     out_file_writer.write(os.path.join(directory, "grb_parameters.yml"))
 
@@ -191,7 +195,7 @@ class GBMTriggerFile(object):
 
         with file_name.open("r") as f:
 
-            stuff = yaml.load(f)
+            stuff = yaml.safe_load(f)
 
         return cls(
             name=stuff["name"],
