@@ -33,12 +33,12 @@ class BackgroundFitTTE(luigi.ExternalTask):
     # detector = luigi.Parameter()
 
     def requires(self):
-        return {'Time_Selection': TimeSelectionHandler(grb_name=self.grb_name),
-                'Trigdat_Bkg': BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),  # CHANGE THIS TO v00
-                'TTE_File': [DownloadTTEFile(grb_name=self.grb_name,
+        return {'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'trigdat_bkg': BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),  # CHANGE THIS TO v00
+                'tte_file': [DownloadTTEFile(grb_name=self.grb_name,
                                              version=self.version,
                                              detector=d) for d in _gbm_detectors],
-                'CSPEC_File': [DownloadCSPECFile(grb_name=self.grb_name,
+                'cspec_file': [DownloadCSPECFile(grb_name=self.grb_name,
                                                  version=self.version,
                                                  detector=d) for d in _gbm_detectors]}
 
@@ -77,8 +77,8 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
 
     # detector = luigi.Parameter()
     def requires(self):
-        return {'Time_Selection': TimeSelectionHandler(grb_name=self.grb_name),
-                'Data_File:': DownloadTrigdat(grb_name=self.grb_name,
+        return {'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'data_file:': DownloadTrigdat(grb_name=self.grb_name,
                                               version=self.version)}
 
     def output(self):
