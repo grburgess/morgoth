@@ -1,8 +1,11 @@
 import luigi
+from luigi.contrib.external_program import ExternalProgramTask
 import os
 import shutil
 
+from morgoth.downloaders import DownloadTrigdat
 from morgoth.time_selection_handler import TimeSelectionHandler
+from morgoth.trigger import OpenGBMFile
 from morgoth.utils.file_utils import if_directory_not_existing_then_make
 from morgoth.utils.package_data import get_path_of_data_file
 from morgoth.utils.env import get_env_value
@@ -78,27 +81,43 @@ class ProcessFitResults(luigi.Task):
 
         result_reader.save_result_yml(file_path)
 
-
-class RunBalrogTTE(luigi.ExternalTask):
+class RunBalrogTTE(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return BackgroundFitTTE(grb_name=self.grb_name, version=self.version)
+        return {
+                'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
+            }
         
     def output(self):
-        
-        filename = f"tte_{self.version}_loc_results.fits"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, "fit_results", filename))
+        base_job = os.path.join(base_dir, self.grb_name, 'tte', self.version)
+        fit_result_name = f"tte_{self.version}_loc_results.fits"
+        spectral_plot_name = f"{self.grb_name}_spectrum_plot_tte_{self.version}.png"
 
-    def run(self):
+        return {
+            'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat')),
+            'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+        }
+
+    def program_args(self):
         fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
-        time_selection_file_path = os.path.join(base_dir, self.grb_name, "time_selection.yml")
-
-        bkg_fit_file_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
-        
-        os.system(f"mpiexec -n {n_cores_multinest} {path_to_python} {fit_script_path} {self.grb_name} {self.version} {bkg_fit_file_path} {time_selection_file_path} tte")
+        command = [
+            "mpiexec",
+            f"-n",
+            f"{n_cores_multinest}",
+            f"{path_to_python}",
+            f"{fit_script_path}",
+            f"{self.grb_name}",
+            f"{self.version}",
+            f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
+            f"{self.input()['time_selection'].path}",
+            f"tte"
+        ]
+        return command
 
 
 class RunBalrogTrigdat(ExternalProgramTask):
