@@ -77,12 +77,15 @@ class BkgFittingTrigdat(object):
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
 
-        self._lightcurve_plots_dir_path = dir_path
-
         plots = self._trig_reader.view_lightcurve(start=-150, stop=float(max_time), return_plots=True)
 
-        for name, fig in plots:
-            fig.savefig(os.path.join(dir_path, f"{self._grb_name}_lightcurve_trigdat_detector_{name}_plot_{self._version}.png"), bbox_inches='tight')
+        self._lightcurve_plots = {}
+
+        for det_name, fig in plots:
+            file_path = os.path.join(dir_path, f"{self._grb_name}_lightcurve_trigdat_detector_{det_name}_plot_{self._version}.png")
+
+            fig.savefig(file_path, bbox_inches='tight')
+            self._lightcurve_plots[det_name] = file_path
 
     def save_bkg_file(self, dir_path):
         """
@@ -94,11 +97,13 @@ class BkgFittingTrigdat(object):
         if not os.path.isdir(dir_path):
             os.mkdir(dir_path)
 
-        self._bkg_fits_dir_path = dir_path
+        self._bkg_fits_files = {}
 
-        for d in _gbm_detectors:
-            self._trigdat_time_series[d].save_background(os.path.join(dir_path,
-                                                                      f'bkg_det{d}.h5'))
+        for det_name in _gbm_detectors:
+            file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
+
+            self._trigdat_time_series[det_name].save_background(file_path)
+            self._bkg_fits_files[det_name] = file_path
 
     def _choose_dets(self):
         """
@@ -142,9 +147,9 @@ class BkgFittingTrigdat(object):
         :return:
         """
         bkg_fit_dict = {}
-        bkg_fit_dict['Use_dets'] = self._use_dets
-        bkg_fit_dict['Bkg_Fits_Dir_Path'] = self._bkg_fits_dir_path
-        bkg_fit_dict['Lightcurve_Plots_Dir_Path'] = self._lightcurve_plots_dir_path
+        bkg_fit_dict['use_dets'] = self._use_dets
+        bkg_fit_dict['bkg_fit_files'] = self._bkg_fits_files
+        bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
 
         with open(path, "w") as outfile:
             yaml.dump(bkg_fit_dict, outfile)

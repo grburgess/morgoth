@@ -72,8 +72,9 @@ class MultinestFitTrigdat(object):
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
             data = yaml.load(f)
-            self._use_dets = np.array(_gbm_detectors)[np.array(data["Use_dets"])]
-            self._bkg_fit_folder = data["Bkg_Fits_Dir_Path"]
+            self._use_dets = np.array(_gbm_detectors)[np.array(data["use_dets"])]
+
+            self._bkg_fit_files = data["bkg_fit_files"]
 
         with open(self._time_selection_yaml_file, "r") as f:
             data = yaml.load(f)
@@ -96,7 +97,7 @@ class MultinestFitTrigdat(object):
                 trig_reader = TrigReader(self._trigdat_file,
                                          fine=False,
                                          verbose=False,
-                                         restore_bkg_fit_dir=self._bkg_fit_folder)
+                                         restore_poly_fit=self._bkg_fit_files)
                 success_restore = True
                 i = 0
             except:
