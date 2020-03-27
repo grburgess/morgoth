@@ -82,25 +82,33 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
                                               version=self.version)}
 
     def output(self):
-        yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
-
-        return luigi.LocalTarget(yml_path)
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
+        return {
+            'bkg_fit_yml': luigi.LocalTarget(os.path.join(base_job, f"bkg_fit_trigdat_{self.version}.yml")),
+            'bkg_fit_files': [luigi.LocalTarget(os.path.join(base_job, 'bkg_files', f'bkg_det_{d}.h5')) for d in _gbm_detectors],
+        }
 
     def run(self):
-        time_selection_filename = "time_selection.yml"
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
 
-        time_selection_path = os.path.join(base_dir, self.grb_name, time_selection_filename)
+        # Fit Background
+        bkg_fit = BkgFittingTrigdat(
+            self.grb_name,
+            self.version,
+            time_selection_file_path=self.input()['time_selection'].path
+        )
 
-        bkg_fit = BkgFittingTrigdat(self.grb_name, self.version, time_selection_path)
+        # Save background fit
+        bkg_fit.save_bkg_file(
+            os.path.join(base_job, "bkg_files")
+        )
 
-        bkg_files_dir = os.path.join(base_dir, self.grb_name, f"bkg_files_trigdat_{self.version}")
+        # Save lightcurves
+        bkg_fit.save_lightcurves(
+            os.path.join(base_job, 'plots', 'lightcurves')
+        )
 
-        lightcurves_dir = os.path.join(base_dir, self.grb_name, f"lightcurves_trigdat_{self.version}")
-
-        bkg_fit.save_bkg_file(bkg_files_dir)
-
-        bkg_fit.save_lightcurves(lightcurves_dir)
-
-        yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
-
-        bkg_fit.save_yaml(yml_path)
+        # Save background fit yaml
+        bkg_fit.save_yaml(
+            os.path.join(base_job, f"bkg_fit_trigdat_{self.version}.yml")
+        )
