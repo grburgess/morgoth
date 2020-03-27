@@ -30,7 +30,8 @@ data_type = sys.argv[5]
 if data_type == 'trigdat':
     multinest_fit = MultinestFitTrigdat(grb_name, version, bkg_fit_yaml_file, time_selection_yaml_file)
     multinest_fit.fit()
-    multinest_fit.spectrum_plot()
+    multinest_fit.save_fit_result()
+    multinest_fit.create_spectrum_plot()
 
 elif data_type == 'tte':
     multinest_fit = MultinestFitTTE(grb_name, version, bkg_fit_yaml_file, time_selection_yaml_file)

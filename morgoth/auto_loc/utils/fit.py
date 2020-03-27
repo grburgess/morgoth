@@ -214,28 +214,31 @@ class MultinestFitTrigdat(object):
                                          verbose=True,
                                          resume=True)
 
+    def save_fit_result(self):
+        """
+        Save the fits result to  'base_dir/grb_name/report_type/version/trigdat_version_loc_results.fits'
+        :return:
+        """
+        fit_result_name = f"trigdat_{self._version}_loc_results.fits"
+        fit_result_path = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, fit_result_name)
+
         if using_mpi:
             if rank == 0:
-
-                if not os.path.exists(os.path.join(base_dir, self._grb_name, "fit_results")):
-                    os.mkdir(os.path.join(base_dir, self._grb_name, "fit_results"))
-
                 self._bayes.restore_median_fit()
-                self._bayes.results.write_to(os.path.join(base_dir, self._grb_name, "fit_results", f"trigdat_{self._version}_loc_results.fits"))
+                self._bayes.results.write_to(fit_result_path)
 
         else:
-
-            if not os.path.exists(os.path.join(base_dir, self._grb_name, "fit_results")):
-                os.mkdir(os.path.join(base_dir, self._grb_name, "fit_results"))
-
             self._bayes.restore_median_fit()
-            self._bayes.results.write_to(os.path.join(base_dir, self._grb_name, "fit_results", f"trigdat_{self._version}_loc_results.fits"))
+            self._bayes.results.write_to(fit_result_path)
 
-    def spectrum_plot(self):
+    def create_spectrum_plot(self):
         """
         Create the spectral plot to show the fit results for all used dets
         :return:
         """
+
+        plot_name = f"{self._grb_name}_spectrum_plot_trigdat_{self._version}.png"
+        plot_path = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, 'plots', plot_name)
 
         color_dict = {'n0': '#FF9AA2', 'n1': '#FFB7B2', 'n2': '#FFDAC1', 'n3': '#E2F0CB', 'n4': '#B5EAD7',
                       'n5': '#C7CEEA', 'n6': '#DF9881', 'n7': '#FCE2C2', 'n8': '#B3C8C8', 'n9': '#DFD8DC',
@@ -259,7 +262,7 @@ class MultinestFitTrigdat(object):
                                                                   data_colors=color_list,
                                                                   model_colors=color_list)
 
-                    spectrum_plot.savefig(os.path.join(base_dir, self._grb_name, "plots", "Trigdat_spectrum_residuals_plot_{self._version}.png"),
+                    spectrum_plot.savefig(plot_path,
                                           bbox_inches='tight')
 
                 except Exception as e:
@@ -277,7 +280,7 @@ class MultinestFitTrigdat(object):
                                                               data_colors=color_list,
                                                               model_colors=color_list)
 
-                spectrum_plot.savefig(os.path.join(base_dir, self._grb_name, "plots", "Trigdat_spectrum_residuals_plot_{self._version}.png"),
+                spectrum_plot.savefig(plot_path,
                                       bbox_inches='tight')
 
             except:
