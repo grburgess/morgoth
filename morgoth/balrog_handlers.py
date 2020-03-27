@@ -101,7 +101,7 @@ class RunBalrogTTE(luigi.ExternalTask):
         os.system(f"mpiexec -n {n_cores_multinest} {path_to_python} {fit_script_path} {self.grb_name} {self.version} {bkg_fit_file_path} {time_selection_file_path} tte")
 
 
-class RunBalrogTrigdat(luigi.ExternalTask):
+class RunBalrogTrigdat(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
     
@@ -122,20 +122,19 @@ class RunBalrogTrigdat(luigi.ExternalTask):
             'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
-    def run(self):
-
+    def program_args(self):
         fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
-        run_command = f"mpiexec -n {n_cores_multinest} " \
-            f"{path_to_python} " \
-            f"{fit_script_path} " \
-            f"{self.grb_name} " \
-            f"{self.version} " \
-            f"{self.input()['bkg_fit']['bkg_fit_yml'].path} " \
-            f"{self.input()['time_selection'].path} " \
+        command = [
+            "mpiexec",
+            f"-n",
+            f"{n_cores_multinest}",
+            f"{path_to_python}",
+            f"{fit_script_path}",
+            f"{self.grb_name}",
+            f"{self.version}",
+            f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
+            f"{self.input()['time_selection'].path}",
             f"trigdat"
-
-        os.system(run_command)
-
-
-
+        ]
+        return command
