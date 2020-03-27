@@ -2,6 +2,7 @@ import luigi
 import os
 import shutil
 
+from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.utils.file_utils import if_directory_not_existing_then_make
 from morgoth.utils.package_data import get_path_of_data_file
 from morgoth.utils.env import get_env_value
@@ -60,12 +61,7 @@ class ProcessFitResults(luigi.Task):
             'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat'))
         }
 
-
     def run(self):
-        out_dir = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'chains')
-        if_directory_not_existing_then_make(out_dir)
-        shutil.copyfile(get_path_of_data_file('post_equal_weights.dat'), os.path.join(out_dir, 'post_equal_weights.dat'))
-
         result_path = f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/fit_result/" \
             f"{self.grb_name}_{self.report_type}_{self.version}_loc_results.fits"
 
@@ -110,7 +106,10 @@ class RunBalrogTrigdat(luigi.ExternalTask):
     version = luigi.Parameter(default="v00")
     
     def requires(self):
-        return BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version)
+        return {
+                'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
+            }
 
     def output(self):
         base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
@@ -127,10 +126,16 @@ class RunBalrogTrigdat(luigi.ExternalTask):
 
         fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
-        time_selection_file_path = os.path.join(base_dir, self.grb_name, "time_selection.yml")
+        run_command = f"mpiexec -n {n_cores_multinest} " \
+            f"{path_to_python} " \
+            f"{fit_script_path} " \
+            f"{self.grb_name} " \
+            f"{self.version} " \
+            f"{self.input()['bkg_fit']['bkg_fit_yml'].path} " \
+            f"{self.input()['time_selection'].path} " \
+            f"trigdat"
 
-        bkg_fit_file_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_trigdat_{self.version}.yml")
-        
-        os.system(f"mpiexec -n {n_cores_multinest} {path_to_python} {fit_script_path} {self.grb_name} {self.version} {bkg_fit_file_path} {time_selection_file_path} trigdat")
+        os.system(run_command)
+
 
 
