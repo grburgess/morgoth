@@ -113,8 +113,15 @@ class RunBalrogTrigdat(luigi.ExternalTask):
         return BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version)
 
     def output(self):
-        filename = f"trigdat_{self.version}_loc_results.fits"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, "fit_results",filename))
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
+        fit_result_name = f"trigdat_{self.version}_loc_results.fits"
+        spectral_plot_name = f"{self.grb_name}_spectrum_plot_trigdat_{self.version}.png"
+
+        return {
+            'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat')),
+            'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+        }
 
     def run(self):
 
