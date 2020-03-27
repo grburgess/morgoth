@@ -152,7 +152,7 @@ class BkgFittingTrigdat(object):
         bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
 
         with open(path, "w") as outfile:
-            yaml.dump(bkg_fit_dict, outfile)
+            yaml.dump(bkg_fit_dict, outfile, default_flow_style=False)
 
     @property
     def use_dets(self):

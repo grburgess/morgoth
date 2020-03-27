@@ -71,7 +71,7 @@ class TimeSelection(object):
         time_select['Poly_Order'] = -1
 
         with open(path, "w") as outfile:
-            yaml.dump(time_select, outfile)
+            yaml.dump(time_select, outfile, default_flow_style=False)
 
     @property
     def background_time_neg(self):
