@@ -30,62 +30,70 @@ class BackgroundFitTTE(luigi.ExternalTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
-    # detector = luigi.Parameter()
-
     def requires(self):
-        return {'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
-                'trigdat_bkg': BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),  # CHANGE THIS TO v00
-                'tte_file': [DownloadTTEFile(grb_name=self.grb_name,
+        return {
+            'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+            'trigdat_bkg': BackgroundFitTrigdat(grb_name=self.grb_name, version="v01"),  # CHANGE THIS TO v00
+            'tte_file': [DownloadTTEFile(grb_name=self.grb_name,
+                                         version=self.version,
+                                         detector=d) for d in _gbm_detectors],
+            'cspec_file': [DownloadCSPECFile(grb_name=self.grb_name,
                                              version=self.version,
-                                             detector=d) for d in _gbm_detectors],
-                'cspec_file': [DownloadCSPECFile(grb_name=self.grb_name,
-                                                 version=self.version,
-                                                 detector=d) for d in _gbm_detectors]}
+                                             detector=d) for d in _gbm_detectors]
+        }
 
     def output(self):
-        yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
-
-        return luigi.LocalTarget(yml_path)
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
+        return {
+            'bkg_fit_yml': luigi.LocalTarget(os.path.join(base_job, f"bkg_fit_tte_{self.version}.yml")),
+            'bkg_fit_files': [luigi.LocalTarget(os.path.join(base_job, 'bkg_files', f'bkg_det_{d}.h5'))
+                              for d in _gbm_detectors],
+        }
 
     def run(self):
-        time_selection_filename = "time_selection.yml"
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
 
-        time_selection_path = os.path.join(base_dir, self.grb_name, time_selection_filename)
+        # Fit Background
+        bkg_fit = BkgFittingTTE(
+            self.grb_name,
+            self.version,
+            time_selection_file_path=self.input()['time_selection'].path,
+            bkg_fitting_file_path=self.input()['trigdat_bkg'].path
+        )
 
-        bkg_trigdat_filename = "bkg_fit_trigdat_v01.yml"  # TODO change this to v00
+        # Save background fit
+        bkg_fit.save_bkg_file(
+            os.path.join(base_job, "bkg_files")
+        )
 
-        bkg_trigdat_path = os.path.join(base_dir, self.grb_name, bkg_trigdat_filename)
+        # Save lightcurves
+        bkg_fit.save_lightcurves(
+            os.path.join(base_job, 'plots', 'lightcurves')
+        )
 
-        bkg_fit = BkgFittingTTE(self.grb_name, self.version, time_selection_path, bkg_trigdat_path)
-
-        bkg_files_dir = os.path.join(base_dir, self.grb_name, f"bkg_files_tte_{self.version}")
-
-        lightcurves_dir = os.path.join(base_dir, self.grb_name, f"lightcurves_tte_{self.version}")
-
-        bkg_fit.save_bkg_file(bkg_files_dir)
-
-        bkg_fit.save_lightcurves(lightcurves_dir)
-
-        yml_path = os.path.join(base_dir, self.grb_name, f"bkg_fit_tte_{self.version}.yml")
-
-        bkg_fit.save_yaml(yml_path)
+        # Save background fit yaml
+        bkg_fit.save_yaml(
+            self.output()['bkg_fit_yml']
+        )
 
 
 class BackgroundFitTrigdat(luigi.ExternalTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
-    # detector = luigi.Parameter()
     def requires(self):
-        return {'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
-                'data_file:': DownloadTrigdat(grb_name=self.grb_name,
-                                              version=self.version)}
+        return {
+            'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+            'data_file:': DownloadTrigdat(grb_name=self.grb_name,
+                                          version=self.version)
+        }
 
     def output(self):
         base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
         return {
             'bkg_fit_yml': luigi.LocalTarget(os.path.join(base_job, f"bkg_fit_trigdat_{self.version}.yml")),
-            'bkg_fit_files': [luigi.LocalTarget(os.path.join(base_job, 'bkg_files', f'bkg_det_{d}.h5')) for d in _gbm_detectors],
+            'bkg_fit_files': [luigi.LocalTarget(os.path.join(base_job, 'bkg_files', f'bkg_det_{d}.h5'))
+                              for d in _gbm_detectors],
         }
 
     def run(self):
@@ -110,5 +118,5 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
 
         # Save background fit yaml
         bkg_fit.save_yaml(
-            os.path.join(base_job, f"bkg_fit_trigdat_{self.version}.yml")
+            self.output()['bkg_fit_yml']
         )
