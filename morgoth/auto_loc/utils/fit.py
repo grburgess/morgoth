@@ -20,6 +20,7 @@ from gbm_drm_gen.drmgen_trig import DRMGenTrig
 import yaml
 import matplotlib.pyplot as plt
 import time
+import shutil
 
 _gbm_detectors = (
     "n0",
@@ -197,12 +198,13 @@ class MultinestFitTrigdat(object):
         wrap = [0] * len(self._model.free_parameters)
         wrap[0] = 1
 
-        # Make chain folder if it does not exists already
-        if not os.path.exists(os.path.join(base_dir, self._grb_name, "chains")):
-            os.mkdir(os.path.join(base_dir, self._grb_name, "chains"))
+        # define temp chain save path
+        self._temp_chains_dir = os.path.join(base_dir, self._grb_name, f"c_trig_{self._version}")
+        chain_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
 
-        # define chain save path
-        chain_path = os.path.join(base_dir, self._grb_name, "chains", f"trigdat_{self._version}_")
+        # Make temp chains folder if it does not exists already
+        if not os.path.exists(self._temp_chains_dir):
+            os.mkdir(os.path.join(self._temp_chains_dir))
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
@@ -216,7 +218,7 @@ class MultinestFitTrigdat(object):
 
     def save_fit_result(self):
         """
-        Save the fits result to  'base_dir/grb_name/report_type/version/trigdat_version_loc_results.fits'
+        Save the fits result to '{base_dir}/{grb_name}/{report_type}/{version}/trigdat_{version}_loc_results.fits'
         :return:
         """
         fit_result_name = f"trigdat_{self._version}_loc_results.fits"
@@ -231,12 +233,24 @@ class MultinestFitTrigdat(object):
             self._bayes.restore_median_fit()
             self._bayes.results.write_to(fit_result_path)
 
+    def move_chains_dir(self):
+        """
+        Move temp chains directory to sub-folder '{base_dir}/{grb_name}/{report_type}/{version}/chains'
+        :return:
+        """
+        if using_mpi:
+            if rank == 0:
+                chains_dir_store = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, "chains")
+                shutil.move(self._temp_chains_dir, chains_dir_store)
+        else:
+            chains_dir_store = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, "chains")
+            shutil.move(self._temp_chains_dir, chains_dir_store)
+
     def create_spectrum_plot(self):
         """
         Create the spectral plot to show the fit results for all used dets
         :return:
         """
-
         plot_name = f"{self._grb_name}_spectrum_plot_trigdat_{self._version}.png"
         plot_path = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, 'plots', plot_name)
 
@@ -498,12 +512,13 @@ class MultinestFitTTE(object):
         wrap = [0] * len(self._model.free_parameters)
         wrap[0] = 1
 
-        # Make chain folder if it does not exists already
-        if not os.path.exists(os.path.join(base_dir, self._grb_name, "chains")):
-            os.mkdir(os.path.join(base_dir, self._grb_name, "chains"))
+        # define temp chain save path
+        self._temp_chains_dir = os.path.join(base_dir, self._grb_name, f"c_tte_{self._version}")
+        chain_path = os.path.join(self._temp_chains_dir, f"tte_{self._version}_")
 
-        # define chain save path
-        chain_path = os.path.join(base_dir, self._grb_name, "chains", f"tte_{self._version}_")
+        # Make temp chains folder if it does not exists already
+        if not os.path.exists(self._temp_chains_dir):
+            os.mkdir(os.path.join(self._temp_chains_dir))
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
@@ -514,28 +529,44 @@ class MultinestFitTTE(object):
                                          wrapped_params=wrap,
                                          verbose=True,
                                          resume=True)
+
+    def save_fit_result(self):
+        """
+        Save the fits result to '{base_dir}/{grb_name}/{report_type}/{version}/tte_{version}_loc_results.fits'
+        :return:
+        """
+        fit_result_name = f"tte_{self._version}_loc_results.fits"
+        fit_result_path = os.path.join(base_dir, self._grb_name, 'tte', self._version, fit_result_name)
+
         if using_mpi:
             if rank == 0:
-
-                if not os.path.exists(os.path.join(base_dir, self._grb_name, "fit_results")):
-                    os.mkdir(os.path.join(base_dir, self._grb_name, "fit_results"))
-
                 self._bayes.restore_median_fit()
-                self._bayes.results.write_to(os.path.join(base_dir, self._grb_name, "fit_results", f"tte_{self._version}_loc_results.fits"))
+                self._bayes.results.write_to(fit_result_path)
 
         else:
-
-            if not os.path.exists(os.path.join(base_dir, self._grb_name, "fit_results")):
-                os.mkdir(os.path.join(base_dir, self._grb_name, "fit_results"))
-
             self._bayes.restore_median_fit()
-            self._bayes.results.write_to(os.path.join(base_dir, self._grb_name, "fit_results", f"tte_{self._version}_loc_results.fits"))
+            self._bayes.results.write_to(fit_result_path)
 
-    def spectrum_plot(self):
+    def move_chains_dir(self):
+        """
+        Move temp chains directory to sub-folder '{base_dir}/{grb_name}/{report_type}/{version}/chains'
+        :return:
+        """
+        if using_mpi:
+            if rank == 0:
+                chains_dir_store = os.path.join(base_dir, self._grb_name, 'tte', self._version, "chains")
+                shutil.move(self._temp_chains_dir, chains_dir_store)
+        else:
+            chains_dir_store = os.path.join(base_dir, self._grb_name, 'tte', self._version, "chains")
+            shutil.move(self._temp_chains_dir, chains_dir_store)
+
+    def create_spectrum_plot(self):
         """
         Create the spectral plot to show the fit results for all used dets
         :return:
         """
+        plot_name = f"{self._grb_name}_spectrum_plot_tte_{self._version}.png"
+        plot_path = os.path.join(base_dir, self._grb_name, 'tte', self._version, 'plots', plot_name)
 
         color_dict = {'n0': '#FF9AA2', 'n1': '#FFB7B2', 'n2': '#FFDAC1', 'n3': '#E2F0CB', 'n4': '#B5EAD7',
                       'n5': '#C7CEEA', 'n6': '#DF9881', 'n7': '#FCE2C2', 'n8': '#B3C8C8', 'n9': '#DFD8DC',
@@ -559,7 +590,7 @@ class MultinestFitTTE(object):
                                                                   data_colors=color_list,
                                                                   model_colors=color_list)
 
-                    spectrum_plot.savefig(os.path.join(base_dir, self._grb_name, "plots", "TTE_spectrum_residuals_plot_{self._version}.png"),
+                    spectrum_plot.savefig(plot_path,
                                           bbox_inches='tight')
 
                 except:
@@ -576,7 +607,7 @@ class MultinestFitTTE(object):
                                                               data_colors=color_list,
                                                               model_colors=color_list)
 
-                spectrum_plot.savefig(os.path.join(base_dir, self._grb_name, "plots", "TTE_spectrum_residuals_plot_{self._version}.png"), bbox_inches='tight')
+                spectrum_plot.savefig(plot_path, bbox_inches='tight')
 
             except:
 

@@ -32,11 +32,14 @@ if data_type == 'trigdat':
     multinest_fit.fit()
     multinest_fit.save_fit_result()
     multinest_fit.create_spectrum_plot()
+    multinest_fit.move_chains_dir()
 
 elif data_type == 'tte':
     multinest_fit = MultinestFitTTE(grb_name, version, bkg_fit_yaml_file, time_selection_yaml_file)
     multinest_fit.fit()
-    multinest_fit.spectrum_plot()
+    multinest_fit.save_fit_result()
+    multinest_fit.create_spectrum_plot()
+    multinest_fit.move_chains_dir()
 
 else:
     raise AssertionError("Please use either tte or trigdat as input")
