@@ -8,6 +8,7 @@ from trigdat_reader import *
 # import ast
 import os
 import gbm_drm_gen as drm
+import numpy as np
 # from astropy.utils.data import download_file
 # import requests
 # import shutil
