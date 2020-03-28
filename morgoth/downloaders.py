@@ -1,5 +1,7 @@
 import luigi
 import os
+
+from morgoth.utils import file_utils
 from morgoth.utils.download_file import BackgroundDownload
 from morgoth.trigger import OpenGBMFile, GBMTriggerFile
 from morgoth.configuration import morgoth_config
@@ -26,7 +28,7 @@ class DownloadTrigdat(luigi.Task):
     def output(self):
 
         trigdat = f"glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, trigdat))
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, 'trigdat', trigdat))
 
     def run(self):
 
@@ -38,7 +40,7 @@ class DownloadTrigdat(luigi.Task):
 
         uri = os.path.join(info.uri, trigdat)
 
-        store_path = os.path.join(base_dir, info.name)
+        store_path = os.path.join(base_dir, info.name, 'trigdat')
         dl = BackgroundDownload(
             uri,
             store_path,
@@ -50,6 +52,10 @@ class DownloadTrigdat(luigi.Task):
             ),
         )
         dl.run()
+
+        # Create the version subfolder when download is done
+        file_utils.if_directory_not_existing_then_make(os.path.join(base_dir, info.name, 'trigdat', self.version))
+
 
 class DownloadTTEFile(luigi.Task):
     grb_name = luigi.Parameter()
@@ -63,7 +69,7 @@ class DownloadTTEFile(luigi.Task):
     def output(self):
 
         tte = f"glg_tte_{self.detector}_bn{self.grb_name[3:]}_{self.version}.fit"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, tte))
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, 'tte', 'data', tte))
 
     def run(self):
 
@@ -76,7 +82,7 @@ class DownloadTTEFile(luigi.Task):
         uri = os.path.join(info.uri, tte)
         print(uri)
 
-        store_path = os.path.join(base_dir, info.name)
+        store_path = os.path.join(base_dir, info.name, 'tte', 'data')
         dl = BackgroundDownload(
             uri,
             store_path,
@@ -86,6 +92,9 @@ class DownloadTTEFile(luigi.Task):
             max_time=float(morgoth_config["download"]["tte"][self.version]["max_time"]),
         )
         dl.run()
+
+        # Create the version subfolder when download is done
+        file_utils.if_directory_not_existing_then_make(os.path.join(base_dir, info.name, 'tte', self.version))
 
         
 class DownloadCSPECFile(luigi.Task):
@@ -100,7 +109,7 @@ class DownloadCSPECFile(luigi.Task):
     def output(self):
 
         cspec = f"glg_cspec_{self.detector}_bn{self.grb_name[3:]}_{self.version}.pha"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, cspec))
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, 'tte', 'data', cspec))
 
     def run(self):
 
@@ -113,7 +122,7 @@ class DownloadCSPECFile(luigi.Task):
         uri = os.path.join(info.uri, cspec)
         print(uri)
 
-        store_path = os.path.join(base_dir, info.name)
+        store_path = os.path.join(base_dir, info.name, 'tte', 'data')
         dl = BackgroundDownload(
             uri,
             store_path,
