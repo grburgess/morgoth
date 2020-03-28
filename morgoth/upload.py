@@ -14,6 +14,7 @@ from morgoth.plots import (
     CreateSatellitePlot,
     CreateSpectrumPlot
 )
+from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 from morgoth.utils.env import get_env_value
 from morgoth.utils.upload_utils import (
     upload_grb_report,
@@ -66,13 +67,14 @@ class UploadAllPlots(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_all.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_all.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_all.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_all.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -100,13 +102,14 @@ class UploadAllLightcurves(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_all_lightcurves.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_all_lightcurves.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_all_lightcurves.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_all_lightcurves.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -123,8 +126,8 @@ class UploadLightcurve(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_plot_lightcurve.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_plot_lightcurve.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -137,9 +140,10 @@ class UploadLightcurve(luigi.Task):
             det_name=self.detector
         )
 
-        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_plot_lightcurve.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_plot_lightcurve.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -155,8 +159,8 @@ class UploadLocationPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_location.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -168,9 +172,10 @@ class UploadLocationPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_location.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -186,8 +191,8 @@ class UploadCornerPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_corner.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_corner.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -199,9 +204,10 @@ class UploadCornerPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_corner.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_corner.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -217,8 +223,8 @@ class UploadMollLocationPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
         upload_plot(
@@ -229,9 +235,10 @@ class UploadMollLocationPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -247,8 +254,8 @@ class UploadSatellitePlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_satellite.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_satellite.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -260,9 +267,10 @@ class UploadSatellitePlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_satellite.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_satellite.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -278,8 +286,8 @@ class UploadSpectrumPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -291,9 +299,10 @@ class UploadSpectrumPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -309,8 +318,8 @@ class Upload3DLocationPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -322,9 +331,10 @@ class Upload3DLocationPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
 
@@ -340,8 +350,8 @@ class UploadBalrogSwiftPlot(luigi.Task):
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
+        filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.done"
+        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename))
 
     def run(self):
 
@@ -353,7 +363,8 @@ class UploadBalrogSwiftPlot(luigi.Task):
             version=self.version
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.txt"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.done"
+        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'upload', filename)
 
+        if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")

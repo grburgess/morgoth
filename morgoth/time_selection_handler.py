@@ -8,7 +8,7 @@ from morgoth.downloaders import DownloadTrigdat
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
-class TimeSelectionHandler(luigi.ExternalTask):
+class TimeSelectionHandler(luigi.Task):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v01")  # TODO change this to v00 for not testing!!!!!!!!
 
