@@ -58,7 +58,7 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 class MultinestFitTrigdat(object):
 
-    def __init__(self, grb_name, version, bkg_fit_yaml_file, time_selection_yaml_file):
+    def __init__(self, grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file):
         """
         Initalize MultinestFit for Balrog
         :param grb_name: Name of GRB
@@ -73,16 +73,16 @@ class MultinestFitTrigdat(object):
 
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
             self._use_dets = np.array(_gbm_detectors)[np.array(data["use_dets"])]
 
             self._bkg_fit_files = data["bkg_fit_files"]
 
         with open(self._time_selection_yaml_file, "r") as f:
-            data = yaml.load(f)
-            self._active_time = data["Active_Time"]
+            data = yaml.safe_load(f)
+            self._active_time = f"{data['active_time']['start']}-{data['active_time']['stop']}"
 
-        self._trigdat_file = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_{self._version}.fit")
+        self._trigdat_file = trigdat_file
 
         self._set_plugins()
         self._define_model()
