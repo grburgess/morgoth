@@ -6,7 +6,6 @@ import uuid
 
 
 def file_existing_and_readable(filename):
-
     sanitized_filename = sanitize_filename(filename)
 
     if os.path.exists(sanitized_filename):
@@ -33,7 +32,6 @@ def file_existing_and_readable(filename):
 
 
 def path_exists_and_is_directory(path):
-
     sanitized_path = sanitize_filename(path, abspath=True)
 
     if os.path.exists(sanitized_path):
@@ -52,7 +50,6 @@ def path_exists_and_is_directory(path):
 
 
 def sanitize_filename(filename, abspath=False):
-
     sanitized = os.path.expandvars(os.path.expanduser(filename))
 
     if abspath:
@@ -67,6 +64,7 @@ def sanitize_filename(filename, abspath=False):
 def if_directory_not_existing_then_make(directory):
     """
     If the given directory does not exists, then make it
+    If a path is a file then check the parent dir
     :param directory: directory to check or make
     :return: None
     """
@@ -75,6 +73,23 @@ def if_directory_not_existing_then_make(directory):
 
     if not os.path.exists(sanitized_directory):
 
+        os.makedirs(sanitized_directory)
+
+
+def if_dir_containing_file_not_existing_then_make(filename):
+    """
+    If the given directory does not exists, then make it
+    If basename of path contains a '.' we assume it is a file and check the parent dir
+    :param filename: directory to check or make
+    :return: None
+    """
+
+    sanitized_directory = sanitize_filename(filename)
+
+    if '.' in os.path.basename(sanitized_directory):
+        sanitized_directory = os.path.dirname(sanitized_directory)
+
+    if not os.path.exists(sanitized_directory):
         os.makedirs(sanitized_directory)
 
 
@@ -113,11 +128,9 @@ def temporary_directory(prefix="", within_directory=None):
 
 @contextmanager
 def within_directory(directory):
-
     current_dir = os.getcwd()
 
     if not os.path.exists(directory):
-
         raise IOError("Directory %s does not exists!" % os.path.abspath(directory))
 
     try:

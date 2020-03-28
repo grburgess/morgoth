@@ -11,6 +11,8 @@ from threeML.utils.spectrum.binned_spectrum import BinnedSpectrum, BinnedSpectru
 import gbm_drm_gen as drm
 from gbm_drm_gen.io.balrog_drm import BALROG_DRM
 
+from morgoth.utils import file_utils
+
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 _gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1']
@@ -74,8 +76,7 @@ class BkgFittingTrigdat(object):
             data = yaml.load(f)
             max_time = data['Max_Time']
 
-        if not os.path.isdir(dir_path):
-            os.mkdir(dir_path)
+        file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
         plots = self._trig_reader.view_lightcurve(start=-150, stop=float(max_time), return_plots=True)
 
@@ -93,9 +94,7 @@ class BkgFittingTrigdat(object):
         :param dir_path: Directory path where to save the bkg h5 file
         :return:
         """
-
-        if not os.path.isdir(dir_path):
-            os.mkdir(dir_path)
+        file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
         self._bkg_fits_files = {}
 
@@ -146,6 +145,8 @@ class BkgFittingTrigdat(object):
         :param path: Path where to save the yaml
         :return:
         """
+        file_utils.if_dir_containing_file_not_existing_then_make(path)
+
         bkg_fit_dict = {}
         bkg_fit_dict['use_dets'] = self._use_dets
         bkg_fit_dict['bkg_fit_files'] = self._bkg_fits_files
@@ -309,8 +310,8 @@ class BkgFittingTTE(object):
             data = yaml.load(f)
             max_time = data['Max_Time']
 
-        if not os.path.isdir(dir_path):
-            os.mkdir(dir_path)
+        file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
+
 
         self._lightcurve_plots_dir_path = dir_path
 
@@ -325,8 +326,7 @@ class BkgFittingTTE(object):
         :return:
         """
 
-        if not os.path.isdir(dir_path):
-            os.mkdir(dir_path)
+        file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
         self._bkg_fits_dir_path = dir_path
 
@@ -339,6 +339,8 @@ class BkgFittingTTE(object):
         :param path: Path where to save the yaml
         :return:
         """
+        file_utils.if_dir_containing_file_not_existing_then_make(path)
+
         bkg_fit_dict = {}
         bkg_fit_dict['Bkg_Fits_Dir_Path'] = self._bkg_fits_dir_path
         bkg_fit_dict['Lightcurve_Plots_Dir_Path'] = self._lightcurve_plots_dir_path
