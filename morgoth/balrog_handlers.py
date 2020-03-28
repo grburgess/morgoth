@@ -103,7 +103,8 @@ class RunBalrogTTE(ExternalProgramTask):
 
         return {
             'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
-            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat')),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
+                                                                 f'tte_{self.version}_post_equal_weights.dat')),
             'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
@@ -118,6 +119,7 @@ class RunBalrogTTE(ExternalProgramTask):
             f"{fit_script_path}",
             f"{self.grb_name}",
             f"{self.version}",
+            f"",  # Trigdat file
             f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
             f"{self.input()['time_selection'].path}",
             f"tte"
@@ -131,6 +133,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
     
     def requires(self):
         return {
+                'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
                 'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
                 'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
             }
@@ -142,7 +145,8 @@ class RunBalrogTrigdat(ExternalProgramTask):
 
         return {
             'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
-            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat')),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
+                                                                 f'trigdat_{self.version}_post_equal_weights.dat')),
             'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
