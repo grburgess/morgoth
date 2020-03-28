@@ -13,3 +13,7 @@ class EmptyFileError(RuntimeError):
 
 class ImproperlyConfigured(RuntimeError):
     pass
+
+
+class UnkownReportType(RuntimeError):
+    pass

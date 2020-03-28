@@ -1,5 +1,7 @@
 import os
+
 from morgoth.exceptions.custom_exceptions import ImproperlyConfigured
+
 
 def get_env_value(env_variable):
     try:

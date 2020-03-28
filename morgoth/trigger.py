@@ -1,13 +1,15 @@
-import luigi
-import yaml
 import os
 import re
-import numpy as np
 from datetime import datetime, timedelta
 
+import luigi
+import numpy as np
+import yaml
+
+from morgoth.utils.env import get_env_value
 from morgoth.utils.file_utils import if_directory_not_existing_then_make
 
-base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
+base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 _gbm_detectors = (
@@ -87,7 +89,7 @@ def parse_trigger_file_and_write(root):
         frac = f"0{frac}"
 
     burst_name = f"GRB{yy}{mm}{dd}{frac}"
-
+    
     burst_number = f"{yy}{mm}{dd}{frac}"
 
     pos2d = root.find(".//{*}Position2D")
@@ -122,6 +124,7 @@ def parse_trigger_file_and_write(root):
 
     out_file_writer = GBMTriggerFile(
         name=burst_name,
+        burst_number=burst_number,
         ra=ra,
         dec=dec,
         radius=radius,
@@ -148,6 +151,7 @@ class GBMTriggerFile(object):
     def __init__(
         self,
         name,
+        burst_number,
         ra,
         dec,
         radius,
@@ -160,6 +164,7 @@ class GBMTriggerFile(object):
 
         self._params = dict(
             name=name,
+            burst_number=burst_number,
             ra=ra,
             dec=dec,
             radius=radius,
@@ -173,6 +178,7 @@ class GBMTriggerFile(object):
         self.ra = ra
         self.dec = dec
         self.name = name
+        self.burst_number = burst_number
         self.radius = radius
         self.uri = uri
         self.most_likely = most_likely
@@ -184,17 +190,18 @@ class GBMTriggerFile(object):
 
         with open(file_name, "w") as f:
 
-            yaml.dump(self._params, f)
+            yaml.dump(self._params, f, default_flow_style=False)
 
     @classmethod
     def from_file(cls, file_name):
 
         with file_name.open("r") as f:
 
-            stuff = yaml.load(f)
+            stuff = yaml.safe_load(f)
 
         return cls(
             name=stuff["name"],
+            burst_number=stuff["burst_number"],
             ra=stuff["ra"],
             dec=stuff["dec"],
             radius=stuff["radius"],

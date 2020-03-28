@@ -1,26 +1,26 @@
-import numpy as np
-from astropy.coordinates import Angle
-import matplotlib.pyplot as plt
-from chainconsumer import ChainConsumer
+import os
+
 import astropy.io.fits as fits
-from gbmgeometry.utils.gbm_time import GBMTime
 import astropy.time as astro_time
-import requests
-import shutil
-from gbmgeometry.gbm_frame import GBMFrame
-from gbmgeometry import gbm_detector_list
-from astropy.coordinates import SkyCoord
 import astropy.units as unit
+import matplotlib.pyplot as plt
+import numpy as np
 import plotly
 import plotly.graph_objs as go
-import os
+from astropy.coordinates import Angle
+from astropy.coordinates import SkyCoord
+from chainconsumer import ChainConsumer
 from gbm_drm_gen.io.balrog_healpix_map import BALROGHealpixMap
-from threeML import *
+from gbmgeometry import gbm_detector_list
+from gbmgeometry.gbm_frame import GBMFrame
+from gbmgeometry.utils.gbm_time import GBMTime
 
+import morgoth.utils.file_utils as file_utils
 from morgoth.utils.env import get_env_value
-from morgoth.balrog_handlers import ProcessFitResults
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
+
+_gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1']
 
 model_param_lookup = {
     'pl': ['ra (deg)', 'dec (deg)', 'K', 'index'],
@@ -31,12 +31,12 @@ model_param_lookup = {
 }
 
 
-def create_corner_loc_plot(grb_name, report_type, version, datapath, model):
+def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for ra and dec
     :return:
     """
-    chain = loadtxt2d(datapath)
+    chain = loadtxt2d(post_equal_weights_file)
 
     # Get parameter for model
     parameter = model_param_lookup[model]
@@ -76,18 +76,18 @@ def create_corner_loc_plot(grb_name, report_type, version, datapath, model):
                                                                            colors="#cd5c5c", flip=False, kde=2.0,
                                                                            max_ticks=5)
 
-    filename = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_location_plot_{report_type}_{version}.png'
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
-    c1.plotter.plot(filename=filename,
+    c1.plotter.plot(filename=save_path,
                     figsize="column")
 
 
-def create_corner_all_plot(grb_name, report_type, version, datapath, model):
+def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for all parameters
     :return:
     """
-    chain = loadtxt2d(datapath)
+    chain = loadtxt2d(post_equal_weights_file)
 
     # Get parameter for model
     parameter = model_param_lookup[model]
@@ -98,13 +98,12 @@ def create_corner_all_plot(grb_name, report_type, version, datapath, model):
     c2.add_chain(chain[:, :-1], parameters=parameter).configure(plot_hists=False, contour_labels='sigma',
                                                                 colors="#cd5c5c", flip=False, max_ticks=3)
 
-    filename = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_allcorner_plot_{report_type}_{version}.png'
-
-    c2.plotter.plot(filename=filename,
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
+    c2.plotter.plot(filename=save_path,
                     figsize="column")
 
 
-def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weigts_file, used_dets, model, ra, dec, swift=None):
+def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, save_path, swift=None):
     # get earth pointing in icrs and the pointing of dets in icrs
 
     with fits.open(trigdat_file) as f:
@@ -114,15 +113,15 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
 
     # get a det object and calculate with this the position of the earth, the moon and the sun seen from the satellite
     # in the icrs system
-    det_1 = gbm_detector_list[used_dets[-1]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    det_1 = gbm_detector_list[_gbm_detectors[used_dets[-1]]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
     earth_pos = det_1.earth_position_icrs
     sun_pos = det_1.sun_position_icrs
     moon_pos = det_1.moon_position_icrs
     # get pointing of all used dets
     det_pointing = {}
-    for det_name in used_dets:
-        det = gbm_detector_list[det_name](quaternion=quat, sc_pos=sc_pos)
-        det_pointing[det_name] = det.det_ra_dec_icrs
+    for det_number in used_dets:
+        det = gbm_detector_list[_gbm_detectors[det_number]](quaternion=quat, sc_pos=sc_pos)
+        det_pointing[_gbm_detectors[det_number]] = det.det_ra_dec_icrs
 
     # set a figure with a hammer projection
     fig = plt.figure()
@@ -145,7 +144,7 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
     # Plot GRB contours from fit
     # Get contours
     x_contour, y_contour, val_contour, x_contour_1, x_contour_2, \
-    val_contour_1, val_contour_2 = get_contours(model, post_equal_weigts_file)
+    val_contour_1, val_contour_2 = get_contours(model, post_equal_weights_file)
 
     if len(x_contour_1) > 0:
         ax.contourf(x_contour_1, y_contour, val_contour_1, levels=[0, 0.68268949, 0.9545],
@@ -231,12 +230,11 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
 
     # save figure
-    save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_molllocation_plot_{report_type}_{version}.png'
-
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec):
+def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec, save_path):
     """
     plot azimuth plot in sat frame to check if burst comes from the solar panel sides
     :return:
@@ -311,12 +309,12 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
                  label=f'{grb_name}', labelpos='N')
     ax.set_title(f'{grb_name} direction in the sat. frame', y=1.08)
 
-    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_satellite_plot_{report_type}_{version}.png"
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weigts_file, swift=None):
+def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weights_file, save_path, swift=None):
     """
     If swift postion known make a small area plot with grb position, error contours and Swift position (in deg)
     This Plot has to be made AFTER the mollweide plot.
@@ -333,7 +331,7 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
 
         # Get contours
         x_contour, y_contour, val_contour, x_contour_1, x_contour_2, val_contour_1, \
-        val_contour_2 = get_contours(model, post_equal_weigts_file)
+        val_contour_2 = get_contours(model, post_equal_weights_file)
 
         x_contour_1 = x_contour[x_contour < np.pi]
         x_contour_2 = x_contour[x_contour > np.pi] - 2 * np.pi
@@ -383,11 +381,11 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
         ax.grid(True)
 
         # save plot
-        save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_balrogswift_plot_{report_type}_{version}.png"
+        file_utils.if_dir_containing_file_not_existing_then_make(save_path)
         fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, trigdat_file, used_dets, model):
+def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file, trigdat_file, used_dets, model, save_path):
     # Plot 10 degree grid
     trace_grid = []
     phi_l = np.arange(-180, 181, 10)  # file size!#
@@ -595,7 +593,7 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, 
 
     # Plot Balrog ERROR CONTOURS
     # Load data from chain with chain consumer
-    chain = loadtxt2d(post_equal_weigts_file)
+    chain = loadtxt2d(post_equal_weights_file)
 
     # Get parameter for model
     parameter = model_param_lookup[model]
@@ -717,8 +715,7 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weigts_file, 
 
     output = plotly.offline.plot(fig, auto_open=False, output_type='div', include_plotlyjs=False, show_link=False)
 
-    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_3dlocation_plot_{report_type}_{version}.html"
-
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     with open(save_path, "w") as text_file:
         text_file.write(output)
 

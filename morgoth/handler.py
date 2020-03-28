@@ -1,12 +1,10 @@
-import gcn
-import time
-import os
 import shlex
 import subprocess
 
+import gcn
 
-from morgoth.trigger import parse_trigger_file_and_write
 from morgoth import morgoth_config
+from morgoth.trigger import parse_trigger_file_and_write
 
 n_workers = int(morgoth_config['luigi']["n_workers"])
 
@@ -35,7 +33,6 @@ def handler(payload, root):
     cmd = form_morgoth_cmd_string(grb)
 
     # launch luigi
-
     subprocess.Popen(cmd)
 
 

@@ -1,8 +1,7 @@
 import os
 import shutil
-import threading
 import time
-import requests
+
 import astropy.utils.data as astro_data
 
 import morgoth.utils.file_utils as file_utils
@@ -63,7 +62,6 @@ class BackgroundDownload(object):
         while flag:
 
             # try to download the file
-
             try:
 
                 path = download_file(self._url)
