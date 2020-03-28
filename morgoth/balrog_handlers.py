@@ -44,15 +44,22 @@ class ProcessFitResults(luigi.Task):
     def requires(self):
 
         if self.report_type.lower() == "tte":
-
-            return RunBalrogTTE(grb_name=self.grb_name)
+            return {
+                'gbm_file:': OpenGBMFile(grb=self.grb_name),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
+                'balrog': RunBalrogTTE(grb_name=self.grb_name),
+            }
 
         elif self.report_type.lower() == "trigdat":
-
-            return RunBalrogTrigdat(grb_name=self.grb_name, version=self.version)
+            return {
+                'gbm_file:': OpenGBMFile(grb=self.grb_name),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
+                'balrog': RunBalrogTrigdat(grb_name=self.grb_name, version=self.version),
+            }
 
         else:
-
             return None
 
     def output(self):
@@ -60,26 +67,24 @@ class ProcessFitResults(luigi.Task):
         result_name = f"{self.report_type}_{self.version}_fit_result.yml"
 
         return {
-            'result': luigi.LocalTarget(os.path.join(base_job, result_name)),
-            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains', 'post_equal_weights.dat'))
+            'result_file': luigi.LocalTarget(os.path.join(base_job, result_name)),
+            'post_equal_weights': self.input()['balrog']['post_equal_weights']
         }
 
     def run(self):
-        result_path = f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/fit_result/" \
-            f"{self.grb_name}_{self.report_type}_{self.version}_loc_results.fits"
 
         result_reader = ResultReader(
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            result_file=result_path,
-            trigger_file='dummy'
+            trigger_file=self.input()['gbm_file'].path,
+            time_selection_file=self.input()['time_selection'].path,
+            background_file=self.input()['bkg_fit']['bkg_fit_yml'].path,
+            result_file=self.input()['balrog']['fit_result'].path,
         )
 
-        filename = f"{self.report_type}_{self.version}_fit_result.yml"
-        file_path = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
+        result_reader.save_result_yml(self.output()['result'].path)
 
-        result_reader.save_result_yml(file_path)
 
 class RunBalrogTTE(ExternalProgramTask):
     grb_name = luigi.Parameter()

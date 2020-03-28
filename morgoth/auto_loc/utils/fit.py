@@ -2,21 +2,15 @@ from threeML import *
 from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
 from threeML.utils.time_series.event_list import EventListWithDeadTime
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
-from threeML.utils.spectrum.binned_spectrum import BinnedSpectrum, BinnedSpectrumWithDispersion
+from threeML.utils.spectrum.binned_spectrum import BinnedSpectrumWithDispersion
 
 from trigdat_reader import *
-# import ast
 import os
 import gbm_drm_gen as drm
 import numpy as np
-# from astropy.utils.data import download_file
-# import requests
-# import shutil
-# import os, time, urllib2
+
 from gbm_drm_gen.io.balrog_drm import BALROG_DRM
-from gbm_drm_gen.io.balrog_like import BALROGLike
-from gbm_drm_gen.drmgen_trig import DRMGenTrig
-# import astropy.io.fits as fits
+
 import yaml
 import matplotlib.pyplot as plt
 import time

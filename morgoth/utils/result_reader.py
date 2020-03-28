@@ -1,8 +1,7 @@
-import collections
-import os
 from datetime import datetime
 
-import pandas as pd
+from chainconsumer import ChainConsumer
+
 import astropy.io.fits as fits
 import numpy as np
 import yaml
@@ -15,44 +14,29 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 class ResultReader(object):
 
-    def __init__(self, grb_name, report_type, version, result_file, trigger_file):
+    def __init__(self, grb_name, report_type, version, trigger_file, time_selection_file, background_file,
+                 post_equal_weights_file, result_file):
         self.grb_name = grb_name
         self.report_type = report_type
         self.version = version
 
-        self._ra = None
-        self._dec = None
-        self._K = None
-        self._alpha = None
-        self._xp = None
-        self._beta = None
-        self._index = None
-        self._xc = None
-
-        self._ra_err = None
-        self._dec_err = None
-        self._K_err = None
-        self._alpha_err = None
-        self._xp_err = None
-        self._beta_err = None
-        self._index_err = None
-        self._xc_err = None
-
-        self._trigger_number = None
-        self._trigger_timestamp = None
-        self._data_timestamp = None
-        self._most_likely = None
-        self._second_most_likely = None
-        self._swift = None
-
         # read trigger output
         self._read_trigger(trigger_file)
+
+        # read time selection values
+        self._read_time_selection(time_selection_file)
+
+        # read background file
+        self._read_background_fit(background_file)
 
         # read parameter values
         self._read_fit_result(result_file)
 
-        self._build_report()
+        # read parameter values
+        self._read_post_equal_weights_file(post_equal_weights_file)
 
+        # Create a report containing all the results of the pipeline
+        self._build_report()
 
     def _read_fit_result(self, result_file):
 
@@ -152,49 +136,37 @@ class ResultReader(object):
             raise UnkownReportType('The specified report type is not valid. Valid report types: (trigdat, tte)')
 
     def _read_trigger(self, trigger_file):
+        with open(trigger_file, 'r') as f:
+            data = yaml.safe_load(f)
 
-        # TODO: read file
-        self._trigger_number = 123456
-        self._trigger_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._data_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        self._most_likely = 'GRB 100%'
-        self._second_most_likely = None
-        self._swift = None
+            self._trigger_number = 123456
+            self._trigger_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._data_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._most_likely = f"{data['most_likely']} {data['most_likely_prob']}%"
+            self._second_most_likely = f"{data['most_likely_2']} {data['most_likely_prob_2']}%"
+            self._swift = None
 
-    def __repr__(self):
-        """
-        Examine the currently selected info as well other things.
+    def _read_time_selection(self, time_selection_file):
+        with open(time_selection_file, 'r') as f:
+            data = yaml.safe_load(f)
 
-        """
-        print(f'Result Reader for {self.grb_name}')
-        return self._output().to_string()
+            self._bkg_neg_start = data['background_time']['before']['start']
+            self._bkg_neg_stop = data['background_time']['after']['stop']
+            self._bkg_pos_start = data['background_time']['before']['start']
+            self._bkg_pos_stop = data['background_time']['before']['stop']
+            self._active_time_start = data['active_time']['start']
+            self._active_time_stop = data['active_time']['stop']
+            self._poly_order = data['poly_order']
 
-    def _output(self):
+    def _read_background_fit(self, background_fit_file):
+        with open(background_fit_file, 'r') as f:
+            data = yaml.safe_load(f)
+            self._used_detectors = data['used_detectors']
 
-        info_dict = collections.OrderedDict()
-        info_dict['ra'] = self._ra
-        info_dict['ra_err']= self._ra_err
-        info_dict['dec'] = self._dec
-        info_dict['_dec_err']= self._dec_err
-        info_dict['K'] = self._K
-        info_dict['K_err']= self._K_err
-        info_dict['alpha'] = self._alpha
-        info_dict['alpha_err']= self._alpha_err
-        info_dict['xp'] = self._xp
-        info_dict['xp_err']= self._xp_err
-        info_dict['beta'] = self._beta
-        info_dict['beta_err']= self._beta_err
-        info_dict['index'] = self._index
-        info_dict['index_err']= self._index_err
-        info_dict['xc'] = self._xc
-        info_dict['xc_err']= self._xc_err
-        info_dict['model'] = self._model
+    def _read_post_equal_weights_file(self, post_equal_weights_file):
 
-
-        #return pd.Series(info_dict, index=info_dict.keys())
-
-        return pd.Series(self._report, index=self._report.keys())
-
+        self._ra, self._ra_err, self._dec, self._dec_err, self._balrog_one_sig_err_circle, self._balrog_two_sig_err_circle = \
+            get_best_fit_with_errors(post_equal_weights_file, self._model)
 
     def _build_report(self):
         self._report = {
@@ -267,25 +239,33 @@ class ResultReader(object):
 
             "time_selection": {
 
-                "bkg_neg_start": -15.,
+                "bkg_neg_start": self._bkg_neg_start,
 
-                "bkg_neg_stop": 16.,
+                "bkg_neg_stop": self._bkg_neg_stop,
 
-                "bkg_pos_start": 14.,
+                "bkg_pos_start": self._bkg_pos_start,
 
-                "bkg_pos_stop": 15.,
+                "bkg_pos_stop": self._bkg_pos_stop,
 
-                "active_time_start": 12.,
+                "active_time_start": self._active_time_start,
 
-                "active_time_stop": 16.,
+                "active_time_stop": self._active_time_stop,
 
-                "used_detectors": ['n1', 'n2', 'n3'],
+                "used_detectors": self._used_detectors,
             }
         }
 
     def save_result_yml(self, file_path):
         with open(file_path, "w") as f:
             yaml.dump(self._report, f, default_flow_style=False)
+
+    def __repr__(self):
+        """
+        Examine the balrog results.
+        """
+
+        print(f'Result Reader for {self.grb_name}')
+        return self._report
 
     @property
     def ra(self):
@@ -331,3 +311,102 @@ class ResultReader(object):
     def model(self):
 
         return self._model
+
+
+model_param_lookup = {
+    'pl': ['ra (deg)', 'dec (deg)', 'K', 'index'],
+    'cpl': ['ra (deg)', 'dec (deg)', 'K', 'index', 'xc'],
+    'sbpl': ['ra (deg)', 'dec (deg)', 'K', 'alpha', 'break', 'beta'],
+    'band': ['ra (deg)', 'dec (deg)', 'K', 'alpha', 'xp', 'beta'],
+    'solar_flare': ['ra (deg)', 'dec (deg)', 'K-bl', 'xb-bl', 'alpha-bl', 'beta-bl', 'K-brems', 'Epiv-brems', 'kT-brems']
+}
+
+
+def get_best_fit_with_errors(post_equal_weigts_file, model):
+    """
+    load fit results and get best fit and errors
+    :return:
+    """
+    chain = loadtxt2d(post_equal_weigts_file)
+
+    parameter = model_param_lookup[model]
+
+    # RA-DEC plot
+    c2 = ChainConsumer()
+
+    c2.add_chain(chain[:, :-1], parameters=parameter).configure(plot_hists=False, contour_labels='sigma',
+                                                                colors="#cd5c5c", flip=False, max_ticks=3)
+
+    # Calculate err radius #
+    chains, parameters, truth, extents, blind = c2.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
+
+    summ = c2.analysis.get_summary(parameters=['ra (deg)', 'dec (deg)'], chains=chains, squeeze=False)[0]
+    ra = summ['ra (deg)'][1]
+    ra_pos_err = summ['ra (deg)'][2] - summ['ra (deg)'][1]
+    ra_neg_err = summ['ra (deg)'][1] - summ['ra (deg)'][0]
+    if np.absolute(ra_pos_err) > np.absolute(ra_neg_err):
+        ra_err = np.absolute(ra_pos_err)
+    else:
+        ra_err = np.absolute(ra_neg_err)
+    dec = summ['dec (deg)'][1]
+    dec_pos_err = summ['dec (deg)'][2] - summ['dec (deg)'][1]
+    dec_neg_err = summ['dec (deg)'][1] - summ['dec (deg)'][0]
+    if np.absolute(dec_pos_err) > np.absolute(dec_neg_err):
+        dec_err = np.absolute(dec_pos_err)
+    else:
+        dec_err = np.absolute(dec_neg_err)
+
+    hist, x_contour, y_contour = c2.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)', 'dec (deg)')  # ra, dec in deg here
+
+    hist[hist == 0] = 1E-16
+    val_contour = c2.plotter._convert_to_stdev(hist.T)
+
+    mask = val_contour < 0.68
+    points = []
+    for i in range(len(mask)):
+        for j in range(len(mask[i])):
+            if mask[i][j]:
+                points.append([x_contour[j], y_contour[i]])
+    points = np.array(points)
+    best_fit_point = [ra, dec]
+    best_fit_point_vec = [np.cos(best_fit_point[1] * np.pi / 180) * np.cos(best_fit_point[0] * np.pi / 180),
+                          np.cos(best_fit_point[1] * np.pi / 180) * np.sin(best_fit_point[0] * np.pi / 180),
+                          np.sin(best_fit_point[1] * np.pi / 180)]
+    alpha_largest = 0
+
+    for point_2 in points:
+        point_2_vec = [np.cos(point_2[1] * np.pi / 180) * np.cos(point_2[0] * np.pi / 180),
+                       np.cos(point_2[1] * np.pi / 180) * np.sin(point_2[0] * np.pi / 180),
+                       np.sin(point_2[1] * np.pi / 180)]
+        alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
+        if alpha > alpha_largest:
+            alpha_largest = alpha
+    alpha_one_sigma = alpha
+
+    mask = val_contour < 0.95
+    points = []
+    for i in range(len(mask)):
+        for j in range(len(mask[i])):
+            if mask[i][j]:
+                points.append([x_contour[j], y_contour[i]])
+    points = np.array(points)
+    alpha_largest = 0
+
+    for point_2 in points:
+        point_2_vec = [np.cos(point_2[1] * np.pi / 180) * np.cos(point_2[0] * np.pi / 180),
+                       np.cos(point_2[1] * np.pi / 180) * np.sin(point_2[0] * np.pi / 180),
+                       np.sin(point_2[1] * np.pi / 180)]
+        alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
+        if alpha > alpha_largest:
+            alpha_largest = alpha
+    alpha_two_sigma = alpha
+
+    return ra, ra_err, dec, dec_err, alpha_one_sigma, alpha_two_sigma
+
+
+def loadtxt2d(self, intext):
+    try:
+        return np.loadtxt(intext, ndmin=2)
+    except:
+        return np.loadtxt(intext)
+
