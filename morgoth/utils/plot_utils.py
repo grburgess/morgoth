@@ -20,6 +20,8 @@ from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
+_gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1']
+
 model_param_lookup = {
     'pl': ['ra (deg)', 'dec (deg)', 'K', 'index'],
     'cpl': ['ra (deg)', 'dec (deg)', 'K', 'index', 'xc'],
@@ -75,7 +77,7 @@ def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_fi
                                                                            max_ticks=5)
 
     save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_location_plot_{report_type}_{version}.png'
-    file_utils.if_directory_not_existing_then_make(save_path)
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
     c1.plotter.plot(filename=save_path,
                     figsize="column")
@@ -98,7 +100,7 @@ def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_fi
                                                                 colors="#cd5c5c", flip=False, max_ticks=3)
 
     save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_allcorner_plot_{report_type}_{version}.png'
-    file_utils.if_directory_not_existing_then_make(save_path)
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     c2.plotter.plot(filename=save_path,
                     figsize="column")
 
@@ -113,15 +115,15 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
 
     # get a det object and calculate with this the position of the earth, the moon and the sun seen from the satellite
     # in the icrs system
-    det_1 = gbm_detector_list[used_dets[-1]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    det_1 = gbm_detector_list[_gbm_detectors[used_dets[-1]]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
     earth_pos = det_1.earth_position_icrs
     sun_pos = det_1.sun_position_icrs
     moon_pos = det_1.moon_position_icrs
     # get pointing of all used dets
     det_pointing = {}
-    for det_name in used_dets:
-        det = gbm_detector_list[det_name](quaternion=quat, sc_pos=sc_pos)
-        det_pointing[det_name] = det.det_ra_dec_icrs
+    for det_number in used_dets:
+        det = gbm_detector_list[_gbm_detectors[det_number]](quaternion=quat, sc_pos=sc_pos)
+        det_pointing[_gbm_detectors[det_number]] = det.det_ra_dec_icrs
 
     # set a figure with a hammer projection
     fig = plt.figure()
@@ -231,7 +233,7 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
 
     # save figure
     save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_molllocation_plot_{report_type}_{version}.png'
-    file_utils.if_directory_not_existing_then_make(save_path)
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
@@ -311,7 +313,7 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
     ax.set_title(f'{grb_name} direction in the sat. frame', y=1.08)
 
     save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_satellite_plot_{report_type}_{version}.png"
-    file_utils.if_directory_not_existing_then_make(save_path)
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
@@ -384,7 +386,7 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
 
         # save plot
         save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_balrogswift_plot_{report_type}_{version}.png"
-        file_utils.if_directory_not_existing_then_make(save_path)
+        file_utils.if_dir_containing_file_not_existing_then_make(save_path)
         fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
@@ -719,7 +721,7 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file,
     output = plotly.offline.plot(fig, auto_open=False, output_type='div', include_plotlyjs=False, show_link=False)
 
     save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_3dlocation_plot_{report_type}_{version}.html"
-    file_utils.if_directory_not_existing_then_make(save_path)
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     with open(save_path, "w") as text_file:
         text_file.write(output)
 
