@@ -36,7 +36,7 @@ class UploadReport(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         report = upload_grb_report(grb_name=self.grb_name, result=result)
@@ -55,14 +55,14 @@ class UploadAllPlots(luigi.Task):
 
     def requires(self):
         return {
-        #"lightcurves": UploadAllLightcurves(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "location": UploadLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "corner": UploadCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "molllocation": UploadMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "satellite": UploadSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "spectrum": UploadSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "3d_location": Upload3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-        "balrogswift": UploadBalrogSwiftPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+            "lightcurves": UploadAllLightcurves(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "location": UploadLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "corner": UploadCornerPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "molllocation": UploadMollLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "satellite": UploadSatellitePlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "spectrum": UploadSpectrumPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "3d_location": Upload3DLocationPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            "balrogswift": UploadBalrogSwiftPlot(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
         }
 
     def output(self):
@@ -97,7 +97,6 @@ class UploadAllLightcurves(luigi.Task):
             "nb": UploadLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="nb", version=self.version),
             "b0": UploadLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b0", version=self.version),
             "b1": UploadLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b1", version=self.version),
-            "b2": UploadLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b2", version=self.version),
         }
 
     def output(self):
@@ -327,6 +326,7 @@ class Upload3DLocationPlot(luigi.Task):
         tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, filename)
 
         os.system(f"touch {tmp}")
+
 
 class UploadBalrogSwiftPlot(luigi.Task):
     grb_name = luigi.Parameter()
