@@ -1,10 +1,11 @@
-import luigi
 import os
 
+import luigi
+
+from morgoth.configuration import morgoth_config
+from morgoth.trigger import GBMTriggerFile, OpenGBMFile
 from morgoth.utils import file_utils
 from morgoth.utils.download_file import BackgroundDownload
-from morgoth.trigger import OpenGBMFile, GBMTriggerFile
-from morgoth.configuration import morgoth_config
 from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")

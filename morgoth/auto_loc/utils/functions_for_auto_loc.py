@@ -1,7 +1,6 @@
 import numpy as np
-from numpy import sqrt
-import matplotlib.pyplot as plt
 import scipy
+from numpy import sqrt
 from scipy.special import erfinv
 
 

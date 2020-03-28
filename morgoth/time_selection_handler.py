@@ -1,8 +1,9 @@
-import luigi
 import os
 
-from morgoth.downloaders import DownloadTrigdat
+import luigi
+
 from morgoth.auto_loc.time_selection import TimeSelection
+from morgoth.downloaders import DownloadTrigdat
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 

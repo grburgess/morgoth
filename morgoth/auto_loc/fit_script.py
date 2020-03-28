@@ -1,7 +1,7 @@
-from morgoth.auto_loc.utils.fit import MultinestFitTrigdat, MultinestFitTTE
 import sys
-
 import warnings
+
+from morgoth.auto_loc.utils.fit import MultinestFitTTE, MultinestFitTrigdat
 
 warnings.simplefilter('ignore')
 

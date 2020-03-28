@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from chainconsumer import ChainConsumer
-
 import astropy.io.fits as fits
 import numpy as np
 import yaml
+from chainconsumer import ChainConsumer
 
-from morgoth.utils.env import get_env_value
 from morgoth.exceptions.custom_exceptions import *
+from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 

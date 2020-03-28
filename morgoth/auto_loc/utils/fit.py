@@ -1,20 +1,18 @@
+import os
+import shutil
+import time
+
+import gbm_drm_gen as drm
+import matplotlib.pyplot as plt
+import numpy as np
+import yaml
+from gbm_drm_gen.io.balrog_drm import BALROG_DRM
 from threeML import *
 from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
-from threeML.utils.time_series.event_list import EventListWithDeadTime
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
 from threeML.utils.spectrum.binned_spectrum import BinnedSpectrumWithDispersion
-
+from threeML.utils.time_series.event_list import EventListWithDeadTime
 from trigdat_reader import *
-import os
-import gbm_drm_gen as drm
-import numpy as np
-
-from gbm_drm_gen.io.balrog_drm import BALROG_DRM
-
-import yaml
-import matplotlib.pyplot as plt
-import time
-import shutil
 
 _gbm_detectors = (
     "n0",

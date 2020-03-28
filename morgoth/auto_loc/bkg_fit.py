@@ -1,15 +1,14 @@
-from trigdat_reader import *
-import numpy as np
-import yaml
 import os
 
-from threeML.utils.time_series.event_list import EventListWithDeadTime
+import gbm_drm_gen as drm
+import numpy as np
+import yaml
+from gbm_drm_gen.io.balrog_drm import BALROG_DRM
 from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
-from threeML.utils.spectrum.binned_spectrum import BinnedSpectrum, BinnedSpectrumWithDispersion
-
-import gbm_drm_gen as drm
-from gbm_drm_gen.io.balrog_drm import BALROG_DRM
+from threeML.utils.spectrum.binned_spectrum import BinnedSpectrumWithDispersion
+from threeML.utils.time_series.event_list import EventListWithDeadTime
+from trigdat_reader import *
 
 from morgoth.utils import file_utils
 

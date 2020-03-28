@@ -1,5 +1,6 @@
-import coloredlogs, logging
+import logging
 
+import coloredlogs
 
 coloredlogs.install(
     level="INFO",

@@ -1,10 +1,10 @@
-import luigi
 import os
 
-from morgoth.downloaders import DownloadTTEFile, DownloadTrigdat, DownloadCSPECFile
-from morgoth.time_selection_handler import TimeSelectionHandler
+import luigi
 
-from morgoth.auto_loc.bkg_fit import BkgFittingTrigdat, BkgFittingTTE
+from morgoth.auto_loc.bkg_fit import BkgFittingTTE, BkgFittingTrigdat
+from morgoth.downloaders import DownloadCSPECFile, DownloadTTEFile, DownloadTrigdat
+from morgoth.time_selection_handler import TimeSelectionHandler
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 

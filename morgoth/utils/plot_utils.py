@@ -1,22 +1,22 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
-from chainconsumer import ChainConsumer
+
 import astropy.io.fits as fits
 import astropy.time as astro_time
 import astropy.units as unit
-from astropy.coordinates import SkyCoord
-from astropy.coordinates import Angle
+import matplotlib.pyplot as plt
+import numpy as np
 import plotly
 import plotly.graph_objs as go
-from gbmgeometry.utils.gbm_time import GBMTime
-from gbmgeometry.gbm_frame import GBMFrame
-from gbmgeometry import gbm_detector_list
+from astropy.coordinates import Angle
+from astropy.coordinates import SkyCoord
+from chainconsumer import ChainConsumer
 from gbm_drm_gen.io.balrog_healpix_map import BALROGHealpixMap
+from gbmgeometry import gbm_detector_list
+from gbmgeometry.gbm_frame import GBMFrame
+from gbmgeometry.utils.gbm_time import GBMTime
 
-from morgoth.utils.env import get_env_value
 import morgoth.utils.file_utils as file_utils
-
+from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 

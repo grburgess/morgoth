@@ -1,7 +1,8 @@
 import os
-import yaml
 
+import yaml
 from trigdat_reader import *
+
 from morgoth.auto_loc.utils.functions_for_auto_loc import *
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")

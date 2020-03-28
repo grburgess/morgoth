@@ -1,10 +1,11 @@
-from datetime import datetime
-import os
 import requests
 import json
 import time
+
+import requests
+
+from morgoth.exceptions.custom_exceptions import EmptyFileError, GRBNotFound
 from morgoth.utils.env import get_env_value
-from morgoth.exceptions.custom_exceptions import GRBNotFound, DBConflict, EmptyFileError
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 base_url = get_env_value("MORGOTH_BASE_URL")

@@ -1,23 +1,24 @@
-import luigi
 import os
+
+import luigi
 import yaml
 
+from morgoth.balrog_handlers import ProcessFitResults
+from morgoth.plots import (
+    Create3DLocationPlot,
+    CreateBalrogSwiftPlot,
+    CreateCornerPlot,
+    CreateLightcurve,
+    CreateLocationPlot,
+    CreateMollLocationPlot,
+    CreateSatellitePlot,
+    CreateSpectrumPlot
+)
 from morgoth.utils.env import get_env_value
 from morgoth.utils.upload_utils import (
     upload_grb_report,
-    upload_plot,
-    upload_datafile
+    upload_plot
 )
-from morgoth.balrog_handlers import ProcessFitResults
-from morgoth.plots import (
-    CreateLightcurve,
-    CreateLocationPlot,
-    CreateCornerPlot,
-    CreateMollLocationPlot,
-    CreateSatellitePlot,
-    CreateSpectrumPlot,
-    Create3DLocationPlot,
-    CreateBalrogSwiftPlot)
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 

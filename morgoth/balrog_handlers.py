@@ -1,17 +1,15 @@
+import os
+
 import luigi
 from luigi.contrib.external_program import ExternalProgramTask
-import os
-import shutil
 
+from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
+from morgoth.configuration import morgoth_config
 from morgoth.downloaders import DownloadTrigdat
 from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.trigger import OpenGBMFile
-from morgoth.utils.file_utils import if_directory_not_existing_then_make
-from morgoth.utils.package_data import get_path_of_data_file
 from morgoth.utils.env import get_env_value
 from morgoth.utils.result_reader import ResultReader
-from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
-from morgoth.configuration import morgoth_config
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 n_cores_multinest = morgoth_config["multinest"]["n_cores"]

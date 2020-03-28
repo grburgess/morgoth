@@ -1,6 +1,7 @@
-import pkg_resources
 import os
 from shutil import copyfile
+
+import pkg_resources
 
 
 def get_path_of_data_dir():
