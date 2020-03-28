@@ -31,7 +31,7 @@ model_param_lookup = {
 }
 
 
-def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_file, model):
+def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for ra and dec
     :return:
@@ -76,14 +76,13 @@ def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_fi
                                                                            colors="#cd5c5c", flip=False, kde=2.0,
                                                                            max_ticks=5)
 
-    save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_location_plot_{report_type}_{version}.png'
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
     c1.plotter.plot(filename=save_path,
                     figsize="column")
 
 
-def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_file, model):
+def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for all parameters
     :return:
@@ -99,13 +98,12 @@ def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_fi
     c2.add_chain(chain[:, :-1], parameters=parameter).configure(plot_hists=False, contour_labels='sigma',
                                                                 colors="#cd5c5c", flip=False, max_ticks=3)
 
-    save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_allcorner_plot_{report_type}_{version}.png'
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     c2.plotter.plot(filename=save_path,
                     figsize="column")
 
 
-def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, swift=None):
+def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, save_path, swift=None):
     # get earth pointing in icrs and the pointing of dets in icrs
 
     with fits.open(trigdat_file) as f:
@@ -232,12 +230,11 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
 
     # save figure
-    save_path = f'{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_molllocation_plot_{report_type}_{version}.png'
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec):
+def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec, save_path):
     """
     plot azimuth plot in sat frame to check if burst comes from the solar panel sides
     :return:
@@ -312,13 +309,12 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
                  label=f'{grb_name}', labelpos='N')
     ax.set_title(f'{grb_name} direction in the sat. frame', y=1.08)
 
-    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_satellite_plot_{report_type}_{version}.png"
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weights_file, swift=None):
+def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weights_file, save_path, swift=None):
     """
     If swift postion known make a small area plot with grb position, error contours and Swift position (in deg)
     This Plot has to be made AFTER the mollweide plot.
@@ -385,12 +381,11 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
         ax.grid(True)
 
         # save plot
-        save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_balrogswift_plot_{report_type}_{version}.png"
         file_utils.if_dir_containing_file_not_existing_then_make(save_path)
         fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file, trigdat_file, used_dets, model):
+def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file, trigdat_file, used_dets, model, save_path):
     # Plot 10 degree grid
     trace_grid = []
     phi_l = np.arange(-180, 181, 10)  # file size!#
@@ -720,7 +715,6 @@ def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file,
 
     output = plotly.offline.plot(fig, auto_open=False, output_type='div', include_plotlyjs=False, show_link=False)
 
-    save_path = f"{base_dir}/{grb_name}/{report_type}/{version}/plots/{grb_name}_3dlocation_plot_{report_type}_{version}.html"
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     with open(save_path, "w") as text_file:
         text_file.write(output)

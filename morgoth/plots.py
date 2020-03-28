@@ -120,7 +120,8 @@ class CreateLocationPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
-            model=result['fit_result']['model']
+            model=result['fit_result']['model'],
+            save_path=self.output().path
         )
 
 
@@ -145,7 +146,8 @@ class CreateCornerPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
-            model=result['fit_result']['model']
+            model=result['fit_result']['model'],
+            save_path=self.output().path
         )
 
 
@@ -179,7 +181,8 @@ class CreateMollLocationPlot(luigi.Task):
             model=result['fit_result']['model'],
             ra=result['fit_result']['ra'],
             dec=result['fit_result']['dec'],
-            swift=result['general']['swift']
+            swift=result['general']['swift'],
+            save_path=self.output().path
         )
 
 
@@ -209,6 +212,7 @@ class CreateSatellitePlot(luigi.Task):
             trigdat_file=self.input()['trigdat_file'].path,
             ra=result['fit_result']['ra'],
             dec=result['fit_result']['dec'],
+            save_path=self.output().path
         )
 
 
@@ -256,6 +260,7 @@ class Create3DLocationPlot(luigi.Task):
             post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
             used_dets=result['time_selection']['used_detectors'],
             model=result['fit_result']['model'],
+            save_path=self.output().path
         )
 
 
@@ -283,5 +288,6 @@ class CreateBalrogSwiftPlot(luigi.Task):
             model=result['fit_result']['model'],
             ra=result['fit_result']['ra'],
             dec=result['fit_result']['dec'],
-            swift=result['general']['swift']
+            swift=result['general']['swift'],
+            save_path=self.output().path
         )
