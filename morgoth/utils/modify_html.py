@@ -49,5 +49,5 @@ def restore_default():
         shutil.move(os.path.join(visualizer_dir, 'index_backup.html'), os.path.join(visualizer_dir, 'index.html'))
 
     # Delete custom skin
-    if not os.access(os.path.join(theme_css_dir, 'skin-mpe.min.css'), os.F_OK):
+    if os.access(os.path.join(theme_css_dir, 'skin-mpe.min.css'), os.F_OK):
         os.remove(os.path.join(theme_css_dir, 'skin-mpe.min.css'))
