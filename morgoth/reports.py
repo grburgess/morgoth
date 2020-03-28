@@ -34,10 +34,7 @@ class CreateReportTTE(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        report_name = f"tte_{self.version}_report_done.txt"
-        report_done = os.path.join(base_dir, self.grb_name, report_name)
-
-        os.system(f"touch {report_done}")
+        os.system(f"touch {self.output().path}")
 
 
 class CreateReportTrigdat(luigi.Task):
@@ -55,7 +52,4 @@ class CreateReportTrigdat(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        report_name = f"trigdat_{self.version}_report_done.txt"
-        report_done = os.path.join(base_dir, self.grb_name, report_name)
-
-        os.system(f"touch {report_done}")
+        os.system(f"touch {self.output().path}")
