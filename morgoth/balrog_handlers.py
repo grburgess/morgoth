@@ -6,6 +6,7 @@ from luigi.contrib.external_program import ExternalProgramTask
 from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
 from morgoth.configuration import morgoth_config
 from morgoth.downloaders import DownloadTrigdat
+from morgoth.exceptions.custom_exceptions import UnkownReportType
 from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.trigger import OpenGBMFile
 from morgoth.utils.env import get_env_value
@@ -43,7 +44,7 @@ class ProcessFitResults(luigi.Task):
 
         if self.report_type.lower() == "tte":
             return {
-                'gbm_file:': OpenGBMFile(grb=self.grb_name),
+                'gbm_file': OpenGBMFile(grb=self.grb_name),
                 'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
                 'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
                 'balrog': RunBalrogTTE(grb_name=self.grb_name),
@@ -51,14 +52,14 @@ class ProcessFitResults(luigi.Task):
 
         elif self.report_type.lower() == "trigdat":
             return {
-                'gbm_file:': OpenGBMFile(grb=self.grb_name),
+                'gbm_file': OpenGBMFile(grb=self.grb_name),
                 'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
                 'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
                 'balrog': RunBalrogTrigdat(grb_name=self.grb_name, version=self.version),
             }
 
         else:
-            return None
+            raise UnkownReportType(f"The report_type '{self.report_type}' is not valid!")
 
     def output(self):
         base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
@@ -87,6 +88,7 @@ class ProcessFitResults(luigi.Task):
 class RunBalrogTTE(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    always_log_stderr = True
 
     def requires(self):
         return {
@@ -128,6 +130,7 @@ class RunBalrogTTE(ExternalProgramTask):
 class RunBalrogTrigdat(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    always_log_stderr = True
     
     def requires(self):
         return {
