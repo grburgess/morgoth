@@ -57,7 +57,7 @@ def create_report_from_result(result):
 
             "version": result['general']['version'],
 
-            "model_type": model_lookup[result['localization']['model']],
+            "model_type": model_lookup[result['fit_result']['model']],
 
             "trigger_number": result['general']['trigger_number'],
 
@@ -65,74 +65,73 @@ def create_report_from_result(result):
 
             "data_timestamp": result['general']['data_timestamp'],
 
-            "localization_timestamp": result['localization']['localization_timestamp'],
+            "localization_timestamp": result['general']['localization_timestamp'],
 
-            "balrog_ra": result['localization']['ra'],
+            "balrog_ra": result['fit_result']['ra'],
 
-            "balrog_ra_err": result['localization']['ra_err'],
+            "balrog_ra_err": result['fit_result']['ra_err'],
 
-            "balrog_dec": result['localization']['dec'],
+            "balrog_dec": result['fit_result']['dec'],
 
-            "balrog_dec_err": result['localization']['dec_err'],
+            "balrog_dec_err": result['fit_result']['dec_err'],
 
             "swift_ra": result['general']['swift'].get('ra', None) if result['general']['swift'] is not None else None,
 
             "swift_dec": result['general']['swift'].get('dec', None) if result['general']['swift'] is not None else None,
 
-            "spec_K": result['localization']['spec_K'],
+            "spec_K": result['fit_result']['spec_K'],
 
-            "spec_K_err": result['localization']['spec_K_err'],
+            "spec_K_err": result['fit_result']['spec_K_err'],
 
-            "spec_index": result['localization']['spec_index'],
+            "spec_index": result['fit_result']['spec_index'],
 
-            "spec_index_err": result['localization']['spec_index_err'],
+            "spec_index_err": result['fit_result']['spec_index_err'],
 
-            "spec_xc": result['localization']['spec_xc'],
+            "spec_xc": result['fit_result']['spec_xc'],
 
-            "spec_xc_err": result['localization']['spec_xc_err'],
+            "spec_xc_err": result['fit_result']['spec_xc_err'],
 
-            "sat_phi": result['localization']['sat_phi'],
+            "sat_phi": result['fit_result']['sat_phi'],
 
-            "sat_theta": result['localization']['sat_theta'],
+            "sat_theta": result['fit_result']['sat_theta'],
 
-            "spec_alpha": result['localization']['spec_alpha'],
+            "spec_alpha": result['fit_result']['spec_alpha'],
 
-            "spec_alpha_err": result['localization']['spec_alpha_err'],
+            "spec_alpha_err": result['fit_result']['spec_alpha_err'],
 
-            "spec_xp": result['localization']['spec_xp'],
+            "spec_xp": result['fit_result']['spec_xp'],
 
-            "spec_xp_err": result['localization']['spec_xp_err'],
+            "spec_xp_err": result['fit_result']['spec_xp_err'],
 
-            "spec_beta": result['localization']['spec_beta'],
+            "spec_beta": result['fit_result']['spec_beta'],
 
-            "spec_beta_err": result['localization']['spec_beta_err'],
+            "spec_beta_err": result['fit_result']['spec_beta_err'],
 
-            "bkg_neg_start": result['localization']['bkg_neg_start'],
+            "bkg_neg_start": result['time_selection']['bkg_neg_start'],
 
-            "bkg_neg_stop": result['localization']['bkg_neg_stop'],
+            "bkg_neg_stop": result['time_selection']['bkg_neg_stop'],
 
-            "bkg_pos_start": result['localization']['bkg_pos_start'],
+            "bkg_pos_start": result['time_selection']['bkg_pos_start'],
 
-            "bkg_pos_stop": result['localization']['bkg_pos_stop'],
+            "bkg_pos_stop": result['time_selection']['bkg_pos_stop'],
 
-            "active_time_start": result['localization']['active_time_start'],
+            "active_time_start": result['time_selection']['active_time_start'],
 
-            "active_time_stop": result['localization']['active_time_stop'],
+            "active_time_stop": result['time_selection']['active_time_stop'],
 
-            "used_detectors": ', '.join(result['localization']['used_detectors']),
+            "used_detectors": ', '.join(str(det_nr) for det_nr in result['time_selection']['used_detectors']),
 
             "most_likely": result['general']['most_likely'],
 
             "second_most_likely": result['general']['second_most_likely'],
 
-            "balrog_one_sig_err_circle": result['localization']['balrog_one_sig_err_circle'],
+            "balrog_one_sig_err_circle": result['fit_result']['balrog_one_sig_err_circle'],
 
-            "balrog_two_sig_err_circle": result['localization']['balrog_two_sig_err_circle'],
+            "balrog_two_sig_err_circle": result['fit_result']['balrog_two_sig_err_circle'],
 
         }]
     }
     return report
-
 
 
 def upload_grb_report(grb_name, result):
@@ -276,8 +275,7 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name='
                 print('{}: {}'.format(response.status_code, response.text))
 
     if error_class is not None:
-       raise error_class('The plot file was empty')
-
+        raise error_class('The plot file was empty')
 
 
 def upload_datafile(grb_name, report_type, data_file, file_type, version):
@@ -338,4 +336,4 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
                 print('{}: {}'.format(response.status_code, response.text))
 
     if error_class is not None:
-       raise error_class('The datafile was empty')
+        raise error_class('The datafile was empty')
