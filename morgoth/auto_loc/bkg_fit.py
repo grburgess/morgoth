@@ -344,13 +344,13 @@ class BkgFittingTTE(object):
         file_utils.if_dir_containing_file_not_existing_then_make(path)
 
         bkg_fit_dict = {}
-        bkg_fit_dict['Bkg_Fits_Dir_Path'] = self._bkg_fits_dir_path
-        bkg_fit_dict['Lightcurve_Plots_Dir_Path'] = self._lightcurve_plots_dir_path
+        bkg_fit_dict['bkg_fits_files'] = self._bkg_fits_files
+        bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
         with open(self._trigdat_bkg_fitting_path, "r") as f:
-            bkg_fit_dict["Use_dets"] = yaml.load(f)["Use_dets"]
+            bkg_fit_dict["use_dets"] = yaml.safe_load(f)["use_dets"]
 
         with open(path, "w") as f:
-            yaml.dump(bkg_fit_dict, f)
+            yaml.dump(bkg_fit_dict, f, default_flow_style=False)
 
     @property
     def use_dets(self):
