@@ -73,7 +73,7 @@ class BackgroundFitTTE(luigi.ExternalTask):
 
         # Save background fit yaml
         bkg_fit.save_yaml(
-            self.output()['bkg_fit_yml']
+            self.output()['bkg_fit_yml'].path
         )
 
 
@@ -83,9 +83,8 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
 
     def requires(self):
         return {
+            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
             'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
-            'data_file:': DownloadTrigdat(grb_name=self.grb_name,
-                                          version=self.version)
         }
 
     def output(self):
@@ -103,6 +102,7 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
         bkg_fit = BkgFittingTrigdat(
             self.grb_name,
             self.version,
+            trigdat_file=self.input()['trigdat_file'].path,
             time_selection_file_path=self.input()['time_selection'].path
         )
 
@@ -118,5 +118,5 @@ class BackgroundFitTrigdat(luigi.ExternalTask):
 
         # Save background fit yaml
         bkg_fit.save_yaml(
-            self.output()['bkg_fit_yml']
+            self.output()['bkg_fit_yml'].path
         )
