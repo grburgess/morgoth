@@ -227,11 +227,11 @@ class MultinestFitTrigdat(object):
         if using_mpi:
             if rank == 0:
                 self._bayes.restore_median_fit()
-                self._bayes.results.write_to(fit_result_path)
+                self._bayes.results.write_to(fit_result_path, overwrite=True)
 
         else:
             self._bayes.restore_median_fit()
-            self._bayes.results.write_to(fit_result_path)
+            self._bayes.results.write_to(fit_result_path, overwrite=True)
 
     def move_chains_dir(self):
         """
@@ -382,8 +382,8 @@ class MultinestFitTTE(object):
                                            unbinned=False,
                                            verbose=True,
                                            container_type=BinnedSpectrumWithDispersion,
-                                           restore_poly_fit=os.path.join(self._bkg_fit_folder,
-                                                                         f"bkg_det{det}.h5"))
+                                           restore_poly_fit=self._bkg_fit_files[det]
+                                           )
 
                     success_restore = True
                     i = 0
@@ -541,11 +541,11 @@ class MultinestFitTTE(object):
         if using_mpi:
             if rank == 0:
                 self._bayes.restore_median_fit()
-                self._bayes.results.write_to(fit_result_path)
+                self._bayes.results.write_to(fit_result_path, overwrite=True)
 
         else:
             self._bayes.restore_median_fit()
-            self._bayes.results.write_to(fit_result_path)
+            self._bayes.results.write_to(fit_result_path, overwrite=True)
 
     def move_chains_dir(self):
         """
