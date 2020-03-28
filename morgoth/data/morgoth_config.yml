@@ -54,3 +54,20 @@ download:
 
       interval: 5
       max_time: 7200
+
+  cspec:
+
+    v00:
+
+      interval: 5
+      max_time: 7200
+
+    v01:
+
+      interval: 5
+      max_time: 7200
+
+    v02:
+
+      interval: 5
+      max_time: 7200
