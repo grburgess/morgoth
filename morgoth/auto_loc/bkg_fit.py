@@ -283,7 +283,7 @@ class BkgFittingTTE(object):
         # Max time from yaml file
         with open(self._time_selection_file_path, 'r') as f:
             data = yaml.load(f)
-            max_time = data['Max_Time']
+            max_time = data['max_time']
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
@@ -310,7 +310,7 @@ class BkgFittingTTE(object):
 
         for i, det_name in enumerate(_gbm_detectors):
             file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
-            self._ts[i].save_background(file_path)
+            self._ts[i].save_background(file_path, overwrite=True)
             self._bkg_fits_files[det_name] = file_path
 
     def save_yaml(self, path):
@@ -322,7 +322,7 @@ class BkgFittingTTE(object):
         file_utils.if_dir_containing_file_not_existing_then_make(path)
 
         bkg_fit_dict = {}
-        bkg_fit_dict['bkg_fits_files'] = self._bkg_fits_files
+        bkg_fit_dict['bkg_fit_files'] = self._bkg_fits_files
         bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
         with open(self._trigdat_bkg_fitting_path, "r") as f:
             bkg_fit_dict["use_dets"] = yaml.safe_load(f)["use_dets"]
