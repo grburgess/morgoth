@@ -20,7 +20,7 @@ _gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'n
 
 class BkgFittingTrigdat(object):
 
-    def __init__(self, grb_name, version, time_selection_file_path):
+    def __init__(self, grb_name, version, trigdat_file, time_selection_file_path):
         """
         Object used for fitting of the background in every detector and echan.
         :param grb_name: Name of GRB
@@ -29,6 +29,7 @@ class BkgFittingTrigdat(object):
         """
         self._grb_name = grb_name
         self._version = version
+        self._trigdat_file = trigdat_file
         self._time_selection_file_path = time_selection_file_path
 
         self._build_bkg_plugins()

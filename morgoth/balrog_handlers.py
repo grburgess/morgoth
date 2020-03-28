@@ -152,6 +152,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
             f"{fit_script_path}",
             f"{self.grb_name}",
             f"{self.version}",
+            f"{self.input()['trigdat_file'].path}",
             f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
             f"{self.input()['time_selection'].path}",
             f"trigdat"
