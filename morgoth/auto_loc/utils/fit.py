@@ -12,7 +12,9 @@ from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
 from threeML.utils.spectrum.binned_spectrum import BinnedSpectrumWithDispersion
 from threeML.utils.time_series.event_list import EventListWithDeadTime
-from trigdat_reader import *
+from trigdat_reader import TrigReader
+
+from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 
 _gbm_detectors = (
     "n0",
@@ -260,8 +262,7 @@ class MultinestFitTrigdat(object):
         if using_mpi:
             if rank == 0:
 
-                if not os.path.exists(os.path.join(base_dir, self._grb_name, "plots")):
-                    os.mkdir(os.path.join(base_dir, self._grb_name, "plots"))
+                if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
                     spectrum_plot = display_spectrum_model_counts(self._bayes,
@@ -278,8 +279,7 @@ class MultinestFitTrigdat(object):
 
         else:
 
-            if not os.path.exists(os.path.join(base_dir, self._grb_name, "plots")):
-                os.mkdir(os.path.join(base_dir, self._grb_name, "plots"))
+            if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
                 spectrum_plot = display_spectrum_model_counts(self._bayes,
@@ -574,8 +574,7 @@ class MultinestFitTTE(object):
         if using_mpi:
             if rank == 0:
 
-                if not os.path.exists(os.path.join(base_dir, self._grb_name, "plots")):
-                    os.mkdir(os.path.join(base_dir, self._grb_name, "plots"))
+                if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
                     spectrum_plot = display_spectrum_model_counts(self._bayes,
@@ -591,8 +590,7 @@ class MultinestFitTTE(object):
 
         else:
 
-            if not os.path.exists(os.path.join(base_dir, self._grb_name, "plots")):
-                os.mkdir(os.path.join(base_dir, self._grb_name, "plots"))
+            if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
                 spectrum_plot = display_spectrum_model_counts(self._bayes,
