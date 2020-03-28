@@ -296,7 +296,7 @@ class MultinestFitTrigdat(object):
 
 class MultinestFitTTE(object):
 
-    def __init__(self, grb_name, version, bkg_fit_yaml_file, time_selection_yaml_file):
+    def __init__(self, grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file):
         """
         Initalize MultinestFit for Balrog
         :param grb_name: Name of GRB
@@ -317,12 +317,11 @@ class MultinestFitTTE(object):
 
         with open(self._time_selection_yaml_file, "r") as f:
             data = yaml.safe_load(f)
-            self._active_time = data["active_time"]
 
-        for i in range(3):
-            self._trigdat_file = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_v0{i}.fit")
-            if os.path.exists(self._trigdat_file):
-                break
+            self._active_time_start = data['active_time']['start']
+            self._active_time_stop = data['active_time']['stop']
+
+        self._trigdat_file = trigdat_file
 
         self._set_plugins()
         self._define_model()
@@ -339,8 +338,8 @@ class MultinestFitTTE(object):
         for det in self._use_dets:
 
             # set up responses
-            tte_file = f"{base_dir}/{self._grb_name}/glg_tte_{det}_bn{self._grb_name[3:]}_{self._version}.fit"
-            cspec_file = f"{base_dir}/{self._grb_name}/glg_cspec_{det}_bn{self._grb_name[3:]}_{self._version}.pha"
+            tte_file = f"{base_dir}/{self._grb_name}/tte/data/glg_tte_{det}_bn{self._grb_name[3:]}_{self._version}.fit"
+            cspec_file = f"{base_dir}/{self._grb_name}/tte/data/glg_cspec_{det}_bn{self._grb_name[3:]}_{self._version}.pha"
 
             rsp = drm.DRMGenTTE(tte_file=tte_file,
                                 trigdat=self._trigdat_file,
@@ -351,19 +350,20 @@ class MultinestFitTTE(object):
 
             # Time Series
             gbm_tte_file = GBMTTEFile(tte_file)
-            event_list = EventListWithDeadTime(arrival_times=gbm_tte_file.arrival_times - \
-                                                             gbm_tte_file.trigger_time,
-                                               measurement=gbm_tte_file.energies,
-                                               n_channels=gbm_tte_file.n_channels,
-                                               start_time=gbm_tte_file.tstart - \
-                                                          gbm_tte_file.trigger_time,
-                                               stop_time=gbm_tte_file.tstop - \
-                                                         gbm_tte_file.trigger_time,
-                                               dead_time=gbm_tte_file.deadtime,
-                                               first_channel=0,
-                                               instrument=gbm_tte_file.det_name,
-                                               mission=gbm_tte_file.mission,
-                                               verbose=True)
+
+            event_list = EventListWithDeadTime(
+                arrival_times=gbm_tte_file.arrival_times - gbm_tte_file.trigger_time,
+                measurement=gbm_tte_file.energies,
+                n_channels=gbm_tte_file.n_channels,
+                start_time=gbm_tte_file.tstart - gbm_tte_file.trigger_time,
+                stop_time=gbm_tte_file.tstop - gbm_tte_file.trigger_time,
+                dead_time=gbm_tte_file.deadtime,
+                first_channel=0,
+                instrument=gbm_tte_file.det_name,
+                mission=gbm_tte_file.mission,
+                verbose=True
+            )
+
             success_restore = False
             i = 0
             while not success_restore:
@@ -385,17 +385,11 @@ class MultinestFitTTE(object):
                 if i == 50:
                     raise AssertionError("Can not restore background fit...")
 
-            ts.set_active_time_interval(self._active_time)
+            ts.set_active_time_interval(f"{self._active_time_start}-{self._active_time_stop}")
             det_ts.append(ts)
 
         # Mean of active time
-        active_time_step = self._active_time.split('-')
-        if len(active_time_step) == 2:
-            rsp_time = (float(active_time_step[0]) + float(active_time_step[1])) / 2
-        elif len(active_time_step) == 3:
-            rsp_time = (float(active_time_step[1]) + float(active_time_step[2])) / 2
-        else:
-            rsp_time = (float(active_time_step[1]) + float(active_time_step[3])) / 2
+        rsp_time = (float(self._active_time_start) + float(self._active_time_stop)) / 2
 
         # Spectrum Like
         det_sl = []
