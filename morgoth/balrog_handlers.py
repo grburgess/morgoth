@@ -79,10 +79,11 @@ class ProcessFitResults(luigi.Task):
             trigger_file=self.input()['gbm_file'].path,
             time_selection_file=self.input()['time_selection'].path,
             background_file=self.input()['bkg_fit']['bkg_fit_yml'].path,
+            post_equal_weights_file=self.input()['balrog']['post_equal_weights'].path,
             result_file=self.input()['balrog']['fit_result'].path,
         )
 
-        result_reader.save_result_yml(self.output()['result'].path)
+        result_reader.save_result_yml(self.output()['result_file'].path)
 
 
 class RunBalrogTTE(ExternalProgramTask):
