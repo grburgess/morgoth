@@ -15,6 +15,7 @@ from gbmgeometry import gbm_detector_list
 from gbm_drm_gen.io.balrog_healpix_map import BALROGHealpixMap
 
 from morgoth.utils.env import get_env_value
+import morgoth.utils.file_utils as file_utils
 
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
