@@ -19,6 +19,19 @@ class ResultReader(object):
         self.report_type = report_type
         self.version = version
 
+        self._K = None
+        self._K_err = None
+        self._index = None
+        self._index_err = None
+        self._xc = None
+        self._xc_err = None
+        self._alpha = None
+        self._alpha_err = None
+        self._xp = None
+        self._xp_err = None
+        self._beta = None
+        self._beta_err = None
+
         # read trigger output
         self._read_trigger(trigger_file)
 
@@ -160,7 +173,7 @@ class ResultReader(object):
     def _read_background_fit(self, background_fit_file):
         with open(background_fit_file, 'r') as f:
             data = yaml.safe_load(f)
-            self._used_detectors = data['used_detectors']
+            self._used_detectors = data['use_dets']
 
     def _read_post_equal_weights_file(self, post_equal_weights_file):
 
@@ -195,37 +208,37 @@ class ResultReader(object):
 
                 "model": self._model,
 
-                "ra": self._ra,
+                "ra": convert_to_float(self._ra),
 
-                "ra_err": self._ra_err,
+                "ra_err": convert_to_float(self._ra_err),
 
-                "dec": self._dec,
+                "dec": convert_to_float(self._dec),
 
-                "dec_err": self._dec_err,
+                "dec_err": convert_to_float(self._dec_err),
 
-                "spec_K": self._K,
+                "spec_K": convert_to_float(self._K),
 
-                "spec_K_err": self._K_err,
+                "spec_K_err": convert_to_float(self._K_err),
 
-                "spec_index": self._index,
+                "spec_index": convert_to_float(self._index),
 
-                "spec_index_err": self._index_err,
+                "spec_index_err": convert_to_float(self._index_err),
 
-                "spec_xc": self._xc,
+                "spec_xc": convert_to_float(self._xc),
 
-                "spec_xc_err": self._xc_err,
+                "spec_xc_err": convert_to_float(self._xc_err),
 
-                "spec_alpha": self._alpha,
+                "spec_alpha": convert_to_float(self._alpha),
 
-                "spec_alpha_err": self._alpha_err,
+                "spec_alpha_err": convert_to_float(self._alpha_err),
 
-                "spec_xp": self._xp,
+                "spec_xp": convert_to_float(self._xp),
 
-                "spec_xp_err": self._xp_err,
+                "spec_xp_err": convert_to_float(self._xp_err),
 
-                "spec_beta": self._beta,
+                "spec_beta": convert_to_float(self._beta),
 
-                "spec_beta_err": self._beta_err,
+                "spec_beta_err": convert_to_float(self._beta_err),
 
                 "sat_phi": 15,
 
@@ -337,7 +350,7 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
                                                                 colors="#cd5c5c", flip=False, max_ticks=3)
 
     # Calculate err radius #
-    chains, parameters, truth, extents, blind = c2.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
+    chains, parameters, truth, extents, blind, log_scales = c2.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
 
     summ = c2.analysis.get_summary(parameters=['ra (deg)', 'dec (deg)'], chains=chains, squeeze=False)[0]
     ra = summ['ra (deg)'][1]
@@ -403,9 +416,15 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
     return ra, ra_err, dec, dec_err, alpha_one_sigma, alpha_two_sigma
 
 
-def loadtxt2d(self, intext):
+def loadtxt2d(intext):
     try:
         return np.loadtxt(intext, ndmin=2)
     except:
         return np.loadtxt(intext)
 
+
+def convert_to_float(value):
+    if value is not None:
+        return float(value)
+    else:
+        return None
