@@ -1,9 +1,10 @@
 import os
 
 import luigi
+import yaml
 from luigi.contrib.external_program import ExternalProgramTask
 
-from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat
+from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat, GatherTrigdatBackgroundFit
 from morgoth.configuration import morgoth_config
 from morgoth.downloaders import DownloadTrigdat
 from morgoth.exceptions.custom_exceptions import UnkownReportType
@@ -93,6 +94,7 @@ class RunBalrogTTE(ExternalProgramTask):
 
     def requires(self):
         return {
+                'trigdat_version': GatherTrigdatBackgroundFit(grb_name=self.grb_name),
                 'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
                 'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
             }
@@ -106,10 +108,16 @@ class RunBalrogTTE(ExternalProgramTask):
             'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
             'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
                                                                  f'tte_{self.version}_post_equal_weights.dat')),
-            'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
+        # Get the first trigdat version and gather the result of the background
+        with self.input()['trigdat_version'].open() as f:
+            trigdat_version = yaml.safe_load(f)['trigdat_version']
+
+        trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=trigdat_version).output()
+
         fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
         command = [
@@ -120,7 +128,7 @@ class RunBalrogTTE(ExternalProgramTask):
             f"{fit_script_path}",
             f"{self.grb_name}",
             f"{self.version}",
-            f"",  # Trigdat file
+            f"{trigdat_file.path}",
             f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
             f"{self.input()['time_selection'].path}",
             f"tte"
@@ -149,7 +157,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
             'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
             'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
                                                                  f'trigdat_{self.version}_post_equal_weights.dat')),
-            'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
