@@ -90,15 +90,13 @@ class CreateLightcurve(luigi.Task):
         return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
 
     def output(self):
+        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
         filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
+        return luigi.LocalTarget(os.path.join(base_job, 'plots', 'lightcurves', filename))
 
     def run(self):
-        filename = f"{self.grb_name}_lightcurve_{self.report_type}_detector_{self.detector}_plot_{self.version}.png"
-
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
-
-        os.system(f"touch {tmp}")
+        # The lightcurve is created in the background fit Task, this task will check if the creation was successful
+        pass
 
 
 class CreateLocationPlot(luigi.Task):
