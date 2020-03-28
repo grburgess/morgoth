@@ -20,10 +20,11 @@ class TimeSelectionHandler(luigi.ExternalTask):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
 
     def run(self):
-        time_selection = TimeSelection(self.grb_name, self.version)
+        time_selection = TimeSelection(
+            grb_name=self.grb_name,
+            version=self.version,
+            trigdat_file=self.input().path)
 
-        filename = "time_selection.yml"
-
-        tmp = os.path.join(base_dir, self.grb_name, filename)
-
-        time_selection.save_yaml(tmp)
+        time_selection.save_yaml(
+            os.path.join(base_dir, self.grb_name, "time_selection.yml")
+        )
