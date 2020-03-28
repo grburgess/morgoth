@@ -43,6 +43,11 @@ def check_grb_on_website(grb_name):
 
 
 def create_report_from_result(result):
+    if result['general']['report_type'] == 'trigdat':
+        web_version = result['general']['version']
+    else:
+        web_version = f"{result['general']['report_type']}_{result['general']['version']}"
+
     report = {
 
         "name": result['general']['grb_name'],
@@ -55,7 +60,7 @@ def create_report_from_result(result):
 
         "grb_params": [{
 
-            "version": result['general']['version'],
+            "version": web_version,
 
             "model_type": model_lookup[result['fit_result']['model']],
 

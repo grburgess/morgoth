@@ -187,6 +187,8 @@ class ResultReader(object):
 
                 "grb_name": f'{self.grb_name}',
 
+                "report_type": f'{self.report_type}',
+
                 "version": f'{self.version}',
 
                 "trigger_number": self._trigger_number,
