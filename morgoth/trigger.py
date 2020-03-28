@@ -135,10 +135,6 @@ def parse_trigger_file_and_write(root):
 
     directory = os.path.join(base_dir, burst_name)
     if_directory_not_existing_then_make(directory)
-    if_directory_not_existing_then_make(os.path.join(directory, 'tte', 'v00', 'plots'))
-    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v00', 'plots'))
-    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v01', 'plots'))
-    if_directory_not_existing_then_make(os.path.join(directory, 'trigdat', 'v02', 'plots'))
 
     out_file_writer.write(os.path.join(directory, "grb_parameters.yml"))
 
