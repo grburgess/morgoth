@@ -4,6 +4,7 @@ import luigi
 import yaml
 
 from morgoth.balrog_handlers import ProcessFitResults
+from morgoth.downloaders import DownloadTrigdat
 from morgoth.utils.env import get_env_value
 from morgoth.utils.plot_utils import (
     azimuthal_plot_sat_frame,
@@ -65,8 +66,7 @@ class CreateAllLightcurves(luigi.Task):
             "na": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="na", version=self.version),
             "nb": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="nb", version=self.version),
             "b0": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b0", version=self.version),
-            "b1": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b1", version=self.version),
-            "b2": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b2", version=self.version)
+            "b1": CreateLightcurve(grb_name=self.grb_name, report_type=self.report_type, detector="b1", version=self.version)
         }
 
     def output(self):
@@ -112,7 +112,7 @@ class CreateLocationPlot(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         create_corner_loc_plot(
@@ -120,7 +120,7 @@ class CreateLocationPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
-            model=result['localization']['model']
+            model=result['fit_result']['model']
         )
 
 
@@ -137,7 +137,7 @@ class CreateCornerPlot(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         create_corner_all_plot(
@@ -145,7 +145,7 @@ class CreateCornerPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
-            model=result['localization']['model']
+            model=result['fit_result']['model']
         )
 
 
@@ -155,7 +155,10 @@ class CreateMollLocationPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+        }
 
     def output(self):
         filename = f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/plots/" \
@@ -163,19 +166,19 @@ class CreateMollLocationPlot(luigi.Task):
         return luigi.LocalTarget(filename)
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         mollweide_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
-            post_equal_weights_file=self.input()['post_equal_weights'].path,
-            used_dets=result['localization']['used_detectors'],
-            model=result['localization']['model'],
-            ra=result['localization']['ra'],
-            dec=result['localization']['dec'],
+            trigdat_file=self.input()['trigdat_file'].path,
+            post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
+            used_dets=result['time_selection']['used_detectors'],
+            model=result['fit_result']['model'],
+            ra=result['fit_result']['ra'],
+            dec=result['fit_result']['dec'],
             swift=result['general']['swift']
         )
 
@@ -186,23 +189,26 @@ class CreateSatellitePlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+        }
 
     def output(self):
         filename = f"{self.grb_name}_satellite_plot_{self.report_type}_{self.version}.png"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         azimuthal_plot_sat_frame(
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
-            ra=result['localization']['ra'],
-            dec=result['localization']['dec'],
+            trigdat_file=self.input()['trigdat_file'].path,
+            ra=result['fit_result']['ra'],
+            dec=result['fit_result']['dec'],
         )
 
 
@@ -219,10 +225,8 @@ class CreateSpectrumPlot(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        filename = f"{self.grb_name}_spectrum_plot_{self.report_type}_{self.version}.png"
-        tmp = os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename)
-
-        os.system(f"touch {tmp}")
+        # The spectrum plot is created in the balrog fit Task, this task will check if the creation was successful
+        pass
 
 
 class Create3DLocationPlot(luigi.Task):
@@ -231,24 +235,27 @@ class Create3DLocationPlot(luigi.Task):
     version = luigi.Parameter(default="v00")
 
     def requires(self):
-        return ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version)
+        return {
+            'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
+            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+        }
 
     def output(self):
         filename = f"{self.grb_name}_3dlocation_plot_{self.report_type}_{self.version}.html"
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         interactive_3D_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
-            post_equal_weights_file=self.input()['post_equal_weights'].path,
-            used_dets=result['localization']['used_detectors'],
-            model=result['localization']['model'],
+            trigdat_file=self.input()['trigdat_file'].path,
+            post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
+            used_dets=result['time_selection']['used_detectors'],
+            model=result['fit_result']['model'],
         )
 
 
@@ -265,7 +272,7 @@ class CreateBalrogSwiftPlot(luigi.Task):
         return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, self.report_type, self.version, 'plots', filename))
 
     def run(self):
-        with self.input()['result'].open() as f:
+        with self.input()['result_file'].open() as f:
             result = yaml.safe_load(f)
 
         swift_gbm_plot(
@@ -273,8 +280,8 @@ class CreateBalrogSwiftPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
-            model=result['localization']['model'],
-            ra=result['localization']['ra'],
-            dec=result['localization']['dec'],
+            model=result['fit_result']['model'],
+            ra=result['fit_result']['ra'],
+            dec=result['fit_result']['dec'],
             swift=result['general']['swift']
         )
