@@ -9,6 +9,9 @@ luigi_package_dir = os.path.dirname(luigi.__file__)
 
 
 def modify_index_html():
+    # First restore to the original version, to make replace work
+    restore_default()
+
     visualizer_dir = os.path.join(luigi_package_dir, 'static', 'visualiser')
     theme_css_dir = os.path.join(luigi_package_dir, 'static', 'visualiser', 'lib', 'AdminLTE', 'css')
 
@@ -25,7 +28,9 @@ def modify_index_html():
         filedata = f.read()
 
     # Modify Navbar Headline
-    filedata = filedata.replace("Luigi Task Status", "Morgoth Task Status")
+    filedata = filedata.replace("Luigi Task Status", "<b>Morgoth</b> Pipeline")
+
+    filedata = filedata.replace("<title>Luigi Task Visualiser</title>", "<title>Morgoth Pipeline</title>")
 
     # Modify theme
     filedata = filedata.replace("""<link href="lib/AdminLTE/css/skin-green-light.min.css" rel="stylesheet"/>""",
@@ -40,7 +45,7 @@ def restore_default():
     theme_css_dir = os.path.join(luigi_package_dir, 'static', 'visualiser', 'lib', 'AdminLTE', 'css')
 
     # Restore backup of index.html if backup existing
-    if not os.access(os.path.join(visualizer_dir, 'index_backup.html'), os.F_OK):
+    if os.access(os.path.join(visualizer_dir, 'index_backup.html'), os.F_OK):
         shutil.move(os.path.join(visualizer_dir, 'index_backup.html'), os.path.join(visualizer_dir, 'index.html'))
 
     # Delete custom skin

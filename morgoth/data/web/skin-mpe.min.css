@@ -26,6 +26,7 @@
 
 .skin-green-light .main-header .navbar .sidebar-toggle:hover {
     background-color: #3d7b77;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 767px) {
@@ -61,7 +62,7 @@
 }
 
 .skin-green-light .wrapper, .skin-green-light .main-sidebar, .skin-green-light .left-side {
-    background: #1a2226;
+    background: #222d32;
 }
 
 .skin-green-light .content-wrapper, .skin-green-light .main-footer {
