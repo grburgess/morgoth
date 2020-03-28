@@ -2,6 +2,7 @@ import os
 
 import gbm_drm_gen as drm
 import numpy as np
+import re
 import yaml
 from gbm_drm_gen.io.balrog_drm import BALROG_DRM
 from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
@@ -97,7 +98,7 @@ class BkgFittingTrigdat(object):
         for det_name in _gbm_detectors:
             file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
 
-            self._trigdat_time_series[det_name].save_background(file_path)
+            self._trigdat_time_series[det_name].save_background(file_path, overwrite=True)
             self._bkg_fits_files[det_name] = file_path
 
     def _choose_dets(self):
@@ -198,7 +199,8 @@ class BkgFittingTrigdat(object):
 
 class BkgFittingTTE(object):
 
-    def __init__(self, grb_name, version, time_selection_file_path, bkg_fitting_file_path):
+    def __init__(self, grb_name, version, trigdat_file, tte_files, cspec_files,
+                 time_selection_file_path, bkg_fitting_file_path):
         """
         Object used for fitting of the background in every detector and echan for tte data.
         :param grb_name: Name of GRB
@@ -211,8 +213,13 @@ class BkgFittingTTE(object):
         self._time_selection_file_path = time_selection_file_path
         self._trigdat_bkg_fitting_path = bkg_fitting_file_path
 
+        self._trigdat_file = trigdat_file
+
+        # Create dictionaries containing the tte and cspec files
+        self._tte_files = {re.search("glg_tte_(.*?)_bn", file.path).group(1): file.path for file in tte_files}
+        self._cspec_files = {re.search("glg_cspec_(.*?)_bn", file.path).group(1): file.path for file in cspec_files}
+
         self._build_bkg_plugins()
-        # self._choose_dets()
 
     def _build_bkg_plugins(self):
         """
@@ -230,34 +237,28 @@ class BkgFittingTTE(object):
 
         det_ts = []
 
-        for i in range(3):
-            trigdat_file = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_v0{i}.fit")
-            if os.path.exists(trigdat_file):
-                break
-
         for det in _gbm_detectors:
-            tte_file = f"{base_dir}/{self._grb_name}/glg_tte_{det}_bn{self._grb_name[3:]}_{self._version}.fit"
-            cspec_file = f"{base_dir}/{self._grb_name}/glg_cspec_{det}_bn{self._grb_name[3:]}_{self._version}.pha"
-
             # Response Setup
 
-            rsp = BALROG_DRM(drm.DRMGenTTE(tte_file=tte_file, trigdat=trigdat_file, mat_type=2, cspecfile=cspec_file), 0.0, 0.0)
+            rsp = BALROG_DRM(drm.DRMGenTTE(tte_file=self._tte_files[det],
+                                           trigdat=self._trigdat_file,
+                                           mat_type=2,
+                                           cspecfile=self._cspec_files[det]), 0.0, 0.0)
 
             # Time Series
-            gbm_tte_file = GBMTTEFile(tte_file)
-            event_list = EventListWithDeadTime(arrival_times=gbm_tte_file.arrival_times - \
-                                                             gbm_tte_file.trigger_time,
-                                               measurement=gbm_tte_file.energies,
-                                               n_channels=gbm_tte_file.n_channels,
-                                               start_time=gbm_tte_file.tstart - \
-                                                          gbm_tte_file.trigger_time,
-                                               stop_time=gbm_tte_file.tstop - \
-                                                         gbm_tte_file.trigger_time,
-                                               dead_time=gbm_tte_file.deadtime,
-                                               first_channel=0,
-                                               instrument=gbm_tte_file.det_name,
-                                               mission=gbm_tte_file.mission,
-                                               verbose=True)
+            gbm_tte_file = GBMTTEFile(self._tte_files[det])
+            event_list = EventListWithDeadTime(
+                arrival_times=gbm_tte_file.arrival_times - gbm_tte_file.trigger_time,
+                measurement=gbm_tte_file.energies,
+                n_channels=gbm_tte_file.n_channels,
+                start_time=gbm_tte_file.tstart - gbm_tte_file.trigger_time,
+                stop_time=gbm_tte_file.tstop - gbm_tte_file.trigger_time,
+                dead_time=gbm_tte_file.deadtime,
+                first_channel=0,
+                instrument=gbm_tte_file.det_name,
+                mission=gbm_tte_file.mission,
+                verbose=True
+            )
 
             ts = TimeSeriesBuilder(det,
                                    event_list,
@@ -270,28 +271,6 @@ class BkgFittingTTE(object):
             ts.set_background_interval(background_time_neg, background_time_pos)
             ts.set_active_time_interval(active_time)
             det_ts.append(ts)
-
-        # Get start and stop of active
-
-        # split_activetime = active_time.split('-')
-        # if split_activetime[0]=='':
-        #    start = -float(split_activetime[1])
-        #    if split_activetime[2]=='':
-        #        stop = -float(split_activetime[3])
-        #    else:
-        #        stop = float(split_activetime[2])
-        # else:
-        #    start = float(split_activetime[0])
-        #    stop = float(split_activetime[1])
-
-        # det_ts[-1].create_time_bins(start=start,stop=stop, method='constant', dt=0.1)
-        # tstart = ts.bins.starts
-        # tstop = ts.bins.stops
-        # active_time = '{}-{}'.format(tstart[0],tstop[0])
-        # det_ts[-1].set_active_time_interval(active_time)
-        # for ts in det_ts[:-1]:
-        #    ts.set_active_time_interval(active_time)
-        #    ts.create_time_bins(start=tstart, stop=tstop, method='custom')
 
         self._ts = det_ts
 
