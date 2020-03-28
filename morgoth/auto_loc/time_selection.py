@@ -114,8 +114,10 @@ class TimeSelection(object):
 
     def set_background_time_pos(self, tstart=None, tstop=None, string=None):
 
-        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
-        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
+        assert string is None or (tstart is None and tstop is None), \
+            'Only use string definition or start and stop time definition!'
+        assert string is not None or (tstart is not None and tstop is not None), \
+            'String definition and start and stop time are both set to None!'
 
         if string is not None:
             self._background_time_pos = string
@@ -124,8 +126,10 @@ class TimeSelection(object):
 
     def set_background_time_neg(self, tstart=None, tstop=None, string=None):
 
-        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
-        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
+        assert string is None or (tstart is None and tstop is None), \
+            'Only use string definition or start and stop time definition!'
+        assert string is not None or (tstart is not None and tstop is not None), \
+            'String definition and start and stop time are both set to None!'
 
         if string is not None:
             self._background_time_neg = string
@@ -134,8 +138,10 @@ class TimeSelection(object):
 
     def set_active_time(self, tstart=None, tstop=None, string=None):
 
-        assert string == None or (tstart == None and tstop == None), 'Only use string definition or start and stop time definition!'
-        assert string != None or (tstart != None and tstop != None), 'String definition and start and stop time are both set to None!'
+        assert string is None or (tstart is None and tstop is None), \
+            'Only use string definition or start and stop time definition!'
+        assert string is not None or (tstart is not None and tstop is not None), \
+            'String definition and start and stop time are both set to None!'
 
         if string is not None:
             self._active_time = string
