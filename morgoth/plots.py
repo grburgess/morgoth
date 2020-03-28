@@ -119,7 +119,7 @@ class CreateLocationPlot(luigi.Task):
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            datapath=self.input()['post_equal_weights'].path,
+            post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['localization']['model']
         )
 
@@ -144,7 +144,7 @@ class CreateCornerPlot(luigi.Task):
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            datapath=self.input()['post_equal_weights'].path,
+            post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['localization']['model']
         )
 
@@ -171,7 +171,7 @@ class CreateMollLocationPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
-            post_equal_weigts_file=self.input()['post_equal_weights'].path,
+            post_equal_weights_file=self.input()['post_equal_weights'].path,
             used_dets=result['localization']['used_detectors'],
             model=result['localization']['model'],
             ra=result['localization']['ra'],
@@ -246,7 +246,7 @@ class Create3DLocationPlot(luigi.Task):
             report_type=self.report_type,
             version=self.version,
             trigdat_file=f"{base_dir}/{self.grb_name}/glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit",
-            post_equal_weigts_file=self.input()['post_equal_weights'].path,
+            post_equal_weights_file=self.input()['post_equal_weights'].path,
             used_dets=result['localization']['used_detectors'],
             model=result['localization']['model'],
         )
@@ -272,7 +272,7 @@ class CreateBalrogSwiftPlot(luigi.Task):
             grb_name=self.grb_name,
             report_type=self.report_type,
             version=self.version,
-            post_equal_weigts_file=self.input()['post_equal_weights'].path,
+            post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['localization']['model'],
             ra=result['localization']['ra'],
             dec=result['localization']['dec'],
