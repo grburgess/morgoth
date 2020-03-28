@@ -41,15 +41,24 @@ class TimeSelection(object):
 
         sigma_lims = [100, 50, 30, 10, 7, 5, 3]
         for sigma_lim in sigma_lims:
-            new_background_selection_neg, new_background_selection_pos, active_time, max_time = \
-                newIntervalWholeCalc(sigma_lim, trig_reader)
-            # set active_time new and set background selection new => new background fit with this selection                                                                                                                                                               
-            trig_reader.set_active_time_interval(active_time)
-            trig_reader.set_background_selections(new_background_selection_neg, new_background_selection_pos)
+            bkg_neg_start, bkg_neg_stop, bkg_pos_start, bkg_pos_stop, active_time_start, active_time_stop, max_time = \
+                get_new_intervals(sigma_lim, trig_reader)
 
-        self._background_time_neg = new_background_selection_neg
-        self._background_time_pos = new_background_selection_pos
-        self._active_time = active_time
+            # set active_time new and set background selection new => new background fit with this selection                                                                                                                                                               
+            trig_reader.set_active_time_interval(f'{active_time_start}-{active_time_stop}')
+            trig_reader.set_background_selections(f'{bkg_neg_start}-{bkg_neg_stop}',
+                                                  f'{bkg_pos_start}-{bkg_pos_stop}')
+
+        self._bkg_neg_start = bkg_neg_start
+        self._bkg_neg_stop = bkg_neg_stop
+        self._bkg_pos_start = bkg_pos_start
+        self._bkg_pos_stop = bkg_pos_stop
+        self._active_time_start = active_time_start
+        self._active_time_stop = active_time_stop
+
+        self._background_time_neg = f'{bkg_neg_start}-{bkg_neg_stop}'
+        self._background_time_pos = f'{bkg_pos_start}-{bkg_pos_stop}'
+        self._active_time = f'{active_time_start}-{active_time_stop}'
         self._max_time = max_time
 
     def save_yaml(self, path):
@@ -58,17 +67,28 @@ class TimeSelection(object):
         :param path: Path where to save the yaml file
         :return:
         """
-        time_select = {}
-
-        time_select['Active_Time'] = self._active_time
-        time_select['Background_Time'] = {'Time_Before': self._background_time_neg,
-                                          'Time_After': self._background_time_pos}
-        time_select['Max_Time'] = self._max_time
+        time_select = {
+            'active_time': {
+                'start': self._active_time_start,
+                'stop': self._active_time_stop
+            },
+            'background_time': {
+                'before': {
+                    'start': self._bkg_neg_start,
+                    'stop': self._bkg_neg_stop
+                },
+                'after': {
+                    'start': self._bkg_pos_start,
+                    'stop': self._bkg_pos_stop
+                }
+            },
+            'max_time': self._max_time,
+            'poly_order': -1
+        }
 
         # Poly_Order entry with -1 (default). But we need this entry in the
         # yaml file to give us the possibility to alter it if we see that it screws up one of
         # the det fits
-        time_select['Poly_Order'] = -1
 
         with open(path, "w") as outfile:
             yaml.dump(time_select, outfile, default_flow_style=False)
@@ -125,4 +145,4 @@ class TimeSelection(object):
 
     def set_max_time(self, max_time):
 
-        self.max_time = max_time
+        self._max_time = max_time

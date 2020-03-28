@@ -40,26 +40,22 @@ class BkgFittingTrigdat(object):
         Build the background plugins for all dets
         :return:
         """
-
-        trigger_path = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_{self._version}.fit")
-
         # Time selection from yaml file
         with open(self._time_selection_file_path, 'r') as f:
-            data = yaml.load(f)
-            active_time = data['Active_Time']
-            background_time_neg = data['Background_Time']['Time_Before']
-            background_time_pos = data['Background_Time']['Time_After']
-            poly_order = data['Poly_Order']
+            data = yaml.safe_load(f)
+            active_time = data['active_time']
+            bkg_time_neg = data['background_time']['before']
+            bkg_time_pos = data['background_time']['after']
+            poly_order = data['poly_order']
 
-        self._trig_reader = TrigReader(trigger_path,
+        self._trig_reader = TrigReader(self._trigdat_file,
                                        fine=False,
                                        verbose=False,
                                        poly_order=poly_order)
 
-        self._trig_reader.set_active_time_interval(active_time)
-
-        self._trig_reader.set_background_selections(background_time_neg,
-                                                    background_time_pos)
+        self._trig_reader.set_active_time_interval(f"{active_time['start']}-{active_time['stop']}")
+        self._trig_reader.set_background_selections(f"{bkg_time_neg['start']}-{bkg_time_neg['stop']}",
+                                                    f"{bkg_time_pos['start']}-{bkg_time_pos['stop']}")
 
         self._trigdat_time_series = self._trig_reader._time_series
 
@@ -75,7 +71,7 @@ class BkgFittingTrigdat(object):
         # Max time from yaml file
         with open(self._time_selection_file_path, 'r') as f:
             data = yaml.load(f)
-            max_time = data['Max_Time']
+            max_time = data['max_time']
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
@@ -224,14 +220,14 @@ class BkgFittingTTE(object):
         Build the background plugins for all dets
         :return:
         """
-
         # Time selection from yaml file
         with open(self._time_selection_file_path, 'r') as f:
-            data = yaml.load(f)
-            active_time = data['Active_Time']
-            background_time_neg = data['Background_Time']['Time_Before']
-            background_time_pos = data['Background_Time']['Time_After']
-            poly_order = data['Poly_Order']
+            data = yaml.safe_load(f)
+
+            active_time = f"{data['active_time']['start']}-{data['active_time']['stop']}"
+            background_time_neg = f"{data['background_time']['before']['start']}-{data['background_time']['before']['stop']}"
+            background_time_pos = f"{data['background_time']['after']['start']}-{data['background_time']['after']['stop']}"
+            poly_order = data['poly_order']
 
         det_ts = []
 

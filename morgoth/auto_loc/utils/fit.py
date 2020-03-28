@@ -319,13 +319,13 @@ class MultinestFitTTE(object):
 
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
-            data = yaml.load(f)
-            self._use_dets = np.array(_gbm_detectors)[np.array(data["Use_dets"])]
-            self._bkg_fit_folder = data["Bkg_Fits_Dir_Path"]
+            data = yaml.safe_load(f)
+            self._use_dets = np.array(_gbm_detectors)[np.array(data["use_dets"])]
+            self._bkg_fit_files = data["bkg_fit_files"]
 
         with open(self._time_selection_yaml_file, "r") as f:
-            data = yaml.load(f)
-            self._active_time = data["Active_Time"]
+            data = yaml.safe_load(f)
+            self._active_time = data["active_time"]
 
         for i in range(3):
             self._trigdat_file = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_v0{i}.fit")

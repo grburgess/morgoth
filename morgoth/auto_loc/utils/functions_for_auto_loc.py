@@ -270,7 +270,7 @@ def new_intervals(time_intervals_all):
     return sr_large_min, sr_small_max, max_time, end_of_active
 
 
-def newIntervalWholeCalc(sigma_lim, trig_reader):
+def get_new_intervals(sigma_lim, trig_reader):
     # get data and bkg rate for all bins
     observed, background = trig_reader.observed_and_background()
     residuals = []
@@ -288,14 +288,26 @@ def newIntervalWholeCalc(sigma_lim, trig_reader):
     # get new intervals out of the new time_intervals_all
     sr_large_min, sr_small_max, max_time, end_of_active = new_intervals(time_intervals_all)
     # define the new selection
-    new_background_selection_neg = str(-150) + '-' + str(sr_small_max - 20)
-    new_background_selection_pos = str(sr_large_min) + '-' + str(max_time)
+
+    new_bkg_neg_start = -150
+    new_bkg_neg_stop = sr_small_max - 20
+
+    new_bkg_pos_start = sr_large_min
+    new_bkg_pos_stop = max_time
+
     # define active time + cut it down to 15 sec if it is too long
     # if end_of_active - sr_small_max < 2:
     #    active_time = str(sr_small_max) + '-' + str(sr_small_max + 2)
     # else:
-    active_time = active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop)
-    return new_background_selection_neg, new_background_selection_pos, active_time, max_time
+    active_time_start, active_time_stop = active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop)
+
+    return new_bkg_neg_start, \
+           new_bkg_neg_stop, \
+           new_bkg_pos_start, \
+           new_bkg_pos_stop, \
+           active_time_start, \
+           active_time_stop, \
+           max_time
 
 
 def active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop):
@@ -380,160 +392,25 @@ def active_time_selection(observed, background, sr_small_max, end_of_active, tst
 
     if len(index_list) > 0:
         if tstop[index_list[np.argmax(index_list)]] - tstart[index_list[np.argmin(index_list)]] < 10:
-            active_time = str(tstart[index_list[np.argmin(index_list)]]) + '-' + str(tstop[index_list[np.argmax(index_list)]])
+            active_time_start = tstart[index_list[np.argmin(index_list)]]
+            active_time_stop = tstop[index_list[np.argmax(index_list)]]
+
         elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] > 5 and tstart[max_index] - tstart[index_list[np.argmin(index_list)]] > 5:
-            active_time = str(tstart[max_index] - 5) + '-' + str(tstart[max_index] + 5)
+            active_time_start = tstart[max_index] - 5
+            active_time_stop = tstart[max_index] + 5
+
         elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] < 5:
-            active_time = str(tstart[max_index] - (10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index]))) + '-' + str(
-                tstop[index_list[np.argmax(index_list)]])
+            active_time_start = tstart[max_index] - (10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index]))
+            active_time_stop = tstop[index_list[np.argmax(index_list)]]
+
         else:
-            active_time = str(tstart[index_list[np.argmin(index_list)]]) + '-' + str(
-                tstart[max_index] + (10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]])))
+            active_time_start = tstart[index_list[np.argmin(index_list)]]
+            active_time_stop = tstart[max_index] + (10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]]))
+
     else:
-        active_time = str(tstart[max_index]) + '-' + str(tstop[max_index])
-    print("Active Time: {}".format(active_time))
-    return active_time
-    """
-    max_indices=[]
-    max_rate=[]
-    i=0
-    while i<len(observed):
-        max_indices.append(np.argmax(observed[i]))
-        max_rate.append(observed[i][np.argmax(observed[i])])
-        i+=1
-    br = np.argmax(max_rate)
-    br_index = max_indices[br]
-    br_rate = observed[br][br_index]
-    time_br = tstart[br_index]
-    i=0
-    found_low=False
-    found_high=False
-    while i<len(tstart)-1:
-        if tstart[i]>sr_small_max and not found_low:
-            low_index=i
-            found_low = True
-        if tstart[i+1]>end_of_active and not found_high:
-            high_index=i
-            found_high = True
-        i+=1
-    index_list = []
-    index = br_index-1
-    while index>=low_index:
-        observed[br][index]-background[br][index]<(observed[br][br_index]-background[br][br_index])
-        if -tstart[index]+tstart[br_index]<10 and observed[br][index]-background[br][index]>0:
-            if observed[br][index-1]>observed[br][index]:
-                test1 = False
-            else:
-                test1 = True
-            if observed[br][index-2]>observed[br][index]:
-                test2 = False
-            else:
-                test2 = True
-            if observed[br][index-3]>observed[br][index]:
-                test3 = False
-            else:
-                test3 = True
+        active_time_start = tstart[max_index]
+        active_time_stop = tstop[max_index]
 
-            if test1 or test2 or test3:
-                index_list.append(index)
-                index-=1
-            else:
-                index=0
-        else:
-            index=0
-        if observed[br][index]-background[br][index]<(observed[br][br_index]-background[br][br_index])/3 and observed[br][index-1]-background[br][index-1]<(observed[br][br_index]-background[br][br_index])/3:
-            index=0
+    print(f"Active Time: {active_time_start}-{active_time_stop}")
+    return float(active_time_start), float(active_time_stop)
 
-        #Quit peak area if the obs - back < (obs - back |max)/2 for two following time bins
-        #Quit if obs-back<0
-    index = br_index+1
-    while index<=high_index:
-        if tstart[index]-tstart[br_index]<7.5 and observed[br][index]-background[br][index]>0:
-            
-            if observed[br][index+1]>observed[br][index]:
-                test1 = False
-            else:
-                test1 = True
-            if observed[br][index+2]>observed[br][index]:
-                test2 = False
-            else:
-                test2 = True
-            if observed[br][index+3]>observed[br][index]:
-                test3 = False
-            else:
-                test3 = True
-
-            if test1 or test2 or test3:
-                index_list.append(index)
-                index+=1
-            else:
-                index=100*high_index
-        else:
-            index=100*high_index
-        if observed[br][index]-background[br][index]<(observed[br][br_index]-background[br][br_index])/3 and observed[br][index+1]-background[br][index+1]<(observed[br][br_index]-background[br][br_index])/3:
-            index=100*high_index
-
-    #check if there is a peak before the highest peak
-    new_br = []
-    i=3
-    while i<br_index:
-        #search a peak in the time before the highest peak
-
-        #3 tests to identify a new significant peak before the highest peak
-        test1=False
-        test2=False
-        test3=False
-        #Test 1: check if the three time bins after this bin have a lower rate
-        if observed[br][br_index-i]>observed[br][br_index-i+1] and observed[br][br_index-i]>observed[br][br_index-i+2] and observed[br][br_index-i]>observed[br][br_index-i+3] and observed[br][br_index-i]>observed[br][br_index-i+4] and observed[br][br_index-i]>observed[br][br_index-i+5]:
-            test1=True
-        #Test 2: check if the three time bins before this bin have a lower rate (only test if test 1 returns True 
-        if test1 and observed[br][br_index-i]>observed[br][br_index-i-1] and observed[br][br_index-i]>observed[br][br_index-i-2] and observed[br][br_index-i]>observed[br][br_index-i-3] and observed[br][br_index-i]>observed[br][br_index-i-4] and observed[br][br_index-i]>observed[br][br_index-i-5]:
-            test2=True
-        #Test 3: check if this time bin rate is >0.5 the rate of the highest peak (background subtracted)
-        if test1 and test2 and observed[br][br_index-i]-background[br][br_index-i]>0.5*observed[br][br_index]-background[br][br_index]:
-            print("rate-back bin")
-            print(observed[br][br_index-i]-background[br][br_index-i])
-            print("rate-back highest bin")
-            print(observed[br][br_index]-background[br][br_index])
-            test3=True
-        #if all tests True a new significant peak is found
-        if test1 and test2 and test3:
-            new_br.append(br_index-i)
-        #if we arrive at a time bin with time<0 stop the search
-        print(br_index-i)
-        print(tstart[br_index-1])
-        if tstart[br_index-i]<0:
-            i=2*br_index
-        i+=1
-    print("New_Br:")
-    print(new_br)
-    print("Times new Br:")
-    print(tstart[new_br])
-    new_br=[]#### Turns off the search for a peak before the highest peak!###
-    if len(index_list)>0:
-        if len(new_br)>0:
-            active_time = str(tstart[new_br[-1]])+ '-'+ str(tstart[new_br[-1]]+2)
-            print(active_time)
-        else:
-            if tstop[index_list[np.argmax(index_list)]]-tstart[index_list[np.argmin(index_list)]]<2:                                                                                                                                                                              
-                active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstop[index_list[np.argmax(index_list)]])                                                                                                                                                  
-            elif tstop[index_list[np.argmax(index_list)]] - tstart[br_index]>1 and tstart[br_index]-tstart[index_list[np.argmin(index_list)]]>1:                                                                                                                                  
-                #active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstart[index_list[np.argmin(index_list)]]+2)
-                active_time = str(tstart[br_index]-1)+ '-'+ str(tstart[br_index]+1)                                                                                                                                                                                               
-            elif tstop[index_list[np.argmax(index_list)]] - tstart[br_index]<1:                                                                                                                                                                                                   
-                active_time = str(tstart[br_index]-(2-(tstop[index_list[np.argmax(index_list)]]-tstart[br_index])))+ '-'+ str(tstop[index_list[np.argmax(index_list)]])                                                                                                           
-            else:                                                                                                                                                                                                                                                                 
-                active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstart[br_index]+(2-(tstart[br_index]-tstart[index_list[np.argmin(index_list)]])))
-        #pick two second area around peak
-        #if tstop[index_list[np.argmax(index_list)]]-tstart[index_list[np.argmin(index_list)]]<2:
-        #    active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstop[index_list[np.argmax(index_list)]])
-        #elif tstop[index_list[np.argmax(index_list)]] - tstart[br_index]>1 and tstart[br_index]-tstart[index_list[np.argmin(index_list)]]>1:
-        #    active_time = str(tstart[br_index]-1)+ '-'+ str(tstart[br_index]+1)
-        #elif tstop[index_list[np.argmax(index_list)]] - tstart[br_index]<1:
-        #    active_time = str(tstart[br_index]-(2-(tstop[index_list[np.argmax(index_list)]]-tstart[br_index])))+ '-'+ str(tstop[index_list[np.argmax(index_list)]])
-        #else:
-        #    active_time = str(tstart[index_list[np.argmin(index_list)]])+ '-'+ str(tstart[br_index]+(2-(tstart[br_index]-tstart[index_list[np.argmin(index_list)]])))
-    else:
-        active_time = str(tstart[br_index]-1)+ '-'+ str(tstop[br_index]+1)
-    return active_time
-    """
