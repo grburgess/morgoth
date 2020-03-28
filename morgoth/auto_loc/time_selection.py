@@ -9,7 +9,7 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 class TimeSelection(object):
 
-    def __init__(self, grb_name, version):
+    def __init__(self, grb_name, version, trigdat_file):
         """
         Object for time selection of a GRB event.
         :param grb_name: Name of GRB
@@ -17,6 +17,7 @@ class TimeSelection(object):
         """
         self._grb_name = grb_name
         self._version = version
+        self._trigdat_file = trigdat_file
 
         self.trigdata_time_selection()
 
@@ -25,9 +26,7 @@ class TimeSelection(object):
         Function to calcuate the time selection for a given trigger event. This is done iterative.
         :return:
         """
-        trigger_path = os.path.join(base_dir, self._grb_name, f"glg_trigdat_all_bn{self._grb_name[3:]}_{self._version}.fit")
-
-        trig_reader = TrigReader(trigger_path,
+        trig_reader = TrigReader(self._trigdat_file,
                                  fine=False,
                                  verbose=False)
 
