@@ -309,12 +309,15 @@ class BkgFittingTTE(object):
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
+        self._lightcurve_plots = {}
 
-        self._lightcurve_plots_dir_path = dir_path
+        for det_name, ts in zip(_gbm_detectors, self._ts):
+            file_path = os.path.join(dir_path, f"{self._grb_name}_lightcurve_tte_detector_{det_name}_plot_{self._version}.png")
 
-        for det, ts in zip(_gbm_detectors, self._ts):
             fig = ts.view_lightcurve(start=-150, stop=float(max_time))
-            fig.savefig(os.path.join(dir_path, f"{self._grb_name}_lightcurve_tte_detector_{det}_plot_{self._version}.png"), dpi=350, bbox_inches='tight')
+            fig.savefig(file_path, dpi=350, bbox_inches='tight')
+
+            self._lightcurve_plots[det_name] = file_path
 
     def save_bkg_file(self, dir_path):
         """
@@ -325,10 +328,12 @@ class BkgFittingTTE(object):
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
-        self._bkg_fits_dir_path = dir_path
+        self._bkg_fits_files = {}
 
-        for i, d in enumerate(_gbm_detectors):
-            self._ts[i].save_background(os.path.join(dir_path, f'bkg_det{d}.h5'))
+        for i, det_name in enumerate(_gbm_detectors):
+            file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
+            self._ts[i].save_background(file_path)
+            self._bkg_fits_files[det_name] = file_path
 
     def save_yaml(self, path):
         """
