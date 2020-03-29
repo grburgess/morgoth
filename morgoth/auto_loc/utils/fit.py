@@ -12,7 +12,8 @@ from threeML.utils.data_builders.fermi.gbm_data import GBMTTEFile
 from threeML.utils.data_builders.time_series_builder import TimeSeriesBuilder
 from threeML.utils.spectrum.binned_spectrum import BinnedSpectrumWithDispersion
 from threeML.utils.time_series.event_list import EventListWithDeadTime
-from trigdat_reader import TrigReader
+from morgoth.utils.trig_reader import TrigReader
+
 
 from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 

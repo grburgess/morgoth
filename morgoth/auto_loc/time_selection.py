@@ -1,7 +1,7 @@
 import os
 
 import yaml
-from trigdat_reader import *
+from morgoth.utils.trig_reader import TrigReader
 
 from morgoth.auto_loc.utils.functions_for_auto_loc import *
 
