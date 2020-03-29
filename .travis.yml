@@ -7,7 +7,7 @@ compiler:
   - gcc
 
 env:
-  NUMBA_DISABLE_JIT=1 MULTINEST_TAG=v3.10 WITHMPI=no
+  NUMBA_DISABLE_JIT=1 MULTINEST_TAG=v3.10 WITHMPI=no MORGOTH_BASE_URL=http://grb.mpe.mpg.de MORGOTH_AUTH_TOKEN=1234
   
 before_install:
   - sudo apt-get install -qq libblas{3,-dev} liblapack{3,-dev} libatlas{3-base,-dev} cmake build-essential git gfortran
