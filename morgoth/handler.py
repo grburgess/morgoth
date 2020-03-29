@@ -6,7 +6,7 @@ import gcn
 from morgoth import morgoth_config
 from morgoth.trigger import parse_trigger_file_and_write
 
-n_workers = int(morgoth_config['luigi']["n_workers"])
+n_workers = int(morgoth_config["luigi"]["n_workers"])
 
 
 @gcn.include_notice_types(

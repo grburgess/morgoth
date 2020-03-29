@@ -9,7 +9,6 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelection(object):
-
     def __init__(self, grb_name, version, trigdat_file):
         """
         Object for time selection of a GRB event.
@@ -27,27 +26,35 @@ class TimeSelection(object):
         Function to calcuate the time selection for a given trigger event. This is done iterative.
         :return:
         """
-        trig_reader = TrigReader(self._trigdat_file,
-                                 fine=False,
-                                 verbose=False)
+        trig_reader = TrigReader(self._trigdat_file, fine=False, verbose=False)
 
         # Inital bkg and active time selection - We will change this recursivly to explain most of
         # the bkg by a polynomial
-        trig_reader.set_active_time_interval('0-0')
-        trig_reader.set_background_selections('-150-0', '0-150')
+        trig_reader.set_active_time_interval("0-0")
+        trig_reader.set_background_selections("-150-0", "0-150")
 
         # In several steps cut away data from background section that are at least in one
         # detector above the sigma_lim value
 
         sigma_lims = [100, 50, 30, 10, 7, 5, 3]
         for sigma_lim in sigma_lims:
-            bkg_neg_start, bkg_neg_stop, bkg_pos_start, bkg_pos_stop, active_time_start, active_time_stop, max_time = \
-                get_new_intervals(sigma_lim, trig_reader)
+            (
+                bkg_neg_start,
+                bkg_neg_stop,
+                bkg_pos_start,
+                bkg_pos_stop,
+                active_time_start,
+                active_time_stop,
+                max_time,
+            ) = get_new_intervals(sigma_lim, trig_reader)
 
-            # set active_time new and set background selection new => new background fit with this selection                                                                                                                                                               
-            trig_reader.set_active_time_interval(f'{active_time_start}-{active_time_stop}')
-            trig_reader.set_background_selections(f'{bkg_neg_start}-{bkg_neg_stop}',
-                                                  f'{bkg_pos_start}-{bkg_pos_stop}')
+            # set active_time new and set background selection new => new background fit with this selection
+            trig_reader.set_active_time_interval(
+                f"{active_time_start}-{active_time_stop}"
+            )
+            trig_reader.set_background_selections(
+                f"{bkg_neg_start}-{bkg_neg_stop}", f"{bkg_pos_start}-{bkg_pos_stop}"
+            )
 
         self._bkg_neg_start = bkg_neg_start
         self._bkg_neg_stop = bkg_neg_stop
@@ -56,9 +63,9 @@ class TimeSelection(object):
         self._active_time_start = active_time_start
         self._active_time_stop = active_time_stop
 
-        self._background_time_neg = f'{bkg_neg_start}-{bkg_neg_stop}'
-        self._background_time_pos = f'{bkg_pos_start}-{bkg_pos_stop}'
-        self._active_time = f'{active_time_start}-{active_time_stop}'
+        self._background_time_neg = f"{bkg_neg_start}-{bkg_neg_stop}"
+        self._background_time_pos = f"{bkg_pos_start}-{bkg_pos_stop}"
+        self._active_time = f"{active_time_start}-{active_time_stop}"
         self._max_time = max_time
 
     def save_yaml(self, path):
@@ -68,22 +75,16 @@ class TimeSelection(object):
         :return:
         """
         time_select = {
-            'active_time': {
-                'start': self._active_time_start,
-                'stop': self._active_time_stop
+            "active_time": {
+                "start": self._active_time_start,
+                "stop": self._active_time_stop,
             },
-            'background_time': {
-                'before': {
-                    'start': self._bkg_neg_start,
-                    'stop': self._bkg_neg_stop
-                },
-                'after': {
-                    'start': self._bkg_pos_start,
-                    'stop': self._bkg_pos_stop
-                }
+            "background_time": {
+                "before": {"start": self._bkg_neg_start, "stop": self._bkg_neg_stop},
+                "after": {"start": self._bkg_pos_start, "stop": self._bkg_pos_stop},
             },
-            'max_time': self._max_time,
-            'poly_order': -1
+            "max_time": self._max_time,
+            "poly_order": -1,
         }
 
         # Poly_Order entry with -1 (default). But we need this entry in the
@@ -115,39 +116,45 @@ class TimeSelection(object):
 
     def set_background_time_pos(self, tstart=None, tstop=None, string=None):
 
-        assert string is None or (tstart is None and tstop is None), \
-            'Only use string definition or start and stop time definition!'
-        assert string is not None or (tstart is not None and tstop is not None), \
-            'String definition and start and stop time are both set to None!'
+        assert string is None or (
+            tstart is None and tstop is None
+        ), "Only use string definition or start and stop time definition!"
+        assert string is not None or (
+            tstart is not None and tstop is not None
+        ), "String definition and start and stop time are both set to None!"
 
         if string is not None:
             self._background_time_pos = string
         else:
-            self._background_time_pos = '{}-{}'.format(tstart, tstop)
+            self._background_time_pos = "{}-{}".format(tstart, tstop)
 
     def set_background_time_neg(self, tstart=None, tstop=None, string=None):
 
-        assert string is None or (tstart is None and tstop is None), \
-            'Only use string definition or start and stop time definition!'
-        assert string is not None or (tstart is not None and tstop is not None), \
-            'String definition and start and stop time are both set to None!'
+        assert string is None or (
+            tstart is None and tstop is None
+        ), "Only use string definition or start and stop time definition!"
+        assert string is not None or (
+            tstart is not None and tstop is not None
+        ), "String definition and start and stop time are both set to None!"
 
         if string is not None:
             self._background_time_neg = string
         else:
-            self._background_time_neg = f'{tstart}-{tstop}'
+            self._background_time_neg = f"{tstart}-{tstop}"
 
     def set_active_time(self, tstart=None, tstop=None, string=None):
 
-        assert string is None or (tstart is None and tstop is None), \
-            'Only use string definition or start and stop time definition!'
-        assert string is not None or (tstart is not None and tstop is not None), \
-            'String definition and start and stop time are both set to None!'
+        assert string is None or (
+            tstart is None and tstop is None
+        ), "Only use string definition or start and stop time definition!"
+        assert string is not None or (
+            tstart is not None and tstop is not None
+        ), "String definition and start and stop time are both set to None!"
 
         if string is not None:
             self._active_time = string
         else:
-            self._active_time = f'{tstart}-{tstop}'
+            self._active_time = f"{tstart}-{tstop}"
 
     def set_max_time(self, max_time):
 

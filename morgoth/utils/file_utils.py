@@ -86,7 +86,7 @@ def if_dir_containing_file_not_existing_then_make(filename):
 
     sanitized_directory = sanitize_filename(filename)
 
-    if '.' in os.path.basename(sanitized_directory):
+    if "." in os.path.basename(sanitized_directory):
         sanitized_directory = os.path.dirname(sanitized_directory)
 
     if not os.path.exists(sanitized_directory):

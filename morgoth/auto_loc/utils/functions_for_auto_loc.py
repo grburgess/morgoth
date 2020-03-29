@@ -31,11 +31,13 @@ class PoissonResiduals(object):
     # Make the interpolator here so we do it only once. Also use ext=3 so that the interpolation
     # will return the maximum value instead of extrapolating
 
-    _interpolator = scipy.interpolate.InterpolatedUnivariateSpline(_logy[::-1], _x[::-1], k=1, ext=3)
+    _interpolator = scipy.interpolate.InterpolatedUnivariateSpline(
+        _logy[::-1], _x[::-1], k=1, ext=3
+    )
 
     def __init__(self, Non, Noff, alpha=1.0):
 
-        assert alpha > 0 and alpha <= 1, 'alpha was %f' % alpha
+        assert alpha > 0 and alpha <= 1, "alpha was %f" % alpha
 
         self.Non = np.array(Non, dtype=float, ndmin=1)
 
@@ -90,7 +92,7 @@ class PoissonResiduals(object):
 
         out = np.zeros_like(x)
 
-        idx = (cdf >= 2 * self._epsilon)
+        idx = cdf >= 2 * self._epsilon
 
         # We can do a direct computation, because the numerical precision is sufficient
         # for this computation, as -sf = cdf - 1 is a representable number
@@ -111,7 +113,7 @@ class Significance(object):
     """
 
     def __init__(self, Non, Noff, alpha=1):
-        assert alpha > 0 and alpha <= 1, 'alpha was %f' % alpha
+        assert alpha > 0 and alpha <= 1, "alpha was %f" % alpha
 
         self.Non = np.array(Non, dtype=float, ndmin=1)
 
@@ -139,7 +141,9 @@ class Significance(object):
 
         # Poisson probability of obtaining Non given Noff * alpha, in sigma units
 
-        poisson_probability = PoissonResiduals(self.Non, self.Noff, self.alpha).significance_one_side()
+        poisson_probability = PoissonResiduals(
+            self.Non, self.Noff, self.alpha
+        ).significance_one_side()
 
         return poisson_probability
 
@@ -174,7 +178,10 @@ def time_with_less_sigma(residuals, tstart, tstop, sigma_lim):
                 else:
                     i += 1
             elif len(index_del) > 2:
-                if index_del[i - 1] != index_del[i] - 1 and index_del[i + 1] != index_del[i] + 1:
+                if (
+                    index_del[i - 1] != index_del[i] - 1
+                    and index_del[i + 1] != index_del[i] + 1
+                ):
                     del index_del[i]
                 else:
                     i += 1
@@ -262,8 +269,8 @@ def new_intervals(time_intervals_all):
     if sr_large_min > 100:
         max_time = sr_large_min + 50
     # new bkg selection
-    print('-150-' + str(sr_small_max - 20))
-    print(str(sr_large_min) + '-' + str(max_time))
+    print("-150-" + str(sr_small_max - 20))
+    print(str(sr_large_min) + "-" + str(max_time))
     # new background selection: from -100 to -20 sec from the above defined min. value and from the above
     # defined max value (to make sure to not be in the tail of the burst) to max_time
     return sr_large_min, sr_small_max, max_time, end_of_active
@@ -275,8 +282,7 @@ def get_new_intervals(sigma_lim, trig_reader):
     residuals = []
     i = 0
     while i < len(observed):
-        significance_calc = Significance(observed[i],
-                                         background[i])
+        significance_calc = Significance(observed[i], background[i])
         residuals.append(significance_calc.known_background())
         i += 1
     # get the start and stop times for all time bins
@@ -285,7 +291,9 @@ def get_new_intervals(sigma_lim, trig_reader):
     # this is done for each detector (ignore when only one time bin is above)
     time_intervals_all = time_with_less_sigma(residuals, tstart, tstop, sigma_lim)
     # get new intervals out of the new time_intervals_all
-    sr_large_min, sr_small_max, max_time, end_of_active = new_intervals(time_intervals_all)
+    sr_large_min, sr_small_max, max_time, end_of_active = new_intervals(
+        time_intervals_all
+    )
     # define the new selection
 
     new_bkg_neg_start = -150
@@ -298,18 +306,24 @@ def get_new_intervals(sigma_lim, trig_reader):
     # if end_of_active - sr_small_max < 2:
     #    active_time = str(sr_small_max) + '-' + str(sr_small_max + 2)
     # else:
-    active_time_start, active_time_stop = active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop)
+    active_time_start, active_time_stop = active_time_selection(
+        observed, background, sr_small_max, end_of_active, tstart, tstop
+    )
 
-    return new_bkg_neg_start, \
-           new_bkg_neg_stop, \
-           new_bkg_pos_start, \
-           new_bkg_pos_stop, \
-           active_time_start, \
-           active_time_stop, \
-           max_time
+    return (
+        new_bkg_neg_start,
+        new_bkg_neg_stop,
+        new_bkg_pos_start,
+        new_bkg_pos_stop,
+        active_time_start,
+        active_time_stop,
+        max_time,
+    )
 
 
-def active_time_selection(observed, background, sr_small_max, end_of_active, tstart, tstop):
+def active_time_selection(
+    observed, background, sr_small_max, end_of_active, tstart, tstop
+):
     observed = np.sum(observed, axis=0)
     background = np.sum(background, axis=0)
     rate = observed - background
@@ -357,7 +371,10 @@ def active_time_selection(observed, background, sr_small_max, end_of_active, tst
                 index = 0
         else:
             index = 0
-        if rate[index] < (rate[max_index]) / 10 and rate[index - 1] < (rate[max_index]) / 10:
+        if (
+            rate[index] < (rate[max_index]) / 10
+            and rate[index - 1] < (rate[max_index]) / 10
+        ):
             index = 0
 
     index = max_index + 1
@@ -384,27 +401,41 @@ def active_time_selection(observed, background, sr_small_max, end_of_active, tst
 
             if index <= high_index:
 
-                if rate[index] < (rate[max_index]) / 10 and rate[index + 1] < (rate[max_index]) / 10:
+                if (
+                    rate[index] < (rate[max_index]) / 10
+                    and rate[index + 1] < (rate[max_index]) / 10
+                ):
                     index = 100 * high_index
         else:
             index = 100 * high_index
 
     if len(index_list) > 0:
-        if tstop[index_list[np.argmax(index_list)]] - tstart[index_list[np.argmin(index_list)]] < 10:
+        if (
+            tstop[index_list[np.argmax(index_list)]]
+            - tstart[index_list[np.argmin(index_list)]]
+            < 10
+        ):
             active_time_start = tstart[index_list[np.argmin(index_list)]]
             active_time_stop = tstop[index_list[np.argmax(index_list)]]
 
-        elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] > 5 and tstart[max_index] - tstart[index_list[np.argmin(index_list)]] > 5:
+        elif (
+            tstop[index_list[np.argmax(index_list)]] - tstart[max_index] > 5
+            and tstart[max_index] - tstart[index_list[np.argmin(index_list)]] > 5
+        ):
             active_time_start = tstart[max_index] - 5
             active_time_stop = tstart[max_index] + 5
 
         elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] < 5:
-            active_time_start = tstart[max_index] - (10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index]))
+            active_time_start = tstart[max_index] - (
+                10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index])
+            )
             active_time_stop = tstop[index_list[np.argmax(index_list)]]
 
         else:
             active_time_start = tstart[index_list[np.argmin(index_list)]]
-            active_time_stop = tstart[max_index] + (10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]]))
+            active_time_stop = tstart[max_index] + (
+                10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]])
+            )
 
     else:
         active_time_start = tstart[max_index]
@@ -412,4 +443,3 @@ def active_time_selection(observed, background, sr_small_max, end_of_active, tst
 
     print(f"Active Time: {active_time_start}-{active_time_stop}")
     return float(active_time_start), float(active_time_stop)
-

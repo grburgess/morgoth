@@ -52,8 +52,14 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class MultinestFitTrigdat(object):
-
-    def __init__(self, grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file):
+    def __init__(
+        self,
+        grb_name,
+        version,
+        trigdat_file,
+        bkg_fit_yaml_file,
+        time_selection_yaml_file,
+    ):
         """
         Initalize MultinestFit for Balrog
         :param grb_name: Name of GRB
@@ -75,7 +81,9 @@ class MultinestFitTrigdat(object):
 
         with open(self._time_selection_yaml_file, "r") as f:
             data = yaml.safe_load(f)
-            self._active_time = f"{data['active_time']['start']}-{data['active_time']['stop']}"
+            self._active_time = (
+                f"{data['active_time']['start']}-{data['active_time']['stop']}"
+            )
 
         self._trigdat_file = trigdat_file
 
@@ -91,10 +99,12 @@ class MultinestFitTrigdat(object):
         i = 0
         while not success_restore:
             try:
-                trig_reader = TrigReader(self._trigdat_file,
-                                         fine=False,
-                                         verbose=False,
-                                         restore_poly_fit=self._bkg_fit_files)
+                trig_reader = TrigReader(
+                    self._trigdat_file,
+                    fine=False,
+                    verbose=False,
+                    restore_poly_fit=self._bkg_fit_files,
+                )
                 success_restore = True
                 i = 0
             except:
@@ -109,13 +119,13 @@ class MultinestFitTrigdat(object):
 
         self._data_list = DataList(*trig_data)
 
-    def _define_model(self, spectrum='cpl'):
+    def _define_model(self, spectrum="cpl"):
         """
         Define a Model for the fit
         :param spectrum: Which spectrum type should be used (cpl, band, pl, sbpl or solar_flare)
         """
         # data_list=comm.bcast(data_list, root=0)
-        if spectrum == 'cpl':
+        if spectrum == "cpl":
             # we define the spectral model
             cpl = Cutoff_powerlaw()
             cpl.K.max_value = 10 ** 4
@@ -123,9 +133,9 @@ class MultinestFitTrigdat(object):
             cpl.xc.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             cpl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource('GRB_cpl_', 0., 0., spectral_shape=cpl))
+            self._model = Model(PointSource("GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
 
-        elif spectrum == 'band':
+        elif spectrum == "band":
 
             band = Band()
             band.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=1200)
@@ -133,18 +143,18 @@ class MultinestFitTrigdat(object):
             band.xp.prior = Log_uniform_prior(lower_bound=10, upper_bound=1e4)
             band.beta.set_uninformative_prior(Uniform_prior)
 
-            self._model = Model(PointSource('GRB_band', 0., 0., spectral_shape=band))
+            self._model = Model(PointSource("GRB_band", 0.0, 0.0, spectral_shape=band))
 
-        elif spectrum == 'pl':
+        elif spectrum == "pl":
 
             pl = Powerlaw()
             pl.K.max_value = 10 ** 4
             pl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10 ** 4)
             pl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource('GRB_pl', 0., 0., spectral_shape=pl))
+            self._model = Model(PointSource("GRB_pl", 0.0, 0.0, spectral_shape=pl))
 
-        elif spectrum == 'sbpl':
+        elif spectrum == "sbpl":
 
             sbpl = SmoothlyBrokenPowerLaw()
             sbpl.K.min_value = 1e-5
@@ -154,9 +164,9 @@ class MultinestFitTrigdat(object):
             sbpl.beta.set_uninformative_prior(Uniform_prior)
             sbpl.break_energy.min_value = 1
             sbpl.break_energy.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
-            self._model = Model(PointSource('GRB_sbpl', 0., 0., spectral_shape=sbpl))
+            self._model = Model(PointSource("GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
 
-        elif spectrum == 'solar_flare':
+        elif spectrum == "solar_flare":
 
             # broken powerlaw
             bpl = Broken_powerlaw()
@@ -177,9 +187,11 @@ class MultinestFitTrigdat(object):
             # combined
             total = bpl + tb
 
-            self._model = Model(PointSource('Solar_flare', 0., 0., spectral_shape=total))
+            self._model = Model(
+                PointSource("Solar_flare", 0.0, 0.0, spectral_shape=total)
+            )
         else:
-            raise Exception('Use valid model type: cpl, pl, sbpl, band or solar_flare')
+            raise Exception("Use valid model type: cpl, pl, sbpl, band or solar_flare")
 
     def fit(self):
         """
@@ -194,7 +206,9 @@ class MultinestFitTrigdat(object):
         wrap[0] = 1
 
         # define temp chain save path
-        self._temp_chains_dir = os.path.join(base_dir, self._grb_name, f"c_trig_{self._version}")
+        self._temp_chains_dir = os.path.join(
+            base_dir, self._grb_name, f"c_trig_{self._version}"
+        )
         chain_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
 
         # Make temp chains folder if it does not exists already
@@ -203,13 +217,15 @@ class MultinestFitTrigdat(object):
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(800,
-                                         chain_name=chain_path,
-                                         importance_nested_sampling=False,
-                                         const_efficiency_mode=False,
-                                         wrapped_params=wrap,
-                                         verbose=True,
-                                         resume=True)
+        _ = self._bayes.sample_multinest(
+            800,
+            chain_name=chain_path,
+            importance_nested_sampling=False,
+            const_efficiency_mode=False,
+            wrapped_params=wrap,
+            verbose=True,
+            resume=True,
+        )
 
     def save_fit_result(self):
         """
@@ -217,7 +233,9 @@ class MultinestFitTrigdat(object):
         :return:
         """
         fit_result_name = f"trigdat_{self._version}_loc_results.fits"
-        fit_result_path = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, fit_result_name)
+        fit_result_path = os.path.join(
+            base_dir, self._grb_name, "trigdat", self._version, fit_result_name
+        )
 
         if using_mpi:
             if rank == 0:
@@ -235,10 +253,14 @@ class MultinestFitTrigdat(object):
         """
         if using_mpi:
             if rank == 0:
-                chains_dir_store = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, "chains")
+                chains_dir_store = os.path.join(
+                    base_dir, self._grb_name, "trigdat", self._version, "chains"
+                )
                 shutil.move(self._temp_chains_dir, chains_dir_store)
         else:
-            chains_dir_store = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, "chains")
+            chains_dir_store = os.path.join(
+                base_dir, self._grb_name, "trigdat", self._version, "chains"
+            )
             shutil.move(self._temp_chains_dir, chains_dir_store)
 
     def create_spectrum_plot(self):
@@ -247,17 +269,32 @@ class MultinestFitTrigdat(object):
         :return:
         """
         plot_name = f"{self._grb_name}_spectrum_plot_trigdat_{self._version}.png"
-        plot_path = os.path.join(base_dir, self._grb_name, 'trigdat', self._version, 'plots', plot_name)
+        plot_path = os.path.join(
+            base_dir, self._grb_name, "trigdat", self._version, "plots", plot_name
+        )
 
-        color_dict = {'n0': '#FF9AA2', 'n1': '#FFB7B2', 'n2': '#FFDAC1', 'n3': '#E2F0CB', 'n4': '#B5EAD7',
-                      'n5': '#C7CEEA', 'n6': '#DF9881', 'n7': '#FCE2C2', 'n8': '#B3C8C8', 'n9': '#DFD8DC',
-                      'na': '#D2C1CE', 'nb': '#6CB2D1', 'b0': '#58949C', 'b1': '#4F9EC4'}
+        color_dict = {
+            "n0": "#FF9AA2",
+            "n1": "#FFB7B2",
+            "n2": "#FFDAC1",
+            "n3": "#E2F0CB",
+            "n4": "#B5EAD7",
+            "n5": "#C7CEEA",
+            "n6": "#DF9881",
+            "n7": "#FCE2C2",
+            "n8": "#B3C8C8",
+            "n9": "#DFD8DC",
+            "na": "#D2C1CE",
+            "nb": "#6CB2D1",
+            "b0": "#58949C",
+            "b1": "#4F9EC4",
+        }
 
         color_list = []
         for d in self._use_dets:
             color_list.append(color_dict[d])
 
-        set = plt.get_cmap('Set1')
+        set = plt.get_cmap("Set1")
         color_list = set.colors
 
         if using_mpi:
@@ -266,16 +303,15 @@ class MultinestFitTrigdat(object):
                 if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
-                    spectrum_plot = display_spectrum_model_counts(self._bayes,
-                                                                  data_colors=color_list,
-                                                                  model_colors=color_list)
+                    spectrum_plot = display_spectrum_model_counts(
+                        self._bayes, data_colors=color_list, model_colors=color_list
+                    )
 
-                    spectrum_plot.savefig(plot_path,
-                                          bbox_inches='tight')
+                    spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except Exception as e:
 
-                    print('No spectral plot possible...')
+                    print("No spectral plot possible...")
                     print(e)
 
         else:
@@ -283,21 +319,26 @@ class MultinestFitTrigdat(object):
             if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
-                spectrum_plot = display_spectrum_model_counts(self._bayes,
-                                                              data_colors=color_list,
-                                                              model_colors=color_list)
+                spectrum_plot = display_spectrum_model_counts(
+                    self._bayes, data_colors=color_list, model_colors=color_list
+                )
 
-                spectrum_plot.savefig(plot_path,
-                                      bbox_inches='tight')
+                spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
 
-                print('No spectral plot possible...')
+                print("No spectral plot possible...")
 
 
 class MultinestFitTTE(object):
-
-    def __init__(self, grb_name, version, trigdat_file, bkg_fit_yaml_file, time_selection_yaml_file):
+    def __init__(
+        self,
+        grb_name,
+        version,
+        trigdat_file,
+        bkg_fit_yaml_file,
+        time_selection_yaml_file,
+    ):
         """
         Initalize MultinestFit for Balrog
         :param grb_name: Name of GRB
@@ -319,8 +360,8 @@ class MultinestFitTTE(object):
         with open(self._time_selection_yaml_file, "r") as f:
             data = yaml.safe_load(f)
 
-            self._active_time_start = data['active_time']['start']
-            self._active_time_stop = data['active_time']['stop']
+            self._active_time_start = data["active_time"]["start"]
+            self._active_time_stop = data["active_time"]["stop"]
 
         self._trigdat_file = trigdat_file
 
@@ -342,10 +383,12 @@ class MultinestFitTTE(object):
             tte_file = f"{base_dir}/{self._grb_name}/tte/data/glg_tte_{det}_bn{self._grb_name[3:]}_{self._version}.fit"
             cspec_file = f"{base_dir}/{self._grb_name}/tte/data/glg_cspec_{det}_bn{self._grb_name[3:]}_{self._version}.pha"
 
-            rsp = drm.DRMGenTTE(tte_file=tte_file,
-                                trigdat=self._trigdat_file,
-                                mat_type=2,
-                                cspecfile=cspec_file)
+            rsp = drm.DRMGenTTE(
+                tte_file=tte_file,
+                trigdat=self._trigdat_file,
+                mat_type=2,
+                cspecfile=cspec_file,
+            )
 
             det_rsp.append(rsp)
 
@@ -362,21 +405,22 @@ class MultinestFitTTE(object):
                 first_channel=0,
                 instrument=gbm_tte_file.det_name,
                 mission=gbm_tte_file.mission,
-                verbose=True
+                verbose=True,
             )
 
             success_restore = False
             i = 0
             while not success_restore:
                 try:
-                    ts = TimeSeriesBuilder(det,
-                                           event_list,
-                                           response=BALROG_DRM(rsp, 0.0, 0.0),
-                                           unbinned=False,
-                                           verbose=True,
-                                           container_type=BinnedSpectrumWithDispersion,
-                                           restore_poly_fit=self._bkg_fit_files[det]
-                                           )
+                    ts = TimeSeriesBuilder(
+                        det,
+                        event_list,
+                        response=BALROG_DRM(rsp, 0.0, 0.0),
+                        unbinned=False,
+                        verbose=True,
+                        container_type=BinnedSpectrumWithDispersion,
+                        restore_poly_fit=self._bkg_fit_files[det],
+                    )
 
                     success_restore = True
                     i = 0
@@ -386,7 +430,9 @@ class MultinestFitTTE(object):
                 if i == 50:
                     raise AssertionError("Can not restore background fit...")
 
-            ts.set_active_time_interval(f"{self._active_time_start}-{self._active_time_stop}")
+            ts.set_active_time_interval(
+                f"{self._active_time_start}-{self._active_time_stop}"
+            )
             det_ts.append(ts)
 
         # Mean of active time
@@ -396,32 +442,33 @@ class MultinestFitTTE(object):
         det_sl = []
         # set up energy range
         for series in det_ts:
-            if series._name != 'b0' and series._name != 'b1':
+            if series._name != "b0" and series._name != "b1":
                 sl = series.to_spectrumlike()
-                sl.set_active_measurements('8.1-700')
+                sl.set_active_measurements("8.1-700")
                 det_sl.append(sl)
             else:
                 sl = series.to_spectrumlike()
-                sl.set_active_measurements('350-25000')
+                sl.set_active_measurements("350-25000")
                 det_sl.append(sl)
 
         # Make Balrog Like
         det_bl = []
         for i, det in enumerate(self._use_dets):
-            det_bl.append(drm.BALROGLike.from_spectrumlike(det_sl[i],
-                                                           rsp_time,
-                                                           det_rsp[i],
-                                                           free_position=True))
+            det_bl.append(
+                drm.BALROGLike.from_spectrumlike(
+                    det_sl[i], rsp_time, det_rsp[i], free_position=True
+                )
+            )
 
         self._data_list = DataList(*det_bl)
 
-    def _define_model(self, spectrum='band'):
+    def _define_model(self, spectrum="band"):
         """
         Define a Model for the fit
         :param spectrum: Which spectrum type should be used (cpl, band, pl, sbpl or solar_flare)
         """
         # data_list=comm.bcast(data_list, root=0)
-        if spectrum == 'cpl':
+        if spectrum == "cpl":
             # we define the spectral model
             cpl = Cutoff_powerlaw()
             cpl.K.max_value = 10 ** 4
@@ -429,9 +476,9 @@ class MultinestFitTTE(object):
             cpl.xc.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             cpl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource('GRB_cpl_', 0., 0., spectral_shape=cpl))
+            self._model = Model(PointSource("GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
 
-        elif spectrum == 'band':
+        elif spectrum == "band":
 
             band = Band()
             band.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=1200)
@@ -439,18 +486,18 @@ class MultinestFitTTE(object):
             band.xp.prior = Log_uniform_prior(lower_bound=10, upper_bound=1e4)
             band.beta.set_uninformative_prior(Uniform_prior)
 
-            self._model = Model(PointSource('GRB_band', 0., 0., spectral_shape=band))
+            self._model = Model(PointSource("GRB_band", 0.0, 0.0, spectral_shape=band))
 
-        elif spectrum == 'pl':
+        elif spectrum == "pl":
 
             pl = Powerlaw()
             pl.K.max_value = 10 ** 4
             pl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10 ** 4)
             pl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource('GRB_pl', 0., 0., spectral_shape=pl))
+            self._model = Model(PointSource("GRB_pl", 0.0, 0.0, spectral_shape=pl))
 
-        elif spectrum == 'sbpl':
+        elif spectrum == "sbpl":
 
             sbpl = SmoothlyBrokenPowerLaw()
             sbpl.K.min_value = 1e-5
@@ -460,9 +507,9 @@ class MultinestFitTTE(object):
             sbpl.beta.set_uninformative_prior(Uniform_prior)
             sbpl.break_energy.min_value = 1
             sbpl.break_energy.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
-            self._model = Model(PointSource('GRB_sbpl', 0., 0., spectral_shape=sbpl))
+            self._model = Model(PointSource("GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
 
-        elif spectrum == 'solar_flare':
+        elif spectrum == "solar_flare":
 
             # broken powerlaw
             bpl = Broken_powerlaw()
@@ -483,9 +530,11 @@ class MultinestFitTTE(object):
             # combined
             total = bpl + tb
 
-            self._model = Model(PointSource('Solar_flare', 0., 0., spectral_shape=total))
+            self._model = Model(
+                PointSource("Solar_flare", 0.0, 0.0, spectral_shape=total)
+            )
         else:
-            raise Exception('Use valid model type: cpl, pl, sbpl, band or solar_flare')
+            raise Exception("Use valid model type: cpl, pl, sbpl, band or solar_flare")
 
     def fit(self):
         """
@@ -500,7 +549,9 @@ class MultinestFitTTE(object):
         wrap[0] = 1
 
         # define temp chain save path
-        self._temp_chains_dir = os.path.join(base_dir, self._grb_name, f"c_tte_{self._version}")
+        self._temp_chains_dir = os.path.join(
+            base_dir, self._grb_name, f"c_tte_{self._version}"
+        )
         chain_path = os.path.join(self._temp_chains_dir, f"tte_{self._version}_")
 
         # Make temp chains folder if it does not exists already
@@ -509,13 +560,15 @@ class MultinestFitTTE(object):
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(800,
-                                         chain_name=chain_path,
-                                         importance_nested_sampling=False,
-                                         const_efficiency_mode=False,
-                                         wrapped_params=wrap,
-                                         verbose=True,
-                                         resume=True)
+        _ = self._bayes.sample_multinest(
+            800,
+            chain_name=chain_path,
+            importance_nested_sampling=False,
+            const_efficiency_mode=False,
+            wrapped_params=wrap,
+            verbose=True,
+            resume=True,
+        )
 
     def save_fit_result(self):
         """
@@ -523,7 +576,9 @@ class MultinestFitTTE(object):
         :return:
         """
         fit_result_name = f"tte_{self._version}_loc_results.fits"
-        fit_result_path = os.path.join(base_dir, self._grb_name, 'tte', self._version, fit_result_name)
+        fit_result_path = os.path.join(
+            base_dir, self._grb_name, "tte", self._version, fit_result_name
+        )
 
         if using_mpi:
             if rank == 0:
@@ -541,10 +596,14 @@ class MultinestFitTTE(object):
         """
         if using_mpi:
             if rank == 0:
-                chains_dir_store = os.path.join(base_dir, self._grb_name, 'tte', self._version, "chains")
+                chains_dir_store = os.path.join(
+                    base_dir, self._grb_name, "tte", self._version, "chains"
+                )
                 shutil.move(self._temp_chains_dir, chains_dir_store)
         else:
-            chains_dir_store = os.path.join(base_dir, self._grb_name, 'tte', self._version, "chains")
+            chains_dir_store = os.path.join(
+                base_dir, self._grb_name, "tte", self._version, "chains"
+            )
             shutil.move(self._temp_chains_dir, chains_dir_store)
 
     def create_spectrum_plot(self):
@@ -553,17 +612,32 @@ class MultinestFitTTE(object):
         :return:
         """
         plot_name = f"{self._grb_name}_spectrum_plot_tte_{self._version}.png"
-        plot_path = os.path.join(base_dir, self._grb_name, 'tte', self._version, 'plots', plot_name)
+        plot_path = os.path.join(
+            base_dir, self._grb_name, "tte", self._version, "plots", plot_name
+        )
 
-        color_dict = {'n0': '#FF9AA2', 'n1': '#FFB7B2', 'n2': '#FFDAC1', 'n3': '#E2F0CB', 'n4': '#B5EAD7',
-                      'n5': '#C7CEEA', 'n6': '#DF9881', 'n7': '#FCE2C2', 'n8': '#B3C8C8', 'n9': '#DFD8DC',
-                      'na': '#D2C1CE', 'nb': '#6CB2D1', 'b0': '#58949C', 'b1': '#4F9EC4'}
+        color_dict = {
+            "n0": "#FF9AA2",
+            "n1": "#FFB7B2",
+            "n2": "#FFDAC1",
+            "n3": "#E2F0CB",
+            "n4": "#B5EAD7",
+            "n5": "#C7CEEA",
+            "n6": "#DF9881",
+            "n7": "#FCE2C2",
+            "n8": "#B3C8C8",
+            "n9": "#DFD8DC",
+            "na": "#D2C1CE",
+            "nb": "#6CB2D1",
+            "b0": "#58949C",
+            "b1": "#4F9EC4",
+        }
 
         color_list = []
         for d in self._use_dets:
             color_list.append(color_dict[d])
 
-        set = plt.get_cmap('Set1')
+        set = plt.get_cmap("Set1")
         color_list = set.colors
 
         if using_mpi:
@@ -572,28 +646,27 @@ class MultinestFitTTE(object):
                 if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
-                    spectrum_plot = display_spectrum_model_counts(self._bayes,
-                                                                  data_colors=color_list,
-                                                                  model_colors=color_list)
+                    spectrum_plot = display_spectrum_model_counts(
+                        self._bayes, data_colors=color_list, model_colors=color_list
+                    )
 
-                    spectrum_plot.savefig(plot_path,
-                                          bbox_inches='tight')
+                    spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except:
 
-                    print('No spectral plot possible...')
+                    print("No spectral plot possible...")
 
         else:
 
             if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
-                spectrum_plot = display_spectrum_model_counts(self._bayes,
-                                                              data_colors=color_list,
-                                                              model_colors=color_list)
+                spectrum_plot = display_spectrum_model_counts(
+                    self._bayes, data_colors=color_list, model_colors=color_list
+                )
 
-                spectrum_plot.savefig(plot_path, bbox_inches='tight')
+                spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
 
-                print('No spectral plot possible...')
+                print("No spectral plot possible...")

@@ -1,4 +1,3 @@
-
 class GRBNotFound(RuntimeError):
     pass
 

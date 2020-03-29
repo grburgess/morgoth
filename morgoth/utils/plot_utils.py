@@ -20,14 +20,39 @@ from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
-_gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1']
+_gbm_detectors = [
+    "n0",
+    "n1",
+    "n2",
+    "n3",
+    "n4",
+    "n5",
+    "n6",
+    "n7",
+    "n8",
+    "n9",
+    "na",
+    "nb",
+    "b0",
+    "b1",
+]
 
 model_param_lookup = {
-    'pl': ['ra (deg)', 'dec (deg)', 'K', 'index'],
-    'cpl': ['ra (deg)', 'dec (deg)', 'K', 'index', 'xc'],
-    'sbpl': ['ra (deg)', 'dec (deg)', 'K', 'alpha', 'break', 'beta'],
-    'band': ['ra (deg)', 'dec (deg)', 'K', 'alpha', 'xp', 'beta'],
-    'solar_flare': ['ra (deg)', 'dec (deg)', 'K-bl', 'xb-bl', 'alpha-bl', 'beta-bl', 'K-brems', 'Epiv-brems', 'kT-brems']
+    "pl": ["ra (deg)", "dec (deg)", "K", "index"],
+    "cpl": ["ra (deg)", "dec (deg)", "K", "index", "xc"],
+    "sbpl": ["ra (deg)", "dec (deg)", "K", "alpha", "break", "beta"],
+    "band": ["ra (deg)", "dec (deg)", "K", "alpha", "xp", "beta"],
+    "solar_flare": [
+        "ra (deg)",
+        "dec (deg)",
+        "K-bl",
+        "xb-bl",
+        "alpha-bl",
+        "beta-bl",
+        "K-brems",
+        "Epiv-brems",
+        "kT-brems",
+    ],
 }
 
 
@@ -44,13 +69,17 @@ def create_corner_loc_plot(post_equal_weights_file, model, save_path):
     # Check if loc at wrap at 360 degree
     # RA-DEC plot
     c1 = ChainConsumer()
-    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(plot_hists=False, contour_labels='sigma',
-                                                                           colors="#cd5c5c", flip=False)
+    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(
+        plot_hists=False, contour_labels="sigma", colors="#cd5c5c", flip=False
+    )
 
-    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
-    hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)',
-                                                                      'dec (deg)')  # ra, dec in deg here
-    hist[hist == 0] = 1E-16
+    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(
+        None, None, None, None, color_p=True, blind=None
+    )
+    hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(
+        chains[0], "ra (deg)", "dec (deg)"
+    )  # ra, dec in deg here
+    hist[hist == 0] = 1e-16
     val_contour = c1.plotter._convert_to_stdev(hist.T)
 
     # get list with all ra values that have a value of less than 0.99 asigned
@@ -72,14 +101,18 @@ def create_corner_loc_plot(post_equal_weights_file, model, save_path):
             if chain[i, 0] > 180:
                 chain[i, 0] = chain[i, 0] - 360
     c1 = ChainConsumer()
-    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(plot_hists=False, contour_labels='sigma',
-                                                                           colors="#cd5c5c", flip=False, kde=2.0,
-                                                                           max_ticks=5)
+    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(
+        plot_hists=False,
+        contour_labels="sigma",
+        colors="#cd5c5c",
+        flip=False,
+        kde=2.0,
+        max_ticks=5,
+    )
 
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
-    c1.plotter.plot(filename=save_path,
-                    figsize="column")
+    c1.plotter.plot(filename=save_path, figsize="column")
 
 
 def create_corner_all_plot(post_equal_weights_file, model, save_path):
@@ -95,37 +128,55 @@ def create_corner_all_plot(post_equal_weights_file, model, save_path):
     # RA-DEC plot
     c2 = ChainConsumer()
 
-    c2.add_chain(chain[:, :-1], parameters=parameter).configure(plot_hists=False, contour_labels='sigma',
-                                                                colors="#cd5c5c", flip=False, max_ticks=3)
+    c2.add_chain(chain[:, :-1], parameters=parameter).configure(
+        plot_hists=False,
+        contour_labels="sigma",
+        colors="#cd5c5c",
+        flip=False,
+        max_ticks=3,
+    )
 
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
-    c2.plotter.plot(filename=save_path,
-                    figsize="column")
+    c2.plotter.plot(filename=save_path, figsize="column")
 
 
-def mollweide_plot(grb_name, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, save_path, swift=None):
+def mollweide_plot(
+    grb_name,
+    trigdat_file,
+    post_equal_weights_file,
+    used_dets,
+    model,
+    ra,
+    dec,
+    save_path,
+    swift=None,
+):
     # get earth pointing in icrs and the pointing of dets in icrs
 
     with fits.open(trigdat_file) as f:
-        quat = f['TRIGRATE'].data['SCATTITD'][0]
-        sc_pos = f['TRIGRATE'].data['EIC'][0]
-        times = f['TRIGRATE'].data['TIME'][0]
+        quat = f["TRIGRATE"].data["SCATTITD"][0]
+        sc_pos = f["TRIGRATE"].data["EIC"][0]
+        times = f["TRIGRATE"].data["TIME"][0]
 
     # get a det object and calculate with this the position of the earth, the moon and the sun seen from the satellite
     # in the icrs system
-    det_1 = gbm_detector_list[_gbm_detectors[used_dets[-1]]](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    det_1 = gbm_detector_list[_gbm_detectors[used_dets[-1]]](
+        quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times))
+    )
     earth_pos = det_1.earth_position_icrs
     sun_pos = det_1.sun_position_icrs
     moon_pos = det_1.moon_position_icrs
     # get pointing of all used dets
     det_pointing = {}
     for det_number in used_dets:
-        det = gbm_detector_list[_gbm_detectors[det_number]](quaternion=quat, sc_pos=sc_pos)
+        det = gbm_detector_list[_gbm_detectors[det_number]](
+            quaternion=quat, sc_pos=sc_pos
+        )
         det_pointing[_gbm_detectors[det_number]] = det.det_ra_dec_icrs
 
     # set a figure with a hammer projection
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='hammer')
+    ax = fig.add_subplot(111, projection="hammer")
 
     # plot EARTH shadow
     ra_e = earth_pos.ra.rad
@@ -136,22 +187,39 @@ def mollweide_plot(grb_name, trigdat_file, post_equal_weights_file, used_dets, m
     earth_opening = 67  # degree
     earth = FOV(ra_e, dec_e, earth_opening * np.pi / 180)
     if len(earth) == 2:
-        ax.fill(earth[0], earth[1], 'b', alpha=0.2, label='EARTH')
+        ax.fill(earth[0], earth[1], "b", alpha=0.2, label="EARTH")
     else:
-        ax.fill(earth[0], earth[1], 'b', alpha=0.2, label='EARTH')
-        ax.fill(earth[2], earth[3], 'b', alpha=0.2)
+        ax.fill(earth[0], earth[1], "b", alpha=0.2, label="EARTH")
+        ax.fill(earth[2], earth[3], "b", alpha=0.2)
 
     # Plot GRB contours from fit
     # Get contours
-    x_contour, y_contour, val_contour, x_contour_1, x_contour_2, \
-    val_contour_1, val_contour_2 = get_contours(model, post_equal_weights_file)
+    (
+        x_contour,
+        y_contour,
+        val_contour,
+        x_contour_1,
+        x_contour_2,
+        val_contour_1,
+        val_contour_2,
+    ) = get_contours(model, post_equal_weights_file)
 
     if len(x_contour_1) > 0:
-        ax.contourf(x_contour_1, y_contour, val_contour_1, levels=[0, 0.68268949, 0.9545],
-                    colors=['navy', 'lightgreen'])
+        ax.contourf(
+            x_contour_1,
+            y_contour,
+            val_contour_1,
+            levels=[0, 0.68268949, 0.9545],
+            colors=["navy", "lightgreen"],
+        )
     if len(x_contour_2) > 0:
-        ax.contourf(x_contour_2, y_contour, val_contour_2, levels=[0, 0.68268949, 0.9545],
-                    colors=['navy', 'lightgreen'])
+        ax.contourf(
+            x_contour_2,
+            y_contour,
+            val_contour_2,
+            levels=[0, 0.68268949, 0.9545],
+            colors=["navy", "lightgreen"],
+        )
 
     # Plot GRB best fit
     ra_center = ra * np.pi / 180
@@ -159,20 +227,38 @@ def mollweide_plot(grb_name, trigdat_file, post_equal_weights_file, used_dets, m
     if ra_center > np.pi:
         ra_center = ra_center - 2 * np.pi
 
-    ax.scatter(ra_center, dec_center, label='Balrog Position', s=40, color='green', marker="*")
-    ax.annotate(f'Balrog Position {grb_name}',
-                xy=(ra_center, dec_center),  # theta, radius
-                xytext=(0.55, 0.15),  # fraction, fraction
-                textcoords='figure fraction',
-                arrowprops=dict(facecolor='black', shrink=0.02, width=1, headwidth=5, headlength=5),
-                horizontalalignment='left',
-                verticalalignment='bottom',
-                )
+    ax.scatter(
+        ra_center, dec_center, label="Balrog Position", s=40, color="green", marker="*"
+    )
+    ax.annotate(
+        f"Balrog Position {grb_name}",
+        xy=(ra_center, dec_center),  # theta, radius
+        xytext=(0.55, 0.15),  # fraction, fraction
+        textcoords="figure fraction",
+        arrowprops=dict(
+            facecolor="black", shrink=0.02, width=1, headwidth=5, headlength=5
+        ),
+        horizontalalignment="left",
+        verticalalignment="bottom",
+    )
 
     # Plot 60 degree FOV of DETS
-    color_dict = {'n0': 'blue', 'n1': 'navy', 'n2': 'crimson', 'n3': 'lightgreen', 'n4': 'orchid', 'n5': 'brown',
-                  'n6': 'firebrick', 'n7': 'plum', 'n8': 'darkgreen', 'n9': 'olive', 'na': 'aqua',
-                  'nb': 'darkorange', 'b0': 'darkmagenta', 'b1': 'indigo'}
+    color_dict = {
+        "n0": "blue",
+        "n1": "navy",
+        "n2": "crimson",
+        "n3": "lightgreen",
+        "n4": "orchid",
+        "n5": "brown",
+        "n6": "firebrick",
+        "n7": "plum",
+        "n8": "darkgreen",
+        "n9": "olive",
+        "na": "aqua",
+        "nb": "darkorange",
+        "b0": "darkmagenta",
+        "b1": "indigo",
+    }
     FOV_opening = 60  # degree
     for keys in det_pointing:
         pointing = det_pointing[keys]
@@ -194,44 +280,55 @@ def mollweide_plot(grb_name, trigdat_file, post_equal_weights_file, used_dets, m
     dec_s = sun_pos.dec.rad
     if ra_s > np.pi:
         ra_s = ra_s - 2 * np.pi
-    ax.scatter(ra_s, dec_s, label='SUN', s=30, color='yellow')
+    ax.scatter(ra_s, dec_s, label="SUN", s=30, color="yellow")
 
     # MOON
     ra_m = moon_pos.ra.rad
     dec_m = moon_pos.dec.rad
     if ra_m > np.pi:
         ra_m = ra_m - 2 * np.pi
-    ax.scatter(ra_m, dec_m, label='MOON', s=30, color='grey')
+    ax.scatter(ra_m, dec_m, label="MOON", s=30, color="grey")
 
     # if we have a swift position plot it here
     if swift is not None:
         # Plot SWIFT position if there is one
-        ra_swift = float(swift['ra']) * np.pi / 180
-        dec_swift = float(swift['dec']) * np.pi / 180
+        ra_swift = float(swift["ra"]) * np.pi / 180
+        dec_swift = float(swift["dec"]) * np.pi / 180
         if ra_swift > np.pi:
             ra_swift = ra_swift - 2 * np.pi
-        ax.scatter(ra_swift, dec_swift, label='SWIFT Position', s=40, marker="X", color='magenta', alpha=0.2)
-        ax.annotate('SWIFT Position SWIFT-trigger {}'.format(swift['trigger']),
-                    xy=(ra_swift, dec_swift),  # theta, radius
-                    xytext=(0.55, 0.78),  # fraction, fraction
-                    textcoords='figure fraction',
-                    arrowprops=dict(facecolor='black', shrink=0.02, width=1, headwidth=5, headlength=5),
-                    horizontalalignment='left',
-                    verticalalignment='bottom',
-                    )
+        ax.scatter(
+            ra_swift,
+            dec_swift,
+            label="SWIFT Position",
+            s=40,
+            marker="X",
+            color="magenta",
+            alpha=0.2,
+        )
+        ax.annotate(
+            "SWIFT Position SWIFT-trigger {}".format(swift["trigger"]),
+            xy=(ra_swift, dec_swift),  # theta, radius
+            xytext=(0.55, 0.78),  # fraction, fraction
+            textcoords="figure fraction",
+            arrowprops=dict(
+                facecolor="black", shrink=0.02, width=1, headwidth=5, headlength=5
+            ),
+            horizontalalignment="left",
+            verticalalignment="bottom",
+        )
 
     # set title, legend and grid
-    plt.title(f'{grb_name} Position (J2000)', y=1.08)
+    plt.title(f"{grb_name} Position (J2000)", y=1.08)
     ax.grid()
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     # Put a legend to the right of the current axis
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), prop={"size": 6})
 
     # save figure
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
-    fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+    fig.savefig(save_path, bbox_inches="tight", dpi=1000)
 
 
 def azimuthal_plot_sat_frame(grb_name, trigdat_file, ra, dec, save_path):
@@ -245,51 +342,79 @@ def azimuthal_plot_sat_frame(grb_name, trigdat_file, ra, dec, save_path):
         ra_center = ra_center - 2 * np.pi
 
     with fits.open(trigdat_file) as f:
-        quat = f['TRIGRATE'].data['SCATTITD'][0]
-        sc_pos = f['TRIGRATE'].data['EIC'][0]
-        times = f['TRIGRATE'].data['TIME'][0]
+        quat = f["TRIGRATE"].data["SCATTITD"][0]
+        sc_pos = f["TRIGRATE"].data["EIC"][0]
+        times = f["TRIGRATE"].data["TIME"][0]
 
     cone_opening = 45.0  # cone opening for solar panel side in deg
-    loc_icrs = SkyCoord(ra=ra_center * 180 / np.pi, dec=dec_center * 180 / np.pi, unit='deg', frame="icrs")
+    loc_icrs = SkyCoord(
+        ra=ra_center * 180 / np.pi,
+        dec=dec_center * 180 / np.pi,
+        unit="deg",
+        frame="icrs",
+    )
     q1, q2, q3, q4 = quat
     scx, scy, scz = sc_pos
-    loc_sat = loc_icrs.transform_to(GBMFrame(quaternion_1=q1,
-                                             quaternion_2=q2,
-                                             quaternion_3=q3,
-                                             quaternion_4=q4,
-                                             sc_pos_X=scx,
-                                             sc_pos_Y=scy,
-                                             sc_pos_Z=scz,
-                                             ))
+    loc_sat = loc_icrs.transform_to(
+        GBMFrame(
+            quaternion_1=q1,
+            quaternion_2=q2,
+            quaternion_3=q3,
+            quaternion_4=q4,
+            sc_pos_X=scx,
+            sc_pos_Y=scy,
+            sc_pos_Z=scz,
+        )
+    )
     ra_sat = Angle(loc_sat.lon.deg * unit.degree)
     dec_sat = Angle(loc_sat.lat.deg * unit.degree)
-    ra_sat.wrap_at('180d', inplace=True)
+    ra_sat.wrap_at("180d", inplace=True)
 
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='polar')
+    ax = fig.add_subplot(111, projection="polar")
 
     # Fill area where the solar panels may cause a systematic error
 
     r_bound = np.arange(0, 200, 0.5)
     phi_bound = np.ones_like(r_bound)
-    ax.fill_betweenx(r_bound, phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)),
-                     phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)), color='grey', alpha=0.2,
-                     label='solar panel sides')
-    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
-                     phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)), color='grey', alpha=0.2)
+    ax.fill_betweenx(
+        r_bound,
+        phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)),
+        phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)),
+        color="grey",
+        alpha=0.2,
+        label="solar panel sides",
+    )
+    ax.fill_betweenx(
+        r_bound,
+        phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
+        phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)),
+        color="grey",
+        alpha=0.2,
+    )
 
     # Fill other area and label with b0 and b1 side
-    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)),
-                     phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)), color='lime', alpha=0.2,
-                     label='b0 side')
-    ax.fill_betweenx(r_bound, phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
-                     phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)), color='blue', alpha=0.2,
-                     label='b1 side')
+    ax.fill_betweenx(
+        r_bound,
+        phi_bound * (-np.pi / 2 + cone_opening * (np.pi / 180)),
+        phi_bound * (np.pi / 2 - cone_opening * (np.pi / 180)),
+        color="lime",
+        alpha=0.2,
+        label="b0 side",
+    )
+    ax.fill_betweenx(
+        r_bound,
+        phi_bound * (-np.pi / 2 - cone_opening * (np.pi / 180)),
+        phi_bound * (np.pi / 2 + cone_opening * (np.pi / 180)),
+        color="blue",
+        alpha=0.2,
+        label="b1 side",
+    )
 
     # SAT coordinate system#
-    ax.quiver(np.pi / 2, 0, 0, 1, scale=2.)
+    ax.quiver(np.pi / 2, 0, 0, 1, scale=2.0)
     ax.text((np.pi / 2) * 1.07, 0.9, "y")
-    ax.quiver(0, 0, 1, 0, scale=2.)
+    ax.quiver(0, 0, 1, 0, scale=2.0)
     ax.text(-(np.pi / 2) * 0.07, 0.9, "x")
     ax.set_rlim((0, 1))
     ax.set_yticklabels([])
@@ -299,22 +424,23 @@ def azimuthal_plot_sat_frame(grb_name, trigdat_file, ra, dec, save_path):
     u = np.cos(phi_b)
     v = np.sin(phi_b)
 
-    q = ax.quiver(0, 0, u, v, scale=2., color='yellow', linewidth=1)
+    q = ax.quiver(0, 0, u, v, scale=2.0, color="yellow", linewidth=1)
     # Shrink current axis by 20%
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     # Put a legend to the right of the current axis
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.8))
-    ax.quiverkey(q, X=1.3, Y=0.5, U=0.4,
-                 label=f'{grb_name}', labelpos='N')
-    ax.set_title(f'{grb_name} direction in the sat. frame', y=1.08)
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.8))
+    ax.quiverkey(q, X=1.3, Y=0.5, U=0.4, label=f"{grb_name}", labelpos="N")
+    ax.set_title(f"{grb_name} direction in the sat. frame", y=1.08)
 
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
 
-    fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+    fig.savefig(save_path, bbox_inches="tight", dpi=1000)
 
 
-def swift_gbm_plot(grb_name, ra, dec, model, post_equal_weights_file, save_path, swift=None):
+def swift_gbm_plot(
+    grb_name, ra, dec, model, post_equal_weights_file, save_path, swift=None
+):
     """
     If swift postion known make a small area plot with grb position, error contours and Swift position (in deg)
     This Plot has to be made AFTER the mollweide plot.
@@ -330,8 +456,15 @@ def swift_gbm_plot(grb_name, ra, dec, model, post_equal_weights_file, save_path,
             ra_center = ra_center - 2 * np.pi
 
         # Get contours
-        x_contour, y_contour, val_contour, x_contour_1, x_contour_2, val_contour_1, \
-        val_contour_2 = get_contours(model, post_equal_weights_file)
+        (
+            x_contour,
+            y_contour,
+            val_contour,
+            x_contour_1,
+            x_contour_2,
+            val_contour_1,
+            val_contour_2,
+        ) = get_contours(model, post_equal_weights_file)
 
         x_contour_1 = x_contour[x_contour < np.pi]
         x_contour_2 = x_contour[x_contour > np.pi] - 2 * np.pi
@@ -339,53 +472,87 @@ def swift_gbm_plot(grb_name, ra, dec, model, post_equal_weights_file, save_path,
         val_contour_1 = val_contour[:, x_contour < np.pi]
         val_contour_2 = val_contour[:, x_contour > np.pi]
 
-        if swift['ra'] > 180:
-            swift_ra = float(swift['ra']) - 360
+        if swift["ra"] > 180:
+            swift_ra = float(swift["ra"]) - 360
         else:
-            swift_ra = float(swift['ra'])
+            swift_ra = float(swift["ra"])
         # plot Balrog position with errors and swift position
         if len(x_contour_1):
-            ax.contourf(x_contour_1 * 180 / np.pi, y_contour * 180 / np.pi, val_contour_1,
-                        levels=[0, 0.68268949, 0.9545], colors=['navy', 'lightgreen'])
+            ax.contourf(
+                x_contour_1 * 180 / np.pi,
+                y_contour * 180 / np.pi,
+                val_contour_1,
+                levels=[0, 0.68268949, 0.9545],
+                colors=["navy", "lightgreen"],
+            )
         if len(x_contour_2):
-            ax.contourf(x_contour_2 * 180 / np.pi, y_contour * 180 / np.pi, val_contour_2,
-                        levels=[0, 0.68268949, 0.9545], colors=['navy', 'lightgreen'])
-        ax.scatter(swift_ra, swift['dec'], label='SWIFT Position', s=40, marker="X",
-                   color='magenta', alpha=0.5)
-        ax.scatter(ra_center * 180 / np.pi, dec_center * 180 / np.pi, label='Balrog Position', s=40, marker="*",
-                   color='green', alpha=0.5)
+            ax.contourf(
+                x_contour_2 * 180 / np.pi,
+                y_contour * 180 / np.pi,
+                val_contour_2,
+                levels=[0, 0.68268949, 0.9545],
+                colors=["navy", "lightgreen"],
+            )
+        ax.scatter(
+            swift_ra,
+            swift["dec"],
+            label="SWIFT Position",
+            s=40,
+            marker="X",
+            color="magenta",
+            alpha=0.5,
+        )
+        ax.scatter(
+            ra_center * 180 / np.pi,
+            dec_center * 180 / np.pi,
+            label="Balrog Position",
+            s=40,
+            marker="*",
+            color="green",
+            alpha=0.5,
+        )
         ra_diff = np.abs(ra_center - swift_ra * np.pi / 180)
-        dec_diff = np.abs(dec_center - swift['dec'] * np.pi / 180)
+        dec_diff = np.abs(dec_center - swift["dec"] * np.pi / 180)
         print(ra_diff)
         print(dec_diff)
         # choose a decent plotting range
         if ra_diff * 180 / np.pi > 2:
-            ax.set_xlim((ra_center * 180 / np.pi - (1.1) * ra_diff * 180 / np.pi,
-                         ra_center * 180 / np.pi + (1.1) * ra_diff * 180 / np.pi))
+            ax.set_xlim(
+                (
+                    ra_center * 180 / np.pi - (1.1) * ra_diff * 180 / np.pi,
+                    ra_center * 180 / np.pi + (1.1) * ra_diff * 180 / np.pi,
+                )
+            )
         else:
             ax.set_xlim((ra_center * 180 / np.pi - 2, ra_center * 180 / np.pi + 2))
         if dec_diff * 180 / np.pi > 2:
-            ax.set_ylim((dec_center * 180 / np.pi - (1.1) * dec_diff * 180 / np.pi,
-                         dec_center * 180 / np.pi + (1.1) * dec_diff * 180 / np.pi))
+            ax.set_ylim(
+                (
+                    dec_center * 180 / np.pi - (1.1) * dec_diff * 180 / np.pi,
+                    dec_center * 180 / np.pi + (1.1) * dec_diff * 180 / np.pi,
+                )
+            )
         else:
             ax.set_ylim((dec_center * 180 / np.pi - 2, dec_center * 180 / np.pi + 2))
         # plot error contours
-        ax.set_xlabel('RA (deg)')
-        ax.set_ylabel('DEC (deg)')
-        plt.title(f'{grb_name} Position (J2000)', y=1.08)
+        ax.set_xlabel("RA (deg)")
+        ax.set_ylabel("DEC (deg)")
+        plt.title(f"{grb_name} Position (J2000)", y=1.08)
         # Shrink current axis by 20%
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         # Put a legend to the right of the current axis
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 6})
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), prop={"size": 6})
         ax.grid(True)
 
         # save plot
         file_utils.if_dir_containing_file_not_existing_then_make(save_path)
-        fig.savefig(save_path, bbox_inches='tight', dpi=1000)
+        fig.savefig(save_path, bbox_inches="tight", dpi=1000)
 
 
-def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model, save_path):
+def interactive_3D_plot(
+    post_equal_weights_file, trigdat_file, used_dets, model, save_path
+):
     # Plot 10 degree grid
     trace_grid = []
     phi_l = np.arange(-180, 181, 10)  # file size!#
@@ -394,38 +561,60 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     b_side_angle = 45  # has to be <90
     for phi in phi_l:
         x, y, z = xyz(phi, theta_l)
-        trace_grid.append(go.Scatter3d(x=scale_factor_grid * x, y=scale_factor_grid * y, z=scale_factor_grid * z,
-                                       legendgroup='group', showlegend=False, mode='lines', line=dict(
-                color='black',
-                width=1,
-                dash='dash'
-            ), hoverinfo=None))
+        trace_grid.append(
+            go.Scatter3d(
+                x=scale_factor_grid * x,
+                y=scale_factor_grid * y,
+                z=scale_factor_grid * z,
+                legendgroup="group",
+                showlegend=False,
+                mode="lines",
+                line=dict(color="black", width=1, dash="dash"),
+                hoverinfo=None,
+            )
+        )
 
     for theta in theta_l:
         theta_m = np.ones_like(phi_l) * theta
         x, y, z = xyz(phi_l, theta_m)
-        trace_grid.append(go.Scatter3d(x=scale_factor_grid * x, y=scale_factor_grid * y, z=scale_factor_grid * z,
-                                       legendgroup='group', showlegend=False, mode='lines', line=dict(
-                color='black',
-                width=1,
-                dash='dash'
-            ), hoverinfo=None))
+        trace_grid.append(
+            go.Scatter3d(
+                x=scale_factor_grid * x,
+                y=scale_factor_grid * y,
+                z=scale_factor_grid * z,
+                legendgroup="group",
+                showlegend=False,
+                mode="lines",
+                line=dict(color="black", width=1, dash="dash"),
+                hoverinfo=None,
+            )
+        )
     # equator
     theta_m = np.ones_like(phi_l) * 0
     x, y, z = xyz(phi_l, theta_m)
-    trace_grid.append(go.Scatter3d(x=np.array(scale_factor_grid * x), y=np.array(scale_factor_grid * y),
-                                   z=np.array(scale_factor_grid * z), legendgroup='group',
-                                   name='Spherical Grid (10 deg steps)', mode='lines', line=dict(
-            color='black',
-            width=3
-        ), hoverinfo=None))
+    trace_grid.append(
+        go.Scatter3d(
+            x=np.array(scale_factor_grid * x),
+            y=np.array(scale_factor_grid * y),
+            z=np.array(scale_factor_grid * z),
+            legendgroup="group",
+            name="Spherical Grid (10 deg steps)",
+            mode="lines",
+            line=dict(color="black", width=3),
+            hoverinfo=None,
+        )
+    )
 
     # PLOT B0 and B1 Side and Solar panel
-    phi = np.concatenate([np.arange(0, b_side_angle - 1, (b_side_angle - 1) / 10),
-                          np.arange(b_side_angle - 1, b_side_angle + 1, 0.1),
-                          np.arange(b_side_angle + 1, 180 - (b_side_angle + 1), 2 * b_side_angle / 4),
-                          np.arange(180 - (b_side_angle + 1), 180 - (b_side_angle - 1), 0.1),
-                          np.arange(180 - (b_side_angle - 1), 181, (b_side_angle - 1.) / 10.)])  # file size!#
+    phi = np.concatenate(
+        [
+            np.arange(0, b_side_angle - 1, (b_side_angle - 1) / 10),
+            np.arange(b_side_angle - 1, b_side_angle + 1, 0.1),
+            np.arange(b_side_angle + 1, 180 - (b_side_angle + 1), 2 * b_side_angle / 4),
+            np.arange(180 - (b_side_angle + 1), 180 - (b_side_angle - 1), 0.1),
+            np.arange(180 - (b_side_angle - 1), 181, (b_side_angle - 1.0) / 10.0),
+        ]
+    )  # file size!#
     phi = np.concatenate([phi, -np.flip(phi[:-1], 0)])
     theta = np.arange(-90, 91, 5)  # file size!#
     # phi, theta = np.mgrid[-180:180:720j, -90:90:18j]
@@ -473,32 +662,86 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     for i in range(len(phi)):
         te = []
         for j in range(len(phi[0])):
-            te.append('phi:{}<br>theta:{}'.format(phi[i, j], theta[i, j]))
+            te.append("phi:{}<br>theta:{}".format(phi[i, j], theta[i, j]))
         my_text.append(te)
     my_text = np.array(my_text)
-    colorscale_b0 = [[0, 'rgb(117,201,196)'], [1, 'rgb(117,201,196)']]
-    trace_b0 = go.Surface(x=xin_b0, y=yin_b0, z=zin_b0, name='b0-side', showscale=False, colorscale=colorscale_b0,
-                          surfacecolor=np.ones_like(z), opacity=1, contours=contours, text=my_text,
-                          hoverinfo='text+name')
-    colorscale_b1 = [[0, 'rgb(201,117,117)'], [1, 'rgb(201,117,117)']]
-    trace_b1 = go.Surface(x=xin_b1, y=yin_b1, z=zin_b1, name='b1-side', showscale=False, colorscale=colorscale_b1,
-                          surfacecolor=np.ones_like(z), opacity=1, contours=contours, text=my_text,
-                          hoverinfo='text+name')
-    colorscale_s = [[0, 'grey'], [1, 'grey']]
-    trace_s = go.Surface(x=xin_s, y=yin_s, z=zin_s, name='solar_panel side', showscale=False,
-                         colorscale=colorscale_s, surfacecolor=np.ones_like(z), opacity=1, contours=contours,
-                         text=my_text, hoverinfo='text+name')
+    colorscale_b0 = [[0, "rgb(117,201,196)"], [1, "rgb(117,201,196)"]]
+    trace_b0 = go.Surface(
+        x=xin_b0,
+        y=yin_b0,
+        z=zin_b0,
+        name="b0-side",
+        showscale=False,
+        colorscale=colorscale_b0,
+        surfacecolor=np.ones_like(z),
+        opacity=1,
+        contours=contours,
+        text=my_text,
+        hoverinfo="text+name",
+    )
+    colorscale_b1 = [[0, "rgb(201,117,117)"], [1, "rgb(201,117,117)"]]
+    trace_b1 = go.Surface(
+        x=xin_b1,
+        y=yin_b1,
+        z=zin_b1,
+        name="b1-side",
+        showscale=False,
+        colorscale=colorscale_b1,
+        surfacecolor=np.ones_like(z),
+        opacity=1,
+        contours=contours,
+        text=my_text,
+        hoverinfo="text+name",
+    )
+    colorscale_s = [[0, "grey"], [1, "grey"]]
+    trace_s = go.Surface(
+        x=xin_s,
+        y=yin_s,
+        z=zin_s,
+        name="solar_panel side",
+        showscale=False,
+        colorscale=colorscale_s,
+        surfacecolor=np.ones_like(z),
+        opacity=1,
+        contours=contours,
+        text=my_text,
+        hoverinfo="text+name",
+    )
 
     # PLOT DETS - dets in list used dets will be plotted solid all other dashed
     trace_dets = []
-    color_dict = {'n0': 'blue', 'n1': 'navy', 'n2': 'crimson', 'n3': 'lightgreen', 'n4': 'orchid', 'n5': 'brown',
-                  'n6': 'firebrick', 'n7': 'plum', 'n8': 'darkgreen', 'n9': 'olive', 'na': 'aqua',
-                  'nb': 'darkorange', 'b0': 'darkmagenta', 'b1': 'indigo'}
-    det_pointing = {'n0': [45.9, 90 - 20.6], 'n1': [45.1, 90 - 45.3], 'n2': [58.4, 90 - 90.2],
-                    'n3': [314.9, 90 - 45.2], 'n4': [303.2, 90 - 90.3], 'n5': [3.4, 90 - 89.8],
-                    'n6': [224.9, 90 - 20.4], 'n7': [224.6, 90 - 46.2], 'n8': [236.6, 90 - 90],
-                    'n9': [135.2, 90 - 45.6], 'na': [123.7, 90 - 90.4], 'nb': [183.7, 90 - 90.3],
-                    'b0': [0.01, 90 - 90.01], 'b1': [180.01, 90 - 90.01]}
+    color_dict = {
+        "n0": "blue",
+        "n1": "navy",
+        "n2": "crimson",
+        "n3": "lightgreen",
+        "n4": "orchid",
+        "n5": "brown",
+        "n6": "firebrick",
+        "n7": "plum",
+        "n8": "darkgreen",
+        "n9": "olive",
+        "na": "aqua",
+        "nb": "darkorange",
+        "b0": "darkmagenta",
+        "b1": "indigo",
+    }
+    det_pointing = {
+        "n0": [45.9, 90 - 20.6],
+        "n1": [45.1, 90 - 45.3],
+        "n2": [58.4, 90 - 90.2],
+        "n3": [314.9, 90 - 45.2],
+        "n4": [303.2, 90 - 90.3],
+        "n5": [3.4, 90 - 89.8],
+        "n6": [224.9, 90 - 20.4],
+        "n7": [224.6, 90 - 46.2],
+        "n8": [236.6, 90 - 90],
+        "n9": [135.2, 90 - 45.6],
+        "na": [123.7, 90 - 90.4],
+        "nb": [183.7, 90 - 90.3],
+        "b0": [0.01, 90 - 90.01],
+        "b1": [180.01, 90 - 90.01],
+    }
     for keys in det_pointing:
         det_opening = 40  # in deg
         pointing = det_pointing[keys]
@@ -529,28 +772,40 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
         color = str(color_dict[keys])
         if name in used_dets:
             trace_dets.append(
-                go.Scatter3d(x=scale_factor_d * x, y=scale_factor_d * y, z=scale_factor_d * z, name=name,
-                             legendgroup='used detectors', mode='lines', line=dict(
-                        color=color,
-                        width=5,
-                        dash='solid'
-                    ), hoverinfo='name'))
+                go.Scatter3d(
+                    x=scale_factor_d * x,
+                    y=scale_factor_d * y,
+                    z=scale_factor_d * z,
+                    name=name,
+                    legendgroup="used detectors",
+                    mode="lines",
+                    line=dict(color=color, width=5, dash="solid"),
+                    hoverinfo="name",
+                )
+            )
         else:
             trace_dets.append(
-                go.Scatter3d(x=scale_factor_d * x, y=scale_factor_d * y, z=scale_factor_d * z, name=name,
-                             mode='lines', legendgroup='unused detectors', line=dict(
-                        color=color,
-                        width=5,
-                        dash='dash'
-                    ), hoverinfo='name'))
+                go.Scatter3d(
+                    x=scale_factor_d * x,
+                    y=scale_factor_d * y,
+                    z=scale_factor_d * z,
+                    name=name,
+                    mode="lines",
+                    legendgroup="unused detectors",
+                    line=dict(color=color, width=5, dash="dash"),
+                    hoverinfo="name",
+                )
+            )
 
     with fits.open(trigdat_file) as f:
-        quat = f['TRIGRATE'].data['SCATTITD'][0]
-        sc_pos = f['TRIGRATE'].data['EIC'][0]
-        times = f['TRIGRATE'].data['TIME'][0]
+        quat = f["TRIGRATE"].data["SCATTITD"][0]
+        sc_pos = f["TRIGRATE"].data["EIC"][0]
+        times = f["TRIGRATE"].data["TIME"][0]
 
     # Plot Earth Shadow
-    det = gbm_detector_list['n0'](quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times)))
+    det = gbm_detector_list["n0"](
+        quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times))
+    )
     earth_pos_sat = det.earth_position
     ra_earth_sat = earth_pos_sat.lon.deg
     dec_earth_sat = earth_pos_sat.lat.deg
@@ -560,8 +815,12 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     opening_angle = 67
     # points on sphere
     theta_l = np.concatenate(
-        [np.linspace(-np.pi / 2, -np.pi / 2 + 0.1, 30), np.linspace(-np.pi / 2 + 0.1, np.pi / 2 - 0.1, 400),
-         np.linspace(np.pi / 2 - 0.1, np.pi / 2, 30)])  # file size!#
+        [
+            np.linspace(-np.pi / 2, -np.pi / 2 + 0.1, 30),
+            np.linspace(-np.pi / 2 + 0.1, np.pi / 2 - 0.1, 400),
+            np.linspace(np.pi / 2 - 0.1, np.pi / 2, 30),
+        ]
+    )  # file size!#
     theta_final = []
     phi_final = []
     phi_l = np.arange(-np.pi, np.pi + 0.1, 0.1)
@@ -579,17 +838,25 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     y = np.cos(theta_final) * np.sin(phi_final)
     z = np.sin(theta_final)
     scale_factor_earth = 1.005
-    colorscale = [[0, 'navy'], [1, 'navy']]
+    colorscale = [[0, "navy"], [1, "navy"]]
 
     theta = np.arcsin(z) * 180 / np.pi
     phi = np.arctan2(x, y) * 180 / np.pi
     my_text = []
     for i in range(len(phi)):
-        my_text.append('phi:{}<br>theta:{}'.format(phi[i], theta[i]))
+        my_text.append("phi:{}<br>theta:{}".format(phi[i], theta[i]))
     my_text = np.array(my_text)
-    trace_earth = go.Mesh3d(x=scale_factor_earth * x, y=scale_factor_earth * y, z=scale_factor_earth * z,
-                            showscale=False, name='earth', color='navy', alphahull=0, text=my_text,
-                            hoverinfo='text+name')
+    trace_earth = go.Mesh3d(
+        x=scale_factor_earth * x,
+        y=scale_factor_earth * y,
+        z=scale_factor_earth * z,
+        showscale=False,
+        name="earth",
+        color="navy",
+        alphahull=0,
+        text=my_text,
+        hoverinfo="text+name",
+    )
 
     # Plot Balrog ERROR CONTOURS
     # Load data from chain with chain consumer
@@ -599,12 +866,17 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     parameter = model_param_lookup[model]
 
     c1 = ChainConsumer()
-    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(contour_labels='sigma', colors="#cd5c5c",
-                                                                           label_font_size=20)
+    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(
+        contour_labels="sigma", colors="#cd5c5c", label_font_size=20
+    )
     # ra_contour, dec_contour, val_contour = c1.plotter.get_contours_list('ra', 'dec')  # ra, dec in deg here
-    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
-    hist, ra_contour, dec_contour = c1.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)', 'dec (deg)')  # ra, dec in deg here
-    hist[hist == 0] = 1E-16
+    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(
+        None, None, None, None, color_p=True, blind=None
+    )
+    hist, ra_contour, dec_contour = c1.plotter._get_smoothed_histogram2d(
+        chains[0], "ra (deg)", "dec (deg)"
+    )  # ra, dec in deg here
+    hist[hist == 0] = 1e-16
     val_contour = c1.plotter._convert_to_stdev(hist.T)
     ra_con, dec_con = np.meshgrid(ra_contour, dec_contour)
     a = np.array([ra_con, dec_con]).T
@@ -612,15 +884,20 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     q1, q2, q3, q4 = quat
     scx, scy, scz = sc_pos
     for a_inter in a:
-        loc_icrs = SkyCoord(ra=a_inter[:, 0], dec=a_inter[:, 1], unit='deg', frame="icrs")
-        loc_sat = loc_icrs.transform_to(GBMFrame(quaternion_1=q1,
-                                                 quaternion_2=q2,
-                                                 quaternion_3=q3,
-                                                 quaternion_4=q4,
-                                                 sc_pos_X=scx,
-                                                 sc_pos_Y=scy,
-                                                 sc_pos_Z=scz,
-                                                 ))
+        loc_icrs = SkyCoord(
+            ra=a_inter[:, 0], dec=a_inter[:, 1], unit="deg", frame="icrs"
+        )
+        loc_sat = loc_icrs.transform_to(
+            GBMFrame(
+                quaternion_1=q1,
+                quaternion_2=q2,
+                quaternion_3=q3,
+                quaternion_4=q4,
+                sc_pos_X=scx,
+                sc_pos_Y=scy,
+                sc_pos_Z=scz,
+            )
+        )
         ra_sat = Angle(loc_sat.lon.deg * unit.degree).value
         dec_sat = Angle(loc_sat.lat.deg * unit.degree).value
         res.append(np.stack((ra_sat, dec_sat), axis=-1))
@@ -630,7 +907,7 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     x = scale_factor_con * x
     y = y * scale_factor_con
     z = z * scale_factor_con
-    colorscale = [[0, 'green'], [1. / 3., 'orange'], [2. / 3., "red"], [1, 'grey']]
+    colorscale = [[0, "green"], [1.0 / 3.0, "orange"], [2.0 / 3.0, "red"], [1, "grey"]]
     conf_levels = [0.68, 0.95, 0.99]
     trace_conf_l = []
     theta = np.arcsin(z) * 180 / np.pi
@@ -639,17 +916,30 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
     for i in range(len(phi)):
         te = []
         for j in range(len(phi[0])):
-            te.append('phi:{}<br>theta:{}'.format(phi[i, j], theta[i, j]))
+            te.append("phi:{}<br>theta:{}".format(phi[i, j], theta[i, j]))
         my_text.append(te)
     my_text = np.array(my_text)
     for conf in conf_levels:
-        x2n, y2n, z2n = np.where(val_contour < conf, x, None), np.where(val_contour < conf, y, None), np.where(
-            val_contour < conf, z, None)
-        trace_conf = go.Surface(x=x2n, y=y2n, z=z2n, cmin=0, cmax=3, showscale=False, colorscale=colorscale,
-                                surfacecolor=z2n, name='Balrog {} confidence level'.format(conf), text=my_text,
-                                hoverinfo='text+name')
-        lx = len(trace_conf['z'])
-        ly = len(trace_conf['z'][0])
+        x2n, y2n, z2n = (
+            np.where(val_contour < conf, x, None),
+            np.where(val_contour < conf, y, None),
+            np.where(val_contour < conf, z, None),
+        )
+        trace_conf = go.Surface(
+            x=x2n,
+            y=y2n,
+            z=z2n,
+            cmin=0,
+            cmax=3,
+            showscale=False,
+            colorscale=colorscale,
+            surfacecolor=z2n,
+            name="Balrog {} confidence level".format(conf),
+            text=my_text,
+            hoverinfo="text+name",
+        )
+        lx = len(trace_conf["z"])
+        ly = len(trace_conf["z"][0])
         out = []
         x_sigma1 = []
         for i in range(lx):
@@ -665,55 +955,65 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
                     temp.append(3)
             out.append(temp)
         # PLOT BESTFIT and SWIFT (if given)
-        trace_conf['surfacecolor'] = out
+        trace_conf["surfacecolor"] = out
         trace_conf_l.append(trace_conf)
 
     # TODO add swift position
 
     # add data together
-    data = [trace_b0, trace_b1, trace_s, trace_earth] + trace_grid + trace_dets + trace_conf_l
+    data = (
+        [trace_b0, trace_b1, trace_s, trace_earth]
+        + trace_grid
+        + trace_dets
+        + trace_conf_l
+    )
     # change layout
-    layout = go.Layout(dict(
-        hovermode='closest',
-        autosize=True,
-        # width=1000,
-        height=800,
-        scene=dict(
-            xaxis=dict(
-                title='',
-                autorange=True,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                ticks='',
-                showticklabels=False,
-                showspikes=False
+    layout = go.Layout(
+        dict(
+            hovermode="closest",
+            autosize=True,
+            # width=1000,
+            height=800,
+            scene=dict(
+                xaxis=dict(
+                    title="",
+                    autorange=True,
+                    showgrid=False,
+                    zeroline=False,
+                    showline=False,
+                    ticks="",
+                    showticklabels=False,
+                    showspikes=False,
+                ),
+                yaxis=dict(
+                    title="",
+                    autorange=True,
+                    showgrid=False,
+                    zeroline=False,
+                    showline=False,
+                    ticks="",
+                    showticklabels=False,
+                    showspikes=False,
+                ),
+                zaxis=dict(
+                    title="",
+                    autorange=True,
+                    showgrid=False,
+                    zeroline=False,
+                    showline=False,
+                    ticks="",
+                    showticklabels=False,
+                    showspikes=False,
+                ),
             ),
-            yaxis=dict(
-                title='',
-                autorange=True,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                ticks='',
-                showticklabels=False,
-                showspikes=False
-            ),
-            zaxis=dict(
-                title='',
-                autorange=True,
-                showgrid=False,
-                zeroline=False,
-                showline=False,
-                ticks='',
-                showticklabels=False,
-                showspikes=False
-            )))
+        )
     )
     # create figure
     fig = go.Figure(data=data, layout=layout)
 
-    output = plotly.offline.plot(fig, auto_open=False, output_type='div', include_plotlyjs=False, show_link=False)
+    output = plotly.offline.plot(
+        fig, auto_open=False, output_type="div", include_plotlyjs=False, show_link=False
+    )
 
     file_utils.if_dir_containing_file_not_existing_then_make(save_path)
     with open(save_path, "w") as text_file:
@@ -721,8 +1021,12 @@ def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model,
 
 
 def healpix(self, nside=32):
-    result_file = '{}/GRB{}/v0{}/fit_result/GRB{}_v0{}_loc_results.fits'.format(self._save_folder, self._trigger, self._version, self._trigger, self._version)
-    save_file = '{}/GRB{}/v0{}/fit_files/GRB{}_healpix_v0{}.fits'.format(self._save_folder, self._trigger, self._version, self._trigger, self._version)
+    result_file = "{}/GRB{}/v0{}/fit_result/GRB{}_v0{}_loc_results.fits".format(
+        self._save_folder, self._trigger, self._version, self._trigger, self._version
+    )
+    save_file = "{}/GRB{}/v0{}/fit_files/GRB{}_healpix_v0{}.fits".format(
+        self._save_folder, self._trigger, self._version, self._trigger, self._version
+    )
     if os.path.exists(save_file):
         os.remove(save_file)
     results = load_analysis_results(result_file)
@@ -755,7 +1059,11 @@ def seperation_smaller_angle(center, phi, theta, angle):
     :return:
     """
     c1, c2, c3 = center
-    sep = np.arccos(c1 * np.cos(theta) * np.cos(phi) + c2 * np.cos(theta) * np.sin(phi) + c3 * np.sin(theta))
+    sep = np.arccos(
+        c1 * np.cos(theta) * np.cos(phi)
+        + c2 * np.cos(theta) * np.sin(phi)
+        + c3 * np.sin(theta)
+    )
     return phi[sep < angle], theta[sep < angle]
 
 
@@ -810,14 +1118,26 @@ def FOV(center_ra, center_dec, angle):  # in rad!
         theta_max_0 = theta_max[:split_index]
         theta_max_1 = theta_max[split_index:]
 
-        phi_circle_0 = np.concatenate((phi_circle_0, np.flip(phi_circle_0, 0), np.array([phi_circle_0[0]])))
-        phi_circle_1 = np.concatenate((phi_circle_1, np.flip(phi_circle_1, 0), np.array([phi_circle_1[0]])))
-        theta_circle_0 = np.concatenate((theta_min_0, np.flip(theta_max_0, 0), np.array([theta_min_0[0]])))
-        theta_circle_1 = np.concatenate((theta_min_1, np.flip(theta_max_1, 0), np.array([theta_min_1[0]])))
+        phi_circle_0 = np.concatenate(
+            (phi_circle_0, np.flip(phi_circle_0, 0), np.array([phi_circle_0[0]]))
+        )
+        phi_circle_1 = np.concatenate(
+            (phi_circle_1, np.flip(phi_circle_1, 0), np.array([phi_circle_1[0]]))
+        )
+        theta_circle_0 = np.concatenate(
+            (theta_min_0, np.flip(theta_max_0, 0), np.array([theta_min_0[0]]))
+        )
+        theta_circle_1 = np.concatenate(
+            (theta_min_1, np.flip(theta_max_1, 0), np.array([theta_min_1[0]]))
+        )
         return [phi_circle_0, theta_circle_0, phi_circle_1, theta_circle_1]
     else:
-        phi_circle = np.concatenate((phi_circle, np.flip(phi_circle, 0), np.array([phi_circle[0]])))
-        theta_circle = np.concatenate((theta_min, np.flip(theta_max, 0), np.array([theta_min[0]])))
+        phi_circle = np.concatenate(
+            (phi_circle, np.flip(phi_circle, 0), np.array([phi_circle[0]]))
+        )
+        theta_circle = np.concatenate(
+            (theta_min, np.flip(theta_max, 0), np.array([theta_min[0]]))
+        )
         return [phi_circle, theta_circle]
 
 
@@ -853,10 +1173,25 @@ def phi_0(theta, ra_c, dec_c, rad_r):
     b = dety * np.cos(theta)
     c = detz * np.sin(theta)
     d = np.cos(rad_r)
-    z = (-c + (a ** 2 * c / (a ** 2 + b ** 2)) + d - (a ** 2 * d / (a ** 2 + b ** 2)) + (
-            a * np.sqrt(-b ** 2 * (-a ** 2 - b ** 2 + c ** 2 - 2 * c * d + d ** 2))) / (a ** 2 + b ** 2)) / b
-    n = (-a * c + a * d - np.sqrt(
-        a ** 2 * b ** 2 + b ** 4 - b ** 2 * c ** 2 + 2 * b ** 2 * c * d - b ** 2 * d ** 2)) / (a ** 2 + b ** 2)
+    z = (
+        -c
+        + (a ** 2 * c / (a ** 2 + b ** 2))
+        + d
+        - (a ** 2 * d / (a ** 2 + b ** 2))
+        + (a * np.sqrt(-(b ** 2) * (-(a ** 2) - b ** 2 + c ** 2 - 2 * c * d + d ** 2)))
+        / (a ** 2 + b ** 2)
+    ) / b
+    n = (
+        -a * c
+        + a * d
+        - np.sqrt(
+            a ** 2 * b ** 2
+            + b ** 4
+            - b ** 2 * c ** 2
+            + 2 * b ** 2 * c * d
+            - b ** 2 * d ** 2
+        )
+    ) / (a ** 2 + b ** 2)
     phi = np.arctan2(z, n)
     return phi
 
@@ -878,10 +1213,25 @@ def phi_1(theta, ra_c, dec_c, rad_r):
     b = dety * np.cos(theta)
     c = detz * np.sin(theta)
     d = np.cos(rad_r)
-    z = (-c + (a ** 2 * c / (a ** 2 + b ** 2)) + d - (a ** 2 * d / (a ** 2 + b ** 2)) - (
-            a * np.sqrt(-b ** 2 * (-a ** 2 - b ** 2 + c ** 2 - 2 * c * d + d ** 2))) / (a ** 2 + b ** 2)) / b
-    n = (-a * c + a * d + np.sqrt(
-        a ** 2 * b ** 2 + b ** 4 - b ** 2 * c ** 2 + 2 * b ** 2 * c * d - b ** 2 * d ** 2)) / (a ** 2 + b ** 2)
+    z = (
+        -c
+        + (a ** 2 * c / (a ** 2 + b ** 2))
+        + d
+        - (a ** 2 * d / (a ** 2 + b ** 2))
+        - (a * np.sqrt(-(b ** 2) * (-(a ** 2) - b ** 2 + c ** 2 - 2 * c * d + d ** 2)))
+        / (a ** 2 + b ** 2)
+    ) / b
+    n = (
+        -a * c
+        + a * d
+        + np.sqrt(
+            a ** 2 * b ** 2
+            + b ** 4
+            - b ** 2 * c ** 2
+            + 2 * b ** 2 * c * d
+            - b ** 2 * d ** 2
+        )
+    ) / (a ** 2 + b ** 2)
     phi = np.arctan2(z, n)
     return phi
 
@@ -894,15 +1244,19 @@ def get_contours(model, post_equal_weigts_file):
     chain = loadtxt2d(post_equal_weigts_file)
 
     c1 = ChainConsumer()
-    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(plot_hists=False, contour_labels='sigma',
-                                                                           colors="#cd5c5c", flip=False)
+    c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(
+        plot_hists=False, contour_labels="sigma", colors="#cd5c5c", flip=False
+    )
 
     # x_contour, y_contour, val_contour = c1.plotter.get_contours_list('ra (deg)', 'dec (deg)')
 
-    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
-    hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)',
-                                                                      'dec (deg)')  # ra, dec in deg here
-    hist[hist == 0] = 1E-16
+    chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(
+        None, None, None, None, color_p=True, blind=None
+    )
+    hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(
+        chains[0], "ra (deg)", "dec (deg)"
+    )  # ra, dec in deg here
+    hist[hist == 0] = 1e-16
     val_contour = c1.plotter._convert_to_stdev(hist.T)
 
     # Check if at wrap point because then we have to shift this to avoid an ugly space at ra=0 in the plot
@@ -925,15 +1279,19 @@ def get_contours(model, post_equal_weigts_file):
             if chain[i, 0] > 180:
                 chain[i, 0] = chain[i, 0] - 360
         c1 = ChainConsumer()
-        c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(plot_hists=False, contour_labels='sigma',
-                                                                               colors="#cd5c5c", flip=False)
+        c1.add_chain(chain[:, :-1][:, :2], parameters=parameter[:2]).configure(
+            plot_hists=False, contour_labels="sigma", colors="#cd5c5c", flip=False
+        )
 
         # x_contour, y_contour, val_contour = c1.plotter.get_contours_list('ra (deg)', 'dec (deg)')
 
-        chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(None, None, None, None, color_p=True, blind=None)
-        hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(chains[0], 'ra (deg)',
-                                                                          'dec (deg)')  # ra, dec in deg here
-        hist[hist == 0] = 1E-16
+        chains, parameters, truth, extents, blind, log_scales = c1.plotter._sanitise(
+            None, None, None, None, color_p=True, blind=None
+        )
+        hist, x_contour, y_contour = c1.plotter._get_smoothed_histogram2d(
+            chains[0], "ra (deg)", "dec (deg)"
+        )  # ra, dec in deg here
+        hist[hist == 0] = 1e-16
         val_contour = c1.plotter._convert_to_stdev(hist.T)
 
     x_contour = x_contour * np.pi / 180
@@ -946,4 +1304,12 @@ def get_contours(model, post_equal_weigts_file):
     val_contour_1 = val_contour[:, x_contour < np.pi]
     val_contour_2 = val_contour[:, x_contour > np.pi]
 
-    return x_contour, y_contour, val_contour, x_contour_1, x_contour_2, val_contour_1, val_contour_2
+    return (
+        x_contour,
+        y_contour,
+        val_contour,
+        x_contour_1,
+        x_contour_2,
+        val_contour_1,
+        val_contour_2,
+    )

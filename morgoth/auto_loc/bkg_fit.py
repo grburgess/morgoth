@@ -15,11 +15,25 @@ from morgoth.utils import file_utils
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
-_gbm_detectors = ['n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1']
+_gbm_detectors = [
+    "n0",
+    "n1",
+    "n2",
+    "n3",
+    "n4",
+    "n5",
+    "n6",
+    "n7",
+    "n8",
+    "n9",
+    "na",
+    "nb",
+    "b0",
+    "b1",
+]
 
 
 class BkgFittingTrigdat(object):
-
     def __init__(self, grb_name, version, trigdat_file, time_selection_file_path):
         """
         Object used for fitting of the background in every detector and echan.
@@ -41,21 +55,24 @@ class BkgFittingTrigdat(object):
         :return:
         """
         # Time selection from yaml file
-        with open(self._time_selection_file_path, 'r') as f:
+        with open(self._time_selection_file_path, "r") as f:
             data = yaml.safe_load(f)
-            active_time = data['active_time']
-            bkg_time_neg = data['background_time']['before']
-            bkg_time_pos = data['background_time']['after']
-            poly_order = data['poly_order']
+            active_time = data["active_time"]
+            bkg_time_neg = data["background_time"]["before"]
+            bkg_time_pos = data["background_time"]["after"]
+            poly_order = data["poly_order"]
 
-        self._trig_reader = TrigReader(self._trigdat_file,
-                                       fine=False,
-                                       verbose=False,
-                                       poly_order=poly_order)
+        self._trig_reader = TrigReader(
+            self._trigdat_file, fine=False, verbose=False, poly_order=poly_order
+        )
 
-        self._trig_reader.set_active_time_interval(f"{active_time['start']}-{active_time['stop']}")
-        self._trig_reader.set_background_selections(f"{bkg_time_neg['start']}-{bkg_time_neg['stop']}",
-                                                    f"{bkg_time_pos['start']}-{bkg_time_pos['stop']}")
+        self._trig_reader.set_active_time_interval(
+            f"{active_time['start']}-{active_time['stop']}"
+        )
+        self._trig_reader.set_background_selections(
+            f"{bkg_time_neg['start']}-{bkg_time_neg['stop']}",
+            f"{bkg_time_pos['start']}-{bkg_time_pos['stop']}",
+        )
 
         self._trigdat_time_series = self._trig_reader._time_series
 
@@ -69,20 +86,25 @@ class BkgFittingTrigdat(object):
         """
 
         # Max time from yaml file
-        with open(self._time_selection_file_path, 'r') as f:
+        with open(self._time_selection_file_path, "r") as f:
             data = yaml.load(f)
-            max_time = data['max_time']
+            max_time = data["max_time"]
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
-        plots = self._trig_reader.view_lightcurve(start=-150, stop=float(max_time), return_plots=True)
+        plots = self._trig_reader.view_lightcurve(
+            start=-150, stop=float(max_time), return_plots=True
+        )
 
         self._lightcurve_plots = {}
 
         for det_name, fig in plots:
-            file_path = os.path.join(dir_path, f"{self._grb_name}_lightcurve_trigdat_detector_{det_name}_plot_{self._version}.png")
+            file_path = os.path.join(
+                dir_path,
+                f"{self._grb_name}_lightcurve_trigdat_detector_{det_name}_plot_{self._version}.png",
+            )
 
-            fig.savefig(file_path, bbox_inches='tight')
+            fig.savefig(file_path, bbox_inches="tight")
             self._lightcurve_plots[det_name] = file_path
 
     def save_bkg_file(self, dir_path):
@@ -96,9 +118,11 @@ class BkgFittingTrigdat(object):
         self._bkg_fits_files = {}
 
         for det_name in _gbm_detectors:
-            file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
+            file_path = os.path.join(dir_path, f"bkg_det_{det_name}.h5")
 
-            self._trigdat_time_series[det_name].save_background(file_path, overwrite=True)
+            self._trigdat_time_series[det_name].save_background(
+                file_path, overwrite=True
+            )
             self._bkg_fits_files[det_name] = file_path
 
     def _choose_dets(self):
@@ -134,7 +158,7 @@ class BkgFittingTrigdat(object):
         else:
             self._use_dets = side_2_indices
 
-        print('Detectors for fit: ', self._use_dets)
+        print("Detectors for fit: ", self._use_dets)
 
     def save_yaml(self, path):
         """
@@ -145,9 +169,9 @@ class BkgFittingTrigdat(object):
         file_utils.if_dir_containing_file_not_existing_then_make(path)
 
         bkg_fit_dict = {}
-        bkg_fit_dict['use_dets'] = self._use_dets
-        bkg_fit_dict['bkg_fit_files'] = self._bkg_fits_files
-        bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
+        bkg_fit_dict["use_dets"] = self._use_dets
+        bkg_fit_dict["bkg_fit_files"] = self._bkg_fits_files
+        bkg_fit_dict["lightcurve_plots"] = self._lightcurve_plots
 
         with open(path, "w") as outfile:
             yaml.dump(bkg_fit_dict, outfile, default_flow_style=False)
@@ -168,13 +192,13 @@ class BkgFittingTrigdat(object):
 
                 det_list_final.append(det)
 
-            elif 'n' in det:
+            elif "n" in det:
 
-                if det[1] == 'a':
+                if det[1] == "a":
 
                     det_list_final.append(10)
 
-                elif det[1] == 'b':
+                elif det[1] == "b":
 
                     det_list_final.append(11)
 
@@ -182,25 +206,32 @@ class BkgFittingTrigdat(object):
 
                     det_list_final.append(int(det[1]))
 
-            elif 'b0' in det:
+            elif "b0" in det:
 
                 det_list_final.append(12)
 
-            elif 'b1' in det:
+            elif "b1" in det:
 
                 det_list_final.append(13)
 
             else:
 
-                raise Exception('Wrong format for detector selection')
+                raise Exception("Wrong format for detector selection")
 
         self._use_dets = det_list_final
 
 
 class BkgFittingTTE(object):
-
-    def __init__(self, grb_name, version, trigdat_file, tte_files, cspec_files,
-                 time_selection_file_path, bkg_fitting_file_path):
+    def __init__(
+        self,
+        grb_name,
+        version,
+        trigdat_file,
+        tte_files,
+        cspec_files,
+        time_selection_file_path,
+        bkg_fitting_file_path,
+    ):
         """
         Object used for fitting of the background in every detector and echan for tte data.
         :param grb_name: Name of GRB
@@ -216,8 +247,14 @@ class BkgFittingTTE(object):
         self._trigdat_file = trigdat_file
 
         # Create dictionaries containing the tte and cspec files
-        self._tte_files = {re.search("glg_tte_(.*?)_bn", file.path).group(1): file.path for file in tte_files}
-        self._cspec_files = {re.search("glg_cspec_(.*?)_bn", file.path).group(1): file.path for file in cspec_files}
+        self._tte_files = {
+            re.search("glg_tte_(.*?)_bn", file.path).group(1): file.path
+            for file in tte_files
+        }
+        self._cspec_files = {
+            re.search("glg_cspec_(.*?)_bn", file.path).group(1): file.path
+            for file in cspec_files
+        }
 
         self._build_bkg_plugins()
 
@@ -227,23 +264,31 @@ class BkgFittingTTE(object):
         :return:
         """
         # Time selection from yaml file
-        with open(self._time_selection_file_path, 'r') as f:
+        with open(self._time_selection_file_path, "r") as f:
             data = yaml.safe_load(f)
 
-            active_time = f"{data['active_time']['start']}-{data['active_time']['stop']}"
+            active_time = (
+                f"{data['active_time']['start']}-{data['active_time']['stop']}"
+            )
             background_time_neg = f"{data['background_time']['before']['start']}-{data['background_time']['before']['stop']}"
             background_time_pos = f"{data['background_time']['after']['start']}-{data['background_time']['after']['stop']}"
-            poly_order = data['poly_order']
+            poly_order = data["poly_order"]
 
         det_ts = []
 
         for det in _gbm_detectors:
             # Response Setup
 
-            rsp = BALROG_DRM(drm.DRMGenTTE(tte_file=self._tte_files[det],
-                                           trigdat=self._trigdat_file,
-                                           mat_type=2,
-                                           cspecfile=self._cspec_files[det]), 0.0, 0.0)
+            rsp = BALROG_DRM(
+                drm.DRMGenTTE(
+                    tte_file=self._tte_files[det],
+                    trigdat=self._trigdat_file,
+                    mat_type=2,
+                    cspecfile=self._cspec_files[det],
+                ),
+                0.0,
+                0.0,
+            )
 
             # Time Series
             gbm_tte_file = GBMTTEFile(self._tte_files[det])
@@ -257,16 +302,18 @@ class BkgFittingTTE(object):
                 first_channel=0,
                 instrument=gbm_tte_file.det_name,
                 mission=gbm_tte_file.mission,
-                verbose=True
+                verbose=True,
             )
 
-            ts = TimeSeriesBuilder(det,
-                                   event_list,
-                                   response=rsp,
-                                   poly_order=poly_order,
-                                   unbinned=False,
-                                   verbose=True,
-                                   container_type=BinnedSpectrumWithDispersion)
+            ts = TimeSeriesBuilder(
+                det,
+                event_list,
+                response=rsp,
+                poly_order=poly_order,
+                unbinned=False,
+                verbose=True,
+                container_type=BinnedSpectrumWithDispersion,
+            )
 
             ts.set_background_interval(background_time_neg, background_time_pos)
             ts.set_active_time_interval(active_time)
@@ -281,19 +328,22 @@ class BkgFittingTTE(object):
         :return:
         """
         # Max time from yaml file
-        with open(self._time_selection_file_path, 'r') as f:
+        with open(self._time_selection_file_path, "r") as f:
             data = yaml.load(f)
-            max_time = data['max_time']
+            max_time = data["max_time"]
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
 
         self._lightcurve_plots = {}
 
         for det_name, ts in zip(_gbm_detectors, self._ts):
-            file_path = os.path.join(dir_path, f"{self._grb_name}_lightcurve_tte_detector_{det_name}_plot_{self._version}.png")
+            file_path = os.path.join(
+                dir_path,
+                f"{self._grb_name}_lightcurve_tte_detector_{det_name}_plot_{self._version}.png",
+            )
 
             fig = ts.view_lightcurve(start=-150, stop=float(max_time))
-            fig.savefig(file_path, dpi=350, bbox_inches='tight')
+            fig.savefig(file_path, dpi=350, bbox_inches="tight")
 
             self._lightcurve_plots[det_name] = file_path
 
@@ -309,7 +359,7 @@ class BkgFittingTTE(object):
         self._bkg_fits_files = {}
 
         for i, det_name in enumerate(_gbm_detectors):
-            file_path = os.path.join(dir_path, f'bkg_det_{det_name}.h5')
+            file_path = os.path.join(dir_path, f"bkg_det_{det_name}.h5")
             self._ts[i].save_background(file_path, overwrite=True)
             self._bkg_fits_files[det_name] = file_path
 
@@ -322,8 +372,8 @@ class BkgFittingTTE(object):
         file_utils.if_dir_containing_file_not_existing_then_make(path)
 
         bkg_fit_dict = {}
-        bkg_fit_dict['bkg_fit_files'] = self._bkg_fits_files
-        bkg_fit_dict['lightcurve_plots'] = self._lightcurve_plots
+        bkg_fit_dict["bkg_fit_files"] = self._bkg_fits_files
+        bkg_fit_dict["lightcurve_plots"] = self._lightcurve_plots
         with open(self._trigdat_bkg_fitting_path, "r") as f:
             bkg_fit_dict["use_dets"] = yaml.safe_load(f)["use_dets"]
 
@@ -346,13 +396,13 @@ class BkgFittingTTE(object):
 
                 det_list_final.append(det)
 
-            elif 'n' in det:
+            elif "n" in det:
 
-                if det[1] == 'a':
+                if det[1] == "a":
 
                     det_list_final.append(10)
 
-                elif det[1] == 'b':
+                elif det[1] == "b":
 
                     det_list_final.append(11)
 
@@ -360,16 +410,16 @@ class BkgFittingTTE(object):
 
                     det_list_final.append(int(det[1]))
 
-            elif 'b0' in det:
+            elif "b0" in det:
 
                 det_list_final.append(12)
 
-            elif 'b1' in det:
+            elif "b1" in det:
 
                 det_list_final.append(13)
 
             else:
 
-                raise Exception('Wrong format for detector selection')
+                raise Exception("Wrong format for detector selection")
 
         self._use_dets = det_list_final

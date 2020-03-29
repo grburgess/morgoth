@@ -17,10 +17,24 @@ from gbm_drm_gen.io.balrog_like import BALROGLike
 from gbm_drm_gen.drmgen_trig import DRMGenTrig
 
 
-
 # This is a holder of the detector names
 
-lu = ('n0', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7', 'n8', 'n9', 'na', 'nb', 'b0', 'b1')
+lu = (
+    "n0",
+    "n1",
+    "n2",
+    "n3",
+    "n4",
+    "n5",
+    "n6",
+    "n7",
+    "n8",
+    "n9",
+    "na",
+    "nb",
+    "b0",
+    "b1",
+)
 
 
 class TrigReader(object):
@@ -32,7 +46,9 @@ class TrigReader(object):
     :poly_order: optional argument to set the order of the polynomial used in the background fit.
     """
 
-    def __init__(self, trigdat_file, fine=False, time_resolved=False, verbose=True, poly_order=-1):
+    def __init__(
+        self, trigdat_file, fine=False, time_resolved=False, verbose=True, poly_order=-1
+    ):
 
         # self._backgroundexists = False
         # self._sourceexists = False
@@ -45,37 +61,35 @@ class TrigReader(object):
         trigdat = fits.open(trigdat_file)
         self._filename = trigdat_file
         self._out_edge_bgo = np.array(
-            [
-                150., 400.0, 850.0, 1500.0, 3000.0, 5500.0, 10000.0, 20000.0,
-                50000.0
-            ],
-            dtype=np.float32)
+            [150.0, 400.0, 850.0, 1500.0, 3000.0, 5500.0, 10000.0, 20000.0, 50000.0],
+            dtype=np.float32,
+        )
         self._out_edge_nai = np.array(
-            [3.4, 10.0, 22.0, 44.0, 95.0, 300.0, 500.0, 800.0, 2000.],
-            dtype=np.float32)
+            [3.4, 10.0, 22.0, 44.0, 95.0, 300.0, 500.0, 800.0, 2000.0], dtype=np.float32
+        )
         self._binwidth_bgo = self._out_edge_bgo[1:] - self._out_edge_bgo[:-1]
         self._binwidth_nai = self._out_edge_nai[1:] - self._out_edge_nai[:-1]
 
         # Get the times
         evntrate = "EVNTRATE"
 
-        self._trigtime = trigdat[evntrate].header['TRIGTIME']
-        self._tstart = trigdat[evntrate].data['TIME'] - self._trigtime
-        self._tstop = trigdat[evntrate].data['ENDTIME'] - self._trigtime
+        self._trigtime = trigdat[evntrate].header["TRIGTIME"]
+        self._tstart = trigdat[evntrate].data["TIME"] - self._trigtime
+        self._tstop = trigdat[evntrate].data["ENDTIME"] - self._trigtime
 
-        self._rates = trigdat[evntrate].data['RATE']
+        self._rates = trigdat[evntrate].data["RATE"]
 
         num_times = len(self._tstart)
         self._rates = self._rates.reshape(num_times, 14, 8)
 
         # Obtain the positional information
-        self._qauts = trigdat[evntrate].data['SCATTITD']  # [condition][0]
-        self._sc_pos = trigdat[evntrate].data['EIC']  # [condition][0]
+        self._qauts = trigdat[evntrate].data["SCATTITD"]  # [condition][0]
+        self._sc_pos = trigdat[evntrate].data["EIC"]  # [condition][0]
 
         # Get the flight software location
         self._fsw_ra = trigdat["PRIMARY"].header["RA_OBJ"]
         self._fsw_dec = trigdat["PRIMARY"].header["DEC_OBJ"]
-        self._fsw_err = trigdat['PRIMARY'].header['ERR_RAD']
+        self._fsw_err = trigdat["PRIMARY"].header["ERR_RAD"]
 
         # Clean up
         trigdat.close()
@@ -86,13 +100,11 @@ class TrigReader(object):
         # The delta time in the file.
         # This routine is modeled off the procedure in RMFIT.
         myDelta = self._tstop - self._tstart
-        self._tstart[myDelta < .1] = np.round(self._tstart[myDelta < .1], 4)
-        self._tstop[myDelta < .1] = np.round(self._tstop[myDelta < .1], 4)
+        self._tstart[myDelta < 0.1] = np.round(self._tstart[myDelta < 0.1], 4)
+        self._tstop[myDelta < 0.1] = np.round(self._tstop[myDelta < 0.1], 4)
 
-        self._tstart[~(myDelta < .1)] = np.round(self._tstart[~(myDelta < .1)],
-                                                 3)
-        self._tstop[~(myDelta < .1)] = np.round(self._tstop[~(myDelta < .1)],
-                                                3)
+        self._tstart[~(myDelta < 0.1)] = np.round(self._tstart[~(myDelta < 0.1)], 3)
+        self._tstop[~(myDelta < 0.1)] = np.round(self._tstop[~(myDelta < 0.1)], 3)
 
         if fine:
 
@@ -103,13 +115,13 @@ class TrigReader(object):
 
             # masks for all the different delta times and
             # the mid points for the different binnings
-            temp1 = myDelta < .1
-            temp2 = np.logical_and(myDelta > .1, myDelta < 1.)
-            temp3 = np.logical_and(myDelta > 1., myDelta < 2.)
-            temp4 = myDelta > 2.
-            midT1 = (self._tstart[temp1] + self._tstop[temp1]) / 2.
-            midT2 = (self._tstart[temp2] + self._tstop[temp2]) / 2.
-            midT3 = (self._tstart[temp3] + self._tstop[temp3]) / 2.
+            temp1 = myDelta < 0.1
+            temp2 = np.logical_and(myDelta > 0.1, myDelta < 1.0)
+            temp3 = np.logical_and(myDelta > 1.0, myDelta < 2.0)
+            temp4 = myDelta > 2.0
+            midT1 = (self._tstart[temp1] + self._tstop[temp1]) / 2.0
+            midT2 = (self._tstart[temp2] + self._tstop[temp2]) / 2.0
+            midT3 = (self._tstart[temp3] + self._tstop[temp3]) / 2.0
 
             # Dump any index that occurs in a lower resolution
             # binning when a finer resolution covers the interval
@@ -144,11 +156,11 @@ class TrigReader(object):
         else:
 
             # Just deal with the first level of fine data
-            all_index = np.where(myDelta > 1.)[0].tolist()
+            all_index = np.where(myDelta > 1.0)[0].tolist()
 
-            temp1 = np.logical_and(myDelta > 1., myDelta < 2.)
-            temp2 = myDelta > 2.
-            midT1 = (self._tstart[temp1] + self._tstop[temp1]) / 2.
+            temp1 = np.logical_and(myDelta > 1.0, myDelta < 2.0)
+            temp2 = myDelta > 2.0
+            midT1 = (self._tstart[temp1] + self._tstop[temp1]) / 2.0
 
             for indx in np.where(temp2)[0]:
                 for x in midT1:
@@ -180,7 +192,8 @@ class TrigReader(object):
         self._rates = self._rates[sort_mask, :, :]
 
         self._time_intervals = TimeIntervalSet.from_starts_and_stops(
-            self._tstart, self._tstop)
+            self._tstart, self._tstop
+        )
 
         # self._pos_interp = PositionInterpolator(trigdat=trigdat_file)
 
@@ -202,7 +215,6 @@ class TrigReader(object):
 
             # we will create binned spectra for each time slice
 
-
             drm_gen = DRMGenTrig(
                 self._qauts,
                 self._sc_pos,
@@ -210,7 +222,8 @@ class TrigReader(object):
                 tstart=self._tstart,
                 tstop=self._tstop,
                 mat_type=2,
-                time=0)
+                time=0,
+            )
 
             # we will use a single response for each detector
 
@@ -218,7 +231,9 @@ class TrigReader(object):
 
             # extract the counts
 
-            counts = self._rates[:, det_num, :] * self._time_intervals.widths.reshape((len(self._time_intervals), 1))
+            counts = self._rates[:, det_num, :] * self._time_intervals.widths.reshape(
+                (len(self._time_intervals), 1)
+            )
 
             # now create a binned spectrum for each interval
 
@@ -231,14 +246,17 @@ class TrigReader(object):
                         exposure=stop - start,
                         response=tmp_drm,
                         tstart=start,
-                        tstop=stop))
+                        tstop=stop,
+                    )
+                )
 
             # make a binned spectrum set
 
             bss = BinnedSpectrumSet(
                 binned_spectrum_list,
-                reference_time=0.,
-                time_intervals=self._time_intervals)
+                reference_time=0.0,
+                time_intervals=self._time_intervals,
+            )
 
             # convert that set to a series
 
@@ -250,7 +268,13 @@ class TrigReader(object):
 
             # create a time series builder which can produce plugins
 
-            tsb = TimeSeriesBuilder(name, bss2, response=tmp_drm, verbose=self._verbose, poly_order=self._poly_order)
+            tsb = TimeSeriesBuilder(
+                name,
+                bss2,
+                response=tmp_drm,
+                verbose=self._verbose,
+                poly_order=self._poly_order,
+            )
 
             # attach that to the full list
 
@@ -268,19 +292,17 @@ class TrigReader(object):
         plots = []
         for name, det in self._time_series.iteritems():
 
-            #try because sometimes there is no data for some dets in the trigdat files                                                                                                                                                                                         
+            # try because sometimes there is no data for some dets in the trigdat files
 
             try:
                 fig = det.view_lightcurve(start, stop)
                 fig.get_axes()[0].set_title(name)
                 if return_plots:
-                    plots.append([name,fig])
+                    plots.append([name, fig])
             except:
-                print('Could not create a lightcurve for detector {}'.format(name))
+                print("Could not create a lightcurve for detector {}".format(name))
         if return_plots:
             return plots
-
-        
 
     def set_background_selections(self, *intervals):
         """
@@ -319,12 +341,11 @@ class TrigReader(object):
 
             # then we convert to BL
 
-            time = 0.5 * (
-                self._time_series[det].tstart + self._time_series[det].tstop)
+            time = 0.5 * (self._time_series[det].tstart + self._time_series[det].tstop)
 
             balrog_like = BALROGLike.from_spectrumlike(speclike, time=time)
 
-            balrog_like.set_active_measurements('c1-c6')
+            balrog_like.set_active_measurements("c1-c6")
 
             data.append(balrog_like)
 
@@ -335,27 +356,29 @@ class TrigReader(object):
         Method that returns the observed rate and the rate of the poly bkg fit                                                                                                                                                                                                 
         :return: returns the observed rate and bkg rate for one detector for all time_bins                                                                                                                                                                                     
         """
-        start=-1000
-        stop=1000
+        start = -1000
+        stop = 1000
         time_series = time_series_builder.time_series
         poly_fit_exists = time_series.poly_fit_exists
         binned_spectrum_set = time_series.binned_spectrum_set
-        counts=[]
-        width=[]
+        counts = []
+        width = []
         bins = binned_spectrum_set.time_intervals.containing_interval(start, stop)
         for bin in bins:
-            counts.append(time_series.counts_over_interval(bin.start_time, bin.stop_time) )
+            counts.append(
+                time_series.counts_over_interval(bin.start_time, bin.stop_time)
+            )
             width.append(bin.duration)
         counts = np.array(counts)
         width = np.array(width)
-        rates_observed = counts/width
+        rates_observed = counts / width
 
         if poly_fit_exists:
             polynomials = time_series.polynomials
 
             bkg = []
             for j, tb in enumerate(bins):
-                tmpbkg = 0.
+                tmpbkg = 0.0
                 for poly in polynomials:
                     tmpbkg += poly.integral(tb.start_time, tb.stop_time)
 
@@ -388,14 +411,14 @@ class TrigReader(object):
         """                                                                                                                                                                                                                                                                    
         :return: start and stops time of bins in trigdata                                                                                                                                                                                                                      
         """
-        return self._tstart,self._tstop
+        return self._tstart, self._tstop
 
     def quats_sc_time_burst(self):
         """                                                                                                                                                                                                                                                                    
         :return: returns the quat, the sc pos and the time of the trigger                                                                                                                                                                                                      
         """
-        i=0
-        while i<len(self._qauts):
-            if self._tstart[i]>0:
+        i = 0
+        while i < len(self._qauts):
+            if self._tstart[i] > 0:
                 return self._qauts[i], self._sc_pos[i], self._trigtime
-            i+=1
+            i += 1

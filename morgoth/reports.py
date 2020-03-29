@@ -12,10 +12,10 @@ class CreateAllPages(luigi.WrapperTask):
 
     def requires(self):
         return {
-            'tte_v00': CreateReportTTE(grb_name=self.grb_name),
-            'trigdat_v00': CreateReportTrigdat(grb_name=self.grb_name, version="v00"),
-            'trigdat_v01': CreateReportTrigdat(grb_name=self.grb_name, version="v01"),
-            'trigdat_v02': CreateReportTrigdat(grb_name=self.grb_name, version="v02"),
+            "tte_v00": CreateReportTTE(grb_name=self.grb_name),
+            "trigdat_v00": CreateReportTrigdat(grb_name=self.grb_name, version="v00"),
+            "trigdat_v01": CreateReportTrigdat(grb_name=self.grb_name, version="v01"),
+            "trigdat_v02": CreateReportTrigdat(grb_name=self.grb_name, version="v02"),
         }
 
 
@@ -25,8 +25,12 @@ class CreateReportTTE(luigi.Task):
 
     def requires(self):
         return {
-            'report': UploadReport(grb_name=self.grb_name, report_type='tte', version=self.version),
-            'upload_all_plots': UploadAllPlots(grb_name=self.grb_name, report_type='tte', version=self.version)
+            "report": UploadReport(
+                grb_name=self.grb_name, report_type="tte", version=self.version
+            ),
+            "upload_all_plots": UploadAllPlots(
+                grb_name=self.grb_name, report_type="tte", version=self.version
+            ),
         }
 
     def output(self):
@@ -43,8 +47,12 @@ class CreateReportTrigdat(luigi.Task):
 
     def requires(self):
         return {
-            'report': UploadReport(grb_name=self.grb_name, report_type='trigdat', version=self.version),
-            'upload_all_plots': UploadAllPlots(grb_name=self.grb_name, report_type='trigdat', version=self.version)
+            "report": UploadReport(
+                grb_name=self.grb_name, report_type="trigdat", version=self.version
+            ),
+            "upload_all_plots": UploadAllPlots(
+                grb_name=self.grb_name, report_type="trigdat", version=self.version
+            ),
         }
 
     def output(self):
