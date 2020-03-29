@@ -16,7 +16,6 @@ from gbm_drm_gen.io.balrog_drm import BALROG_DRM
 from gbm_drm_gen.io.balrog_like import BALROGLike
 from gbm_drm_gen.drmgen_trig import DRMGenTrig
 
-
 # This is a holder of the detector names
 
 lu = (
@@ -281,16 +280,16 @@ class TrigReader(object):
             self._time_series[name] = tsb
 
     def view_lightcurve(self, start=-30, stop=30, return_plots=False):
-        """                                                                                                                                                                                                                                                                    
-        view the lightcurves of all detectors and if the variable return_plots is True returns the plots                                                                                                                                                                                                                                                                                                                                                                                                                                                    
-        :param start: start time                                                                                                                                                                                                                                               
-        :param stop: stop time                                                                                                                                                                                                                                                 
+        """
+        view the lightcurves of all detectors and if the variable return_plots is True returns the plots
+        :param start: start time
+        :param stop: stop time
         :param return_plots: True if the created plots should be returned
 
-        :return:                                                                                                                                                                                                                                                               
+        :return:
         """
         plots = []
-        for name, det in self._time_series.iteritems():
+        for name, det in self._time_series.items():
 
             # try because sometimes there is no data for some dets in the trigdat files
 
@@ -311,7 +310,7 @@ class TrigReader(object):
         :param intervals: str of intervals
         :return:
         """
-        for name, det in self._time_series.iteritems():
+        for name, det in self._time_series.items():
             det.set_background_interval(*intervals, unbinned=False)
 
     def set_active_time_interval(self, *intervals):
@@ -320,7 +319,7 @@ class TrigReader(object):
         :param intervals:
         :return:
         """
-        for name, det in self._time_series.iteritems():
+        for name, det in self._time_series.items():
             det.set_active_time_interval(*intervals)
 
     def to_plugin(self, *detectors):
@@ -352,9 +351,9 @@ class TrigReader(object):
         return data
 
     def counts_and_background(self, time_series_builder):
-        """                                                                                                                                                                                                                                                                    
-        Method that returns the observed rate and the rate of the poly bkg fit                                                                                                                                                                                                 
-        :return: returns the observed rate and bkg rate for one detector for all time_bins                                                                                                                                                                                     
+        """
+        Method that returns the observed rate and the rate of the poly bkg fit
+        :return: returns the observed rate and bkg rate for one detector for all time_bins
         """
         start = -1000
         stop = 1000
@@ -393,14 +392,14 @@ class TrigReader(object):
         return rates_observed, bkg
 
     def observed_and_background(self):
-        """                                                                                                                                                                                                                                                                    
-        Method that returns the observed rate and the rate calculated with the bkg fit. Needs the method counts_and_background in 3ML.                                                                                                                                         
-        Needed for the automatic localisation script to identify the active time and bkg times.                                                                                                                                                                                
-        :return: returns an list with an array in which the observed rate for all time_bins is saved for every det, same for bkg fit                                                                                                                                           
+        """
+        Method that returns the observed rate and the rate calculated with the bkg fit. Needs the method counts_and_background in 3ML.
+        Needed for the automatic localisation script to identify the active time and bkg times.
+        :return: returns an list with an array in which the observed rate for all time_bins is saved for every det, same for bkg fit
         """
         observed_rate_all = []
         background_rate_all = []
-        for name, det in self._time_series.iteritems():
+        for name, det in self._time_series.items():
             observed_rate, bkg_rate = self.counts_and_background(det)
             observed_rate_all.append(observed_rate)
             background_rate_all.append(bkg_rate)
@@ -408,14 +407,14 @@ class TrigReader(object):
         return observed_rate_all, background_rate_all
 
     def tstart_tstop(self):
-        """                                                                                                                                                                                                                                                                    
-        :return: start and stops time of bins in trigdata                                                                                                                                                                                                                      
+        """
+        :return: start and stops time of bins in trigdata
         """
         return self._tstart, self._tstop
 
     def quats_sc_time_burst(self):
-        """                                                                                                                                                                                                                                                                    
-        :return: returns the quat, the sc pos and the time of the trigger                                                                                                                                                                                                      
+        """
+        :return: returns the quat, the sc pos and the time of the trigger
         """
         i = 0
         while i < len(self._qauts):
