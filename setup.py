@@ -15,7 +15,16 @@ AUTHOR = "J. Michael Burgess"
 REQUIRES_PYTHON = ">=3.5.0"
 VERSION = None
 
-REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy" ,"lxml", "pygcn"]
+# Required by the pipeline
+REQUIRED = ["numpy", "python-telegram-bot", "pyyaml", "requests", "luigi", "astropy", "lxml", "pygcn"]
+
+# Required for auto_loc
+REQUIRED.extend([
+    "matplotlib", "chainconsumer", "plotly",
+    "sympy", "healpy", "seaborn", "h5py", "cython", "trigdat_reader",
+    "spherical_geometry", "gbmgeometry", "threeML", "astromodels", "gbm_drm_gen", "pymultinest", "tables"
+])
+
 
 # What packages are optional?
 EXTRAS = {

@@ -1,11 +1,21 @@
-import luigi
 import os
-from morgoth.utils.download_file import BackgroundDownload
-from morgoth.trigger import OpenGBMFile, GBMTriggerFile
-from morgoth.configuration import morgoth_config
-from morgoth.downloaders import DownloadTTEFile, DownloadTrigdat
 
-base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
+import luigi
+import yaml
+from luigi.contrib.external_program import ExternalProgramTask
+
+from morgoth.bkg_fit_handler import BackgroundFitTTE, BackgroundFitTrigdat, GatherTrigdatBackgroundFit
+from morgoth.configuration import morgoth_config
+from morgoth.downloaders import DownloadTrigdat
+from morgoth.exceptions.custom_exceptions import UnkownReportType
+from morgoth.time_selection_handler import TimeSelectionHandler
+from morgoth.trigger import OpenGBMFile
+from morgoth.utils.env import get_env_value
+from morgoth.utils.result_reader import ResultReader
+
+base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
+n_cores_multinest = morgoth_config["multinest"]["n_cores"]
+path_to_python = morgoth_config["multinest"]["path_to_python"]
 
 
 _gbm_detectors = (
@@ -27,7 +37,6 @@ _gbm_detectors = (
 
 
 class ProcessFitResults(luigi.Task):
-
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -35,70 +44,136 @@ class ProcessFitResults(luigi.Task):
     def requires(self):
 
         if self.report_type.lower() == "tte":
-
-            return RunBalrogTTE(grb_name=self.grb_name)
+            return {
+                'gbm_file': OpenGBMFile(grb=self.grb_name),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
+                'balrog': RunBalrogTTE(grb_name=self.grb_name),
+            }
 
         elif self.report_type.lower() == "trigdat":
-
-            return RunBalrogTrigdat(grb_name=self.grb_name, version=self.version)
+            return {
+                'gbm_file': OpenGBMFile(grb=self.grb_name),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name),
+                'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
+                'balrog': RunBalrogTrigdat(grb_name=self.grb_name, version=self.version),
+            }
 
         else:
-
-            return None
+            raise UnkownReportType(f"The report_type '{self.report_type}' is not valid!")
 
     def output(self):
+        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
+        result_name = f"{self.report_type}_{self.version}_fit_result.yml"
 
-        filename = f"{self.report_type}_{self.version}_report.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
+        return {
+            'result_file': luigi.LocalTarget(os.path.join(base_job, result_name)),
+            'post_equal_weights': self.input()['balrog']['post_equal_weights']
+        }
 
     def run(self):
 
-        filename = f"{self.report_type}_{self.version}_report.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
+        result_reader = ResultReader(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version,
+            trigger_file=self.input()['gbm_file'].path,
+            time_selection_file=self.input()['time_selection'].path,
+            background_file=self.input()['bkg_fit']['bkg_fit_yml'].path,
+            post_equal_weights_file=self.input()['balrog']['post_equal_weights'].path,
+            result_file=self.input()['balrog']['fit_result'].path,
+        )
 
-        os.system(f"touch {tmp}")
+        result_reader.save_result_yml(self.output()['result_file'].path)
 
 
-class RunBalrogTTE(luigi.ExternalTask):
+class RunBalrogTTE(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    always_log_stderr = True
 
     def requires(self):
+        return {
+                'trigdat_version': GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+                'bkg_fit': BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
+            }
+        
+    def output(self):
+        base_job = os.path.join(base_dir, self.grb_name, 'tte', self.version)
+        fit_result_name = f"tte_{self.version}_loc_results.fits"
+        spectral_plot_name = f"{self.grb_name}_spectrum_plot_tte_{self.version}.png"
 
-        return [
-            DownloadTTEFile(grb_name=self.grb_name, version=self.version, detector=d)
-            for d in _gbm_detectors
+        return {
+            'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
+                                                                 f'tte_{self.version}_post_equal_weights.dat')),
+            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+        }
+
+    def program_args(self):
+        # Get the first trigdat version and gather the result of the background
+        with self.input()['trigdat_version'].open() as f:
+            trigdat_version = yaml.safe_load(f)['trigdat_version']
+
+        trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=trigdat_version).output()
+
+        fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
+
+        command = [
+            "mpiexec",
+            f"-n",
+            f"{n_cores_multinest}",
+            f"{path_to_python}",
+            f"{fit_script_path}",
+            f"{self.grb_name}",
+            f"{self.version}",
+            f"{trigdat_file.path}",
+            f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
+            f"{self.input()['time_selection'].path}",
+            f"tte"
         ]
-
-    def output(self):
-
-        filename = f"tte_{self.version}_fit.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
-
-    def run(self):
-
-        filename = f"tte_{self.version}_fit.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
-
-        os.system(f"touch {tmp}")
+        return command
 
 
-class RunBalrogTrigdat(luigi.ExternalTask):
+class RunBalrogTrigdat(ExternalProgramTask):
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
-
+    always_log_stderr = True
+    
     def requires(self):
-
-        return DownloadTrigdat(grb_name=self.grb_name, version=self.version)
+        return {
+                'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+                'bkg_fit': BackgroundFitTrigdat(grb_name=self.grb_name, version=self.version),
+                'time_selection': TimeSelectionHandler(grb_name=self.grb_name)
+            }
 
     def output(self):
+        base_job = os.path.join(base_dir, self.grb_name, 'trigdat', self.version)
+        fit_result_name = f"trigdat_{self.version}_loc_results.fits"
+        spectral_plot_name = f"{self.grb_name}_spectrum_plot_trigdat_{self.version}.png"
 
-        filename = f"trigdat_{self.version}_fit.txt"
-        return luigi.LocalTarget(os.path.join(base_dir, self.grb_name, filename))
+        return {
+            'fit_result': luigi.LocalTarget(os.path.join(base_job, fit_result_name)),
+            'post_equal_weights': luigi.LocalTarget(os.path.join(base_job, 'chains',
+                                                                 f'trigdat_{self.version}_post_equal_weights.dat')),
+            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+        }
 
-    def run(self):
+    def program_args(self):
+        fit_script_path = f"{os.path.dirname(os.path.abspath(__file__))}/auto_loc/fit_script.py"
 
-        filename = f"trigdat_{self.version}_fit.txt"
-        tmp = os.path.join(base_dir, self.grb_name, filename)
-
-        os.system(f"touch {tmp}")
+        command = [
+            "mpiexec",
+            f"-n",
+            f"{n_cores_multinest}",
+            f"{path_to_python}",
+            f"{fit_script_path}",
+            f"{self.grb_name}",
+            f"{self.version}",
+            f"{self.input()['trigdat_file'].path}",
+            f"{self.input()['bkg_fit']['bkg_fit_yml'].path}",
+            f"{self.input()['time_selection'].path}",
+            f"trigdat"
+        ]
+        return command

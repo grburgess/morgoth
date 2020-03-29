@@ -1,11 +1,13 @@
+import os
+import shutil
+
+import yaml
+
 from morgoth.utils.file_utils import (
     file_existing_and_readable,
     if_directory_not_existing_then_make,
 )
-from morgoth.utils.package_data import get_path_of_user_dir, get_path_of_data_file
-import yaml
-import os
-import shutil
+from morgoth.utils.package_data import get_path_of_data_file, get_path_of_user_dir
 
 
 class MorgothConfig(object):
@@ -30,6 +32,7 @@ class MorgothConfig(object):
 
         # copy the default config to the usr directory if there is not
         # one
+
         if not file_existing_and_readable(self._filename):
 
             print("morgoth config was not detected, creating a default one")
