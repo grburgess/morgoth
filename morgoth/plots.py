@@ -116,9 +116,6 @@ class CreateLocationPlot(luigi.Task):
             result = yaml.safe_load(f)
 
         create_corner_loc_plot(
-            grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['fit_result']['model'],
             save_path=self.output().path
@@ -142,9 +139,6 @@ class CreateCornerPlot(luigi.Task):
             result = yaml.safe_load(f)
 
         create_corner_all_plot(
-            grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['fit_result']['model'],
             save_path=self.output().path
@@ -173,8 +167,6 @@ class CreateMollLocationPlot(luigi.Task):
 
         mollweide_plot(
             grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             trigdat_file=self.input()['trigdat_file'].path,
             post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
             used_dets=result['time_selection']['used_detectors'],
@@ -207,8 +199,6 @@ class CreateSatellitePlot(luigi.Task):
 
         azimuthal_plot_sat_frame(
             grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             trigdat_file=self.input()['trigdat_file'].path,
             ra=result['fit_result']['ra'],
             dec=result['fit_result']['dec'],
@@ -253,9 +243,6 @@ class Create3DLocationPlot(luigi.Task):
             result = yaml.safe_load(f)
 
         interactive_3D_plot(
-            grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             trigdat_file=self.input()['trigdat_file'].path,
             post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
             used_dets=result['time_selection']['used_detectors'],
@@ -282,8 +269,6 @@ class CreateBalrogSwiftPlot(luigi.Task):
 
         swift_gbm_plot(
             grb_name=self.grb_name,
-            report_type=self.report_type,
-            version=self.version,
             post_equal_weights_file=self.input()['post_equal_weights'].path,
             model=result['fit_result']['model'],
             ra=result['fit_result']['ra'],

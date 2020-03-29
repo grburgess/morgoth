@@ -31,7 +31,7 @@ model_param_lookup = {
 }
 
 
-def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
+def create_corner_loc_plot(post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for ra and dec
     :return:
@@ -82,7 +82,7 @@ def create_corner_loc_plot(grb_name, report_type, version, post_equal_weights_fi
                     figsize="column")
 
 
-def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_file, model, save_path):
+def create_corner_all_plot(post_equal_weights_file, model, save_path):
     """
     load fit results and create corner plots for all parameters
     :return:
@@ -103,7 +103,7 @@ def create_corner_all_plot(grb_name, report_type, version, post_equal_weights_fi
                     figsize="column")
 
 
-def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, save_path, swift=None):
+def mollweide_plot(grb_name, trigdat_file, post_equal_weights_file, used_dets, model, ra, dec, save_path, swift=None):
     # get earth pointing in icrs and the pointing of dets in icrs
 
     with fits.open(trigdat_file) as f:
@@ -234,7 +234,7 @@ def mollweide_plot(grb_name, report_type, version, trigdat_file, post_equal_weig
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, dec, save_path):
+def azimuthal_plot_sat_frame(grb_name, trigdat_file, ra, dec, save_path):
     """
     plot azimuth plot in sat frame to check if burst comes from the solar panel sides
     :return:
@@ -314,7 +314,7 @@ def azimuthal_plot_sat_frame(grb_name, report_type, version, trigdat_file, ra, d
     fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_weights_file, save_path, swift=None):
+def swift_gbm_plot(grb_name, ra, dec, model, post_equal_weights_file, save_path, swift=None):
     """
     If swift postion known make a small area plot with grb position, error contours and Swift position (in deg)
     This Plot has to be made AFTER the mollweide plot.
@@ -385,7 +385,7 @@ def swift_gbm_plot(grb_name, report_type, version, ra, dec, model, post_equal_we
         fig.savefig(save_path, bbox_inches='tight', dpi=1000)
 
 
-def interactive_3D_plot(grb_name, report_type, version, post_equal_weights_file, trigdat_file, used_dets, model, save_path):
+def interactive_3D_plot(post_equal_weights_file, trigdat_file, used_dets, model, save_path):
     # Plot 10 degree grid
     trace_grid = []
     phi_l = np.arange(-180, 181, 10)  # file size!#
