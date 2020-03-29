@@ -14,7 +14,8 @@ before_install:
     # Install and test
   - git clone --branch ${MULTINEST_TAG} https://github.com/JohannesBuchner/MultiNest
   - mkdir -p MultiNest/build; pushd MultiNest/build; cmake .. && make && popd
-
+  - export LD_LIBRARY_PATH=MultiNest/lib/:${LD_LIBRARY_PATH} 
+  
 
 install:
 - pip install --upgrade pytest pytest-cov codecov numpy>=1.16 cython
