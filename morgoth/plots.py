@@ -4,7 +4,9 @@ import luigi
 import yaml
 
 from morgoth.balrog_handlers import ProcessFitResults
+from morgoth.bkg_fit_handler import GatherTrigdatBackgroundFit
 from morgoth.downloaders import DownloadTrigdat
+from morgoth.exceptions.custom_exceptions import UnkownReportType
 from morgoth.utils.env import get_env_value
 from morgoth.utils.plot_utils import (
     azimuthal_plot_sat_frame,
@@ -153,7 +155,7 @@ class CreateMollLocationPlot(luigi.Task):
     def requires(self):
         return {
             'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+            'trigdat_version': GatherTrigdatBackgroundFit(grb_name=self.grb_name),
         }
 
     def output(self):
@@ -165,9 +167,21 @@ class CreateMollLocationPlot(luigi.Task):
         with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
+        if self.report_type.lower() == 'tte':
+            with self.input()['trigdat_version'].open() as f:
+                trigdat_version = yaml.safe_load(f)['trigdat_version']
+
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=trigdat_version).output()
+
+        elif self.report_type.lower() == 'trigdat':
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=self.version).output()
+
+        else:
+            raise UnkownReportType(f"The report_type '{self.report_type}' is not valid!")
+
         mollweide_plot(
             grb_name=self.grb_name,
-            trigdat_file=self.input()['trigdat_file'].path,
+            trigdat_file=trigdat_file.path,
             post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
             used_dets=result['time_selection']['used_detectors'],
             model=result['fit_result']['model'],
@@ -186,7 +200,7 @@ class CreateSatellitePlot(luigi.Task):
     def requires(self):
         return {
             'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+            'trigdat_version': GatherTrigdatBackgroundFit(grb_name=self.grb_name),
         }
 
     def output(self):
@@ -197,9 +211,21 @@ class CreateSatellitePlot(luigi.Task):
         with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
+        if self.report_type.lower() == 'tte':
+            with self.input()['trigdat_version'].open() as f:
+                trigdat_version = yaml.safe_load(f)['trigdat_version']
+
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=trigdat_version).output()
+
+        elif self.report_type.lower() == 'trigdat':
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=self.version).output()
+
+        else:
+            raise UnkownReportType(f"The report_type '{self.report_type}' is not valid!")
+
         azimuthal_plot_sat_frame(
             grb_name=self.grb_name,
-            trigdat_file=self.input()['trigdat_file'].path,
+            trigdat_file=trigdat_file.path,
             ra=result['fit_result']['ra'],
             dec=result['fit_result']['dec'],
             save_path=self.output().path
@@ -231,7 +257,7 @@ class Create3DLocationPlot(luigi.Task):
     def requires(self):
         return {
             'fit_result': ProcessFitResults(grb_name=self.grb_name, report_type=self.report_type, version=self.version),
-            'trigdat_file': DownloadTrigdat(grb_name=self.grb_name, version=self.version),
+            'trigdat_version': GatherTrigdatBackgroundFit(grb_name=self.grb_name),
         }
 
     def output(self):
@@ -242,8 +268,20 @@ class Create3DLocationPlot(luigi.Task):
         with self.input()['fit_result']['result_file'].open() as f:
             result = yaml.safe_load(f)
 
+        if self.report_type.lower() == 'tte':
+            with self.input()['trigdat_version'].open() as f:
+                trigdat_version = yaml.safe_load(f)['trigdat_version']
+
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=trigdat_version).output()
+
+        elif self.report_type.lower() == 'trigdat':
+            trigdat_file = DownloadTrigdat(grb_name=self.grb_name, version=self.version).output()
+
+        else:
+            raise UnkownReportType(f"The report_type '{self.report_type}' is not valid!")
+
         interactive_3D_plot(
-            trigdat_file=self.input()['trigdat_file'].path,
+            trigdat_file=trigdat_file.path,
             post_equal_weights_file=self.input()['fit_result']['post_equal_weights'].path,
             used_dets=result['time_selection']['used_detectors'],
             model=result['fit_result']['model'],
