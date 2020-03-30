@@ -46,7 +46,13 @@ class TrigReader(object):
     """
 
     def __init__(
-        self, trigdat_file, fine=False, time_resolved=False, verbose=True, poly_order=-1, restore_poly_fit=None
+        self,
+        trigdat_file,
+        fine=False,
+        time_resolved=False,
+        verbose=True,
+        poly_order=-1,
+        restore_poly_fit=None,
     ):
 
         # self._backgroundexists = False
@@ -279,7 +285,7 @@ class TrigReader(object):
                 response=tmp_drm,
                 verbose=self._verbose,
                 poly_order=self._poly_order,
-                restore_poly_fit=bkg_fit_file
+                restore_poly_fit=bkg_fit_file,
             )
 
             # attach that to the full list
