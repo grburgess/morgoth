@@ -46,7 +46,13 @@ class TrigReader(object):
     """
 
     def __init__(
-        self, trigdat_file, fine=False, time_resolved=False, verbose=True, poly_order=-1
+        self,
+        trigdat_file,
+        fine=False,
+        time_resolved=False,
+        verbose=True,
+        poly_order=-1,
+        restore_poly_fit=None,
     ):
 
         # self._backgroundexists = False
@@ -55,6 +61,7 @@ class TrigReader(object):
         self._verbose = verbose
         self._time_resolved = time_resolved
         self._poly_order = poly_order
+        self._restore_poly_fit = restore_poly_fit
         # Read the trig data file and get the appropriate info
 
         trigdat = fits.open(trigdat_file)
@@ -265,6 +272,11 @@ class TrigReader(object):
 
             name = lu[det_num]
 
+            if self._restore_poly_fit is not None:
+                bkg_fit_file = self._restore_poly_fit.get(name, None)
+            else:
+                bkg_fit_file = None
+
             # create a time series builder which can produce plugins
 
             tsb = TimeSeriesBuilder(
@@ -273,6 +285,7 @@ class TrigReader(object):
                 response=tmp_drm,
                 verbose=self._verbose,
                 poly_order=self._poly_order,
+                restore_poly_fit=bkg_fit_file,
             )
 
             # attach that to the full list
