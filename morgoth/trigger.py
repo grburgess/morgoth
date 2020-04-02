@@ -91,8 +91,6 @@ def parse_trigger_file_and_write(root, payload):
 
     burst_name = f"GRB{yy}{mm}{dd}{frac}"
 
-    burst_number = f"{yy}{mm}{dd}{frac}"
-
     pos2d = root.find(".//{*}Position2D")
     ra = float(pos2d.find(".//{*}C1").text)
     dec = float(pos2d.find(".//{*}C2").text)
@@ -125,7 +123,6 @@ def parse_trigger_file_and_write(root, payload):
 
     out_file_writer = GBMTriggerFile(
         name=burst_name,
-        burst_number=burst_number,
         ra=ra,
         dec=dec,
         radius=radius,
@@ -164,7 +161,6 @@ class GBMTriggerFile(object):
     def __init__(
         self,
         name,
-        burst_number,
         ra,
         dec,
         radius,
@@ -177,7 +173,6 @@ class GBMTriggerFile(object):
 
         self._params = dict(
             name=name,
-            burst_number=burst_number,
             ra=ra,
             dec=dec,
             radius=radius,
@@ -191,7 +186,6 @@ class GBMTriggerFile(object):
         self.ra = ra
         self.dec = dec
         self.name = name
-        self.burst_number = burst_number
         self.radius = radius
         self.uri = uri
         self.most_likely = most_likely
@@ -214,7 +208,6 @@ class GBMTriggerFile(object):
 
         return cls(
             name=stuff["name"],
-            burst_number=stuff["burst_number"],
             ra=stuff["ra"],
             dec=stuff["dec"],
             radius=stuff["radius"],
