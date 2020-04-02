@@ -26,7 +26,7 @@ def handler(payload, root):
     # parse the trigger XML file
     # and write to yaml
 
-    grb = parse_trigger_file_and_write(root)
+    grb = parse_trigger_file_and_write(root, payload)
 
     # form the luigi command
 

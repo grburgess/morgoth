@@ -27,7 +27,7 @@ def test_parse_trigger():
     with open(ff, "r") as f:
         root = lxml.etree.parse(f)
 
-    grb = parse_trigger_file_and_write(root)
+    grb = parse_trigger_file_and_write(root, ff)
 
     assert luigi.build(
         [OpenGBMFile(grb=grb)], local_scheduler=False, scheduler_host="localhost"
@@ -40,7 +40,7 @@ def test_auto_pipe():
     with open(ff, "r") as f:
         root = lxml.etree.parse(f)
 
-    grb = parse_trigger_file_and_write(root)
+    grb = parse_trigger_file_and_write(root, ff)
 
     cmd = form_morgoth_cmd_string(grb)
 
@@ -52,7 +52,7 @@ def test_auto_pipe():
     with open(ff, "r") as f:
         root = lxml.etree.parse(f)
 
-    grb2 = parse_trigger_file_and_write(root)
+    grb2 = parse_trigger_file_and_write(root, ff)
 
     cmd = form_morgoth_cmd_string(grb2)
 
@@ -60,9 +60,9 @@ def test_auto_pipe():
 
     time.sleep(60 * 3)
 
-    shutil.rmtree(grb)
+    # shutil.rmtree(grb)
 
-    shutil.rmtree(grb2)
+    # shutil.rmtree(grb2)
 
 
 # def test_multi_pipeline():

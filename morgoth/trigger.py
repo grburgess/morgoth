@@ -1,7 +1,8 @@
 import os
 import re
 from datetime import datetime, timedelta
-
+import xml.etree.ElementTree as ET
+from lxml import etree
 import luigi
 import numpy as np
 import yaml
@@ -67,7 +68,7 @@ most_likely_lookup = {
 }
 
 
-def parse_trigger_file_and_write(root):
+def parse_trigger_file_and_write(root, payload):
 
     tmp = root.find(".//{*}ISOTime").text
     yy, mm, dd = re.match(
@@ -144,6 +145,17 @@ def parse_trigger_file_and_write(root):
 
     # os.system(f"touch {os.path.join(directory,'ready')}")
 
+    # now save the xml_file
+
+    #tree = etree.XML(payload)
+    
+    with open(os.path.join(directory, "gbm_flight_voe.xml"), "w") as f:
+
+        
+        
+        f.write(payload)
+
+    
     return burst_name
 
 
@@ -190,14 +202,14 @@ class GBMTriggerFile(object):
 
         with open(file_name, "w") as f:
 
-            yaml.dump(self._params, f, default_flow_style=False)
+            yaml.dump(self._params, f, Dumper=yaml.SafeDumper, default_flow_style=False)
 
     @classmethod
     def from_file(cls, file_name):
 
         with file_name.open("r") as f:
 
-            stuff = yaml.safe_load(f)
+            stuff = yaml.load(f, Loader=yaml.SafeLoader)
 
         return cls(
             name=stuff["name"],
