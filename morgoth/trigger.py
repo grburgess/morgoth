@@ -149,7 +149,7 @@ def parse_trigger_file_and_write(root, payload):
 
     #tree = etree.XML(payload)
     
-    with open(os.path.join(directory, "gbm_flight_voe.xml"), "w") as f:
+    with open(os.path.join(directory, "gbm_flight_voe.xml"), "wb") as f:
 
         
         

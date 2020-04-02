@@ -21,38 +21,20 @@ for i in range(3):
 morgoth_config["luigi"]["n_workers"] = 2
 
 
-def test_parse_trigger():
-
-    ff = get_path_of_data_file("gbm_flt.xml")
-    with open(ff, "r") as f:
-        root = lxml.etree.parse(f)
-
-    grb = parse_trigger_file_and_write(root, ff)
+def test_parse_trigger(grb1):
 
     assert luigi.build(
-        [OpenGBMFile(grb=grb)], local_scheduler=False, scheduler_host="localhost"
+        [OpenGBMFile(grb=grb1)], local_scheduler=False, scheduler_host="localhost"
     )
 
 
-def test_auto_pipe():
+def test_auto_pipe(grb1,grb2):
 
-    ff = get_path_of_data_file("gbm_flt.xml")
-    with open(ff, "r") as f:
-        root = lxml.etree.parse(f)
-
-    grb = parse_trigger_file_and_write(root, ff)
-
-    cmd = form_morgoth_cmd_string(grb)
+    cmd = form_morgoth_cmd_string(grb1)
 
     subprocess.Popen(cmd)
 
     time.sleep(5)
-
-    ff = get_path_of_data_file("gbm_flt2.xml")
-    with open(ff, "r") as f:
-        root = lxml.etree.parse(f)
-
-    grb2 = parse_trigger_file_and_write(root, ff)
 
     cmd = form_morgoth_cmd_string(grb2)
 
