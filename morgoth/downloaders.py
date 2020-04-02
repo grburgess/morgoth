@@ -15,10 +15,8 @@ class DownloadTrigdat(luigi.Task):
     """
     Downloads a Trigdat file of a given
     version
-    
-
     """
-
+    priority = 100
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
 
@@ -63,6 +61,7 @@ class DownloadTrigdat(luigi.Task):
 
 
 class DownloadTTEFile(luigi.Task):
+    priority = -100
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
     detector = luigi.Parameter()
@@ -107,6 +106,7 @@ class DownloadTTEFile(luigi.Task):
 
 
 class DownloadCSPECFile(luigi.Task):
+    priority = -100
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v01")
     detector = luigi.Parameter()
