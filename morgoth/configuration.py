@@ -4,7 +4,7 @@ from configya import YAMLConfig
 structure = {}
 
 structure["pygcn"] = dict(port=8099)
-structure["luigi"] = dict(n_workers=18)
+structure["luigi"] = dict(n_workers=4)
 structure["multinest"] = dict(n_cores=4, path_to_python="python")
 structure["download"] = dict(
     trigdat=dict(
