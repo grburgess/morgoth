@@ -139,6 +139,10 @@ def parse_trigger_file_and_write(root, payload):
     directory = os.path.join(base_dir, burst_name)
     if_directory_not_existing_then_make(directory)
 
+    with open(os.path.join(directory, "gbm_flight_voe.xml"), "wb") as f:
+
+        f.write(payload)
+
     out_file_writer.write(os.path.join(directory, "grb_parameters.yml"))
 
     # now make a file that will tell luigi to run
@@ -147,15 +151,12 @@ def parse_trigger_file_and_write(root, payload):
 
     # now save the xml_file
 
-    #tree = etree.XML(payload)
-    
+    # tree = etree.XML(payload)
+
     with open(os.path.join(directory, "gbm_flight_voe.xml"), "wb") as f:
 
-        
-        
         f.write(payload)
 
-    
     return burst_name
 
 

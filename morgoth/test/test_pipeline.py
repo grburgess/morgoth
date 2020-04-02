@@ -28,7 +28,7 @@ def test_parse_trigger(grb1):
     )
 
 
-def test_auto_pipe(grb1,grb2):
+def test_auto_pipe(grb1, grb2):
 
     cmd = form_morgoth_cmd_string(grb1)
 
