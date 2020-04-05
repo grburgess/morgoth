@@ -71,3 +71,21 @@ download:
 
       interval: 5
       max_time: 7200
+
+
+upload:
+
+  report:
+
+    interval: 1
+    max_time: 1800
+
+  plot:
+
+    interval: 5
+    max_time: 1800
+
+  data_file:
+
+    interval: 5
+    max_time: 1800

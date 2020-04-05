@@ -16,3 +16,15 @@ class ImproperlyConfigured(RuntimeError):
 
 class UnkownReportType(RuntimeError):
     pass
+
+
+class UnauthorizedRequest(RuntimeError):
+    pass
+
+
+class UnexpectedStatusCode(RuntimeError):
+    pass
+
+
+class UploadFailed(RuntimeError):
+    pass
