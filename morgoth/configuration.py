@@ -25,7 +25,7 @@ structure["download"] = dict(
 )
 structure["upload"] = dict(
     report=dict(
-        interval=10, max_time=30
+        interval=2, max_time=1800
     ),
     plot=dict(
         interval=5, max_time=1800
