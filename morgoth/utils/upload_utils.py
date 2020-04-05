@@ -1,10 +1,15 @@
-import requests
 import json
 import time
 
 import requests
 
-from morgoth.exceptions.custom_exceptions import EmptyFileError, GRBNotFound
+from morgoth.exceptions.custom_exceptions import (
+    EmptyFileError,
+    GRBNotFound,
+    UnauthorizedRequest,
+    UnexpectedStatusCode,
+    UploadFailed
+)
 from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
@@ -28,6 +33,9 @@ def check_grb_on_website(grb_name):
     # GRB already in DB
     elif response.status_code == 200:
         return True
+
+    elif response.status_code == 401:
+        raise UnauthorizedRequest('The authentication token is not valid')
 
     # This should not happen, but we will try to upload anyway
     else:
@@ -102,17 +110,17 @@ def create_report_from_result(result):
     return report
 
 
-def upload_grb_report(grb_name, result):
+def upload_grb_report(grb_name, result, wait_time, max_time):
     headers = {
         "Authorization": "Token {}".format(auth_token),
         "Content-Type": "application/json",
     }
-    do_update = False
+    upload_new_version = False
     grb_on_website = check_grb_on_website(grb_name)
 
     # Upload new version of report
     if grb_on_website:
-        do_update = True
+        upload_new_version = True
         url = f"{base_url}/api/grbs/{grb_name}/params/"
 
     # Create GRB entry on website and upload report
@@ -121,8 +129,15 @@ def upload_grb_report(grb_name, result):
 
     report = create_report_from_result(result)
 
-    send = False
-    while not send:
+    # set a flag to kill the job
+    flag = True
+
+    # the time spent waiting so far
+    time_spent = 0  # seconds
+
+    while flag:
+
+        # try to download the file
         try:
 
             response = requests.post(
@@ -130,29 +145,59 @@ def upload_grb_report(grb_name, result):
             )
             if response.status_code == 201:
                 print("Uploaded new GRB")
-                send = True
+                # kill the loop
 
-            elif response.status_code == 409 and not do_update:
-                print("GRB already existing")
+                flag = False
+
+            elif response.status_code == 401:
+                raise UnauthorizedRequest('The authentication token is not valid')
+
+            elif response.status_code == 409 and not upload_new_version:
+                print("GRB already existing, try uploading new version")
                 url = f"{base_url}/api/grbs/{grb_name}/params/"
 
-            elif response.status_code == 409 and do_update:
-                print("###################################################")
+            elif response.status_code == 409 and upload_new_version:
+                print("################################################")
                 print("The report for this version is already in the DB")
-                print("###################################################")
-                break
+                print("################################################")
+                flag = False
 
-        except:
+            else:
+                raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
 
-            print("Connection timed out!")
-            send = False
+        except UnauthorizedRequest as e:
+            raise e
+
+        except Exception as e:
+
+            print(e)
+
+            # ok, we have not uploaded the grb yet
+
+            # see if we should still wait for the upload
+
+            if time_spent >= max_time:
+
+                # we are out of time so give up
+
+                raise UploadFailed('The max time has been exceeded!')
+
+            else:
+
+                # ok, let's sleep for a bit and then check again
+
+                time.sleep(wait_time)
+
+                # up date the time we have left
+
+                time_spent += wait_time
         else:
 
-            print("{}: {}".format(response.status_code, response.text))
+            print(f"Response {response.status_code} at {url}: {response.text}")
     return report
 
 
-def update_grb_report(grb_name, result):
+def update_grb_report(grb_name, result, wait_time, max_time):
     headers = {
         "Authorization": "Token {}".format(auth_token),
         "Content-Type": "application/json",
@@ -170,27 +215,64 @@ def update_grb_report(grb_name, result):
 
     report = create_report_from_result(result)
 
-    send = False
-    while not send:
+    # set a flag to kill the job
+    flag = True
+
+    # the time spent waiting so far
+    time_spent = 0  # seconds
+
+    while flag:
+
+        # try to download the file
         try:
 
             response = requests.put(
                 url=url, data=json.dumps(report), headers=headers, verify=False
             )
             if response.status_code == 201:
-                print("Uploaded new GRB")
-                send = True
+                print("Updated GRB")
+                # kill the loop
 
-        except:
+                flag = False
 
-            print("Connection timed out!")
-            send = False
+            elif response.status_code == 401:
+                raise UnauthorizedRequest('The authentication token is not valid')
+
+            else:
+                raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
+
+        except UnauthorizedRequest as e:
+            raise e
+
+        except Exception as e:
+
+            print(e)
+
+            # ok, we have not uploaded the grb yet
+
+            # see if we should still wait for the upload
+
+            if time_spent >= max_time:
+
+                # we are out of time so give up
+
+                raise UploadFailed('The max time has been exceeded!')
+
+            else:
+
+                # ok, let's sleep for a bit and then check again
+
+                time.sleep(wait_time)
+
+                # up date the time we have left
+
+                time_spent += wait_time
         else:
 
-            print("{}: {}".format(response.status_code, response.text))
+            print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name=""):
+def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time, max_time, det_name=""):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
@@ -209,11 +291,17 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name="
             f"Upload of plot for {grb_name} not possible, because GRB is missing"
         )
 
-    error_class = None
-    send = False
+    # set a flag to kill the job
+    flag = True
+
+    # the time spent waiting so far
+    time_spent = 0  # seconds
+
     with open(plot_file, "rb") as file_:
 
-        while not send:
+        while flag:
+
+            # try to download the file
             try:
                 response = requests.post(
                     url=url,
@@ -224,32 +312,58 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, det_name="
                 )
                 if response.status_code == 201:
                     print("Uploaded new plot")
-                    send = True
+                    flag = False
+
+                elif response.status_code == 401:
+                    raise UnauthorizedRequest('The authentication token is not valid')
 
                 elif response.status_code == 204:
-                    error_class = EmptyFileError
-                    break
+                    raise EmptyFileError("The plot file is empty")
 
                 elif response.status_code == 409:
-                    print("###################################################")
+                    print("####################################################")
                     print("The plot for this version is already in the Database")
-                    print("###################################################")
-                    break
+                    print("####################################################")
+                    flag = False
 
-            except:
+                else:
+                    raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
 
-                print("Connection timed out!")
-                time.sleep(1)
-                send = False
+            except UnauthorizedRequest as e:
+                raise e
+
+            except EmptyFileError as e:
+                raise e
+
+            except Exception as e:
+
+                print(e)
+
+                # ok, we have not uploaded the grb yet
+
+                # see if we should still wait for the upload
+
+                if time_spent >= max_time:
+
+                    # we are out of time so give up
+
+                    raise UploadFailed('The max time has been exceeded!')
+
+                else:
+
+                    # ok, let's sleep for a bit and then check again
+
+                    time.sleep(wait_time)
+
+                    # up date the time we have left
+
+                    time_spent += wait_time
             else:
 
-                print("{}: {}".format(response.status_code, response.text))
-
-    if error_class is not None:
-        raise error_class("The plot file was empty")
+                print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_datafile(grb_name, report_type, data_file, file_type, version):
+def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_time, max_time):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
@@ -268,14 +382,18 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
             f"Upload of datafile for {grb_name} not possible, because GRB is missing"
         )
 
-    error_class = None
-    send = False
+    # set a flag to kill the job
+    flag = True
+
+    # the time spent waiting so far
+    time_spent = 0  # seconds
+
     with open(data_file, "rb") as file_:
 
-        while not send:
+        while flag:
 
+            # try to download the file
             try:
-
                 response = requests.post(
                     url=url,
                     data=payload,
@@ -284,26 +402,53 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version):
                     verify=False,
                 )
                 if response.status_code == 201:
-                    print("Uploaded new datafile")
-                    send = True
+                    print("Uploaded new plot")
+                    flag = False
+
+                elif response.status_code == 401:
+                    raise UnauthorizedRequest('The authentication token is not valid')
 
                 elif response.status_code == 204:
-                    error_class = EmptyFileError
-                    break
+                    raise EmptyFileError("The datafile was empty")
 
                 elif response.status_code == 409:
-                    print("###################################################")
-                    print("The data file for this version is already in the DB")
-                    print("###################################################")
-                    break
+                    print("#########################################################")
+                    print("The data file for this version is already in the Database")
+                    print("#########################################################")
+                    flag = False
 
-            except:
+                else:
+                    raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
 
-                print("Connection timed out!")
-                send = False
+            except UnauthorizedRequest as e:
+                raise e
+
+            except EmptyFileError as e:
+                raise e
+
+            except Exception as e:
+
+                print(e)
+
+                # ok, we have not uploaded the grb yet
+
+                # see if we should still wait for the upload
+
+                if time_spent >= max_time:
+
+                    # we are out of time so give up
+
+                    raise UploadFailed('The max time has been exceeded!')
+
+                else:
+
+                    # ok, let's sleep for a bit and then check again
+
+                    time.sleep(wait_time)
+
+                    # up date the time we have left
+
+                    time_spent += wait_time
             else:
 
-                print("{}: {}".format(response.status_code, response.text))
-
-    if error_class is not None:
-        raise error_class("The datafile was empty")
+                print(f"Response {response.status_code} at {url}: {response.text}")

@@ -14,6 +14,7 @@ from morgoth.plots import (
     CreateSatellitePlot,
     CreateSpectrumPlot,
 )
+from morgoth.configuration import morgoth_config
 from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 from morgoth.utils.env import get_env_value
 from morgoth.utils.upload_utils import upload_grb_report, upload_plot
@@ -43,7 +44,16 @@ class UploadReport(luigi.Task):
         with self.input()["result_file"].open() as f:
             result = yaml.safe_load(f)
 
-        report = upload_grb_report(grb_name=self.grb_name, result=result)
+        report = upload_grb_report(
+            grb_name=self.grb_name,
+            result=result,
+            wait_time=float(
+                morgoth_config["upload"]["report"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["report"]["max_time"]
+            ),
+        )
 
         report_name = f"{self.report_type}_{self.version}_report.yml"
         report_path = os.path.join(
@@ -284,6 +294,12 @@ class UploadLightcurve(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="lightcurve",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
             det_name=self.detector,
         )
 
@@ -336,6 +352,12 @@ class UploadLocationPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="location",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
@@ -387,6 +409,12 @@ class UploadCornerPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="allcorner",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_corner.done"
@@ -437,6 +465,12 @@ class UploadMollLocationPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="molllocation",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.done"
@@ -488,6 +522,12 @@ class UploadSatellitePlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="satellite",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_satellite.done"
@@ -539,6 +579,12 @@ class UploadSpectrumPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="spectrum",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.done"
@@ -590,6 +636,12 @@ class Upload3DLocationPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="3dlocation",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.done"
@@ -641,6 +693,12 @@ class UploadBalrogSwiftPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="balrogswift",
             version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.done"

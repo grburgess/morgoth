@@ -23,6 +23,17 @@ structure["download"] = dict(
         v02=dict(interval=5, max_time=7200),
     ),
 )
+structure["upload"] = dict(
+    report=dict(
+        interval=10, max_time=30
+    ),
+    plot=dict(
+        interval=5, max_time=1800
+    ),
+    datafile=dict(
+        interval=5, max_time=1800
+    ),
+)
 
 
 class MorgothConfig(YAMLConfig):
