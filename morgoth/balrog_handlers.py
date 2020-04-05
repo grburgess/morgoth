@@ -7,10 +7,9 @@ from luigi.contrib.external_program import ExternalProgramTask
 from morgoth.bkg_fit_handler import (
     BackgroundFitTTE,
     BackgroundFitTrigdat,
-    GatherTrigdatBackgroundFit,
 )
 from morgoth.configuration import morgoth_config
-from morgoth.downloaders import DownloadTrigdat
+from morgoth.downloaders import DownloadTrigdat, GatherTrigdatDownload
 from morgoth.exceptions.custom_exceptions import UnkownReportType
 from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.trigger import OpenGBMFile
@@ -106,7 +105,7 @@ class RunBalrogTTE(ExternalProgramTask):
 
     def requires(self):
         return {
-            "trigdat_version": GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "bkg_fit": BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
             "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
         }

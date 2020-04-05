@@ -9,14 +9,13 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelection(object):
-    def __init__(self, grb_name, version, trigdat_file):
+    def __init__(self, grb_name, trigdat_file):
         """
         Object for time selection of a GRB event.
         :param grb_name: Name of GRB
         :param version: Version of trigdat data file
         """
         self._grb_name = grb_name
-        self._version = version
         self._trigdat_file = trigdat_file
 
         self.trigdata_time_selection()
