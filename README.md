@@ -16,7 +16,7 @@ To view the pipeline in action, visit the [pipeline page](https://pipeline.grb.m
 
 This pipeline relies on [luigi](https://luigi.readthedocs.io/en/stable/) to synchronize and distribute jobs. The project is a joint effort between myself and our students at MPE:
 
-* [Felix Kunzweiler](https://github.com/fkunzweiler) @fkunzweiler (website design and backend intergration)
+* [Felix Kunzweiler](https://github.com/fkunzweiler) @fkunzweiler (backend intergration and [GRB localizations page](https://grb.mpe.mpg.de))
 * [Björn Biltzinger](https://github.com/BjoernBiltzinger) @BjoernBiltzinger (backend fitting pipeline)
 
 If you are interested in the science behind BALROG, checkout our papers: [Burgess et al. 2017](https://academic.oup.com/mnras/article/476/2/1427/4670828) [Berlato et al. (2019)](https://iopscience.iop.org/article/10.3847/1538-4357/ab0413)
