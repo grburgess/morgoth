@@ -5,7 +5,7 @@ import luigi
 import yaml
 
 from morgoth.auto_loc.bkg_fit import BkgFittingTTE, BkgFittingTrigdat
-from morgoth.downloaders import DownloadCSPECFile, DownloadTTEFile, DownloadTrigdat
+from morgoth.downloaders import DownloadCSPECFile, DownloadTTEFile, DownloadTrigdat, GatherTrigdatDownload
 from morgoth.time_selection_handler import TimeSelectionHandler
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
@@ -35,7 +35,7 @@ class BackgroundFitTTE(luigi.Task):
     def requires(self):
         return {
             "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
-            "trigdat_version": GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "tte_files": [
                 DownloadTTEFile(
                     grb_name=self.grb_name, version=self.version, detector=det
@@ -97,55 +97,6 @@ class BackgroundFitTTE(luigi.Task):
 
         # Save background fit yaml
         bkg_fit.save_yaml(self.output()["bkg_fit_yml"].path)
-
-
-class GatherTrigdatBackgroundFit(luigi.Task):
-    grb_name = luigi.Parameter()
-
-    def requires(self):
-        return {
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
-        }
-
-    def output(self):
-        return luigi.LocalTarget(
-            os.path.join(base_dir, self.grb_name, f"gather_trigdat_complete.yml")
-        )
-
-    def run(self):
-        # the time spent waiting so far
-        time_spent = 0  # seconds
-
-        while True:
-            if BackgroundFitTrigdat(grb_name=self.grb_name, version="v00").complete():
-                version = "v00"
-                break
-            else:
-                print("version 0 not complete")
-
-            if BackgroundFitTrigdat(grb_name=self.grb_name, version="v01").complete():
-                version = "v01"
-                break
-            else:
-                print("version 1 not complete")
-
-            if BackgroundFitTrigdat(grb_name=self.grb_name, version="v02").complete():
-                version = "v02"
-                break
-            else:
-                print("version 2 not complete")
-
-            time.sleep(2)
-
-            # up date the time we have left
-            time_spent += 2
-
-        print(f"The total waiting time was: {time_spent}")
-
-        version_dict = {"trigdat_version": version}
-
-        with self.output().open("w") as f:
-            yaml.dump(version_dict, f, default_flow_style=False)
 
 
 class BackgroundFitTrigdat(luigi.Task):

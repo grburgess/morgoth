@@ -1,6 +1,8 @@
 import os
+import time
 
 import luigi
+import yaml
 
 from morgoth.configuration import morgoth_config
 from morgoth.trigger import GBMTriggerFile, OpenGBMFile
@@ -9,6 +11,54 @@ from morgoth.utils.download_file import BackgroundDownload
 from morgoth.utils.env import get_env_value
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
+
+
+class GatherTrigdatDownload(luigi.Task):
+    grb_name = luigi.Parameter()
+
+    def requires(self):
+        return OpenGBMFile(grb=self.grb_name),
+
+    def output(self):
+        return luigi.LocalTarget(
+            os.path.join(base_dir, self.grb_name, f"gather_trigdat_complete.yml")
+        )
+
+    def run(self):
+        # the time spent waiting so far
+        time_spent = 0  # seconds
+
+        while True:
+            if DownloadTrigdat(grb_name=self.grb_name, version="v00").complete():
+                version = "v00"
+                break
+            else:
+                print("version 0 not complete")
+
+            if DownloadTrigdat(grb_name=self.grb_name, version="v01").complete():
+                version = "v01"
+                break
+            else:
+                print("version 1 not complete")
+
+            if DownloadTrigdat(grb_name=self.grb_name, version="v02").complete():
+                version = "v02"
+                break
+            else:
+                print("version 2 not complete")
+
+            time.sleep(2)
+
+            # up date the time we have left
+            time_spent += 2
+
+        print(f"The total waiting time was: {time_spent}")
+
+        version_dict = {"trigdat_version": version}
+
+        with self.output().open("w") as f:
+
+            yaml.dump(version_dict, f, Dumper=yaml.SafeDumper, default_flow_style=False)
 
 
 class DownloadTrigdat(luigi.Task):

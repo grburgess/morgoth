@@ -4,8 +4,7 @@ import luigi
 import yaml
 
 from morgoth.balrog_handlers import ProcessFitResults
-from morgoth.bkg_fit_handler import GatherTrigdatBackgroundFit
-from morgoth.downloaders import DownloadTrigdat
+from morgoth.downloaders import DownloadTrigdat, GatherTrigdatDownload
 from morgoth.exceptions.custom_exceptions import UnkownReportType
 from morgoth.utils.env import get_env_value
 from morgoth.utils.plot_utils import (
@@ -303,7 +302,7 @@ class CreateMollLocationPlot(luigi.Task):
                 report_type=self.report_type,
                 version=self.version,
             ),
-            "trigdat_version": GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
 
     def output(self):
@@ -362,7 +361,7 @@ class CreateSatellitePlot(luigi.Task):
                 report_type=self.report_type,
                 version=self.version,
             ),
-            "trigdat_version": GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
 
     def output(self):
@@ -453,7 +452,7 @@ class Create3DLocationPlot(luigi.Task):
                 report_type=self.report_type,
                 version=self.version,
             ),
-            "trigdat_version": GatherTrigdatBackgroundFit(grb_name=self.grb_name),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
         }
 
     def output(self):
