@@ -149,6 +149,12 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
 
                 flag = False
 
+            if response.status_code == 206:
+                print("Uploaded new GRB but notification went wrong")
+                # kill the loop
+
+                flag = False
+
             elif response.status_code == 401:
                 raise UnauthorizedRequest('The authentication token is not valid')
 
