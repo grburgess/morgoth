@@ -149,7 +149,7 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
 
                 flag = False
 
-            if response.status_code == 206:
+            elif response.status_code == 206:
                 print("Uploaded new GRB but notification went wrong")
                 # kill the loop
 
