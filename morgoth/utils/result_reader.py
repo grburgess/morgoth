@@ -356,19 +356,31 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
         parameters=["ra (deg)", "dec (deg)"], chains=chains, squeeze=False
     )[0]
     ra = summ["ra (deg)"][1]
-    ra_pos_err = summ["ra (deg)"][2] - summ["ra (deg)"][1]
-    ra_neg_err = summ["ra (deg)"][1] - summ["ra (deg)"][0]
-    if np.absolute(ra_pos_err) > np.absolute(ra_neg_err):
-        ra_err = np.absolute(ra_pos_err)
-    else:
-        ra_err = np.absolute(ra_neg_err)
+    try:
+        ra_pos_err = summ["ra (deg)"][2] - summ["ra (deg)"][1]
+        ra_neg_err = summ["ra (deg)"][1] - summ["ra (deg)"][0]
+
+        if np.absolute(ra_pos_err) > np.absolute(ra_neg_err):
+            ra_err = np.absolute(ra_pos_err)
+        else:
+            ra_err = np.absolute(ra_neg_err)
+
+    except:
+        ra_err = None
+        
     dec = summ["dec (deg)"][1]
-    dec_pos_err = summ["dec (deg)"][2] - summ["dec (deg)"][1]
-    dec_neg_err = summ["dec (deg)"][1] - summ["dec (deg)"][0]
-    if np.absolute(dec_pos_err) > np.absolute(dec_neg_err):
-        dec_err = np.absolute(dec_pos_err)
-    else:
-        dec_err = np.absolute(dec_neg_err)
+    
+    try:
+        dec_pos_err = summ["dec (deg)"][2] - summ["dec (deg)"][1]
+        dec_neg_err = summ["dec (deg)"][1] - summ["dec (deg)"][0]
+        
+        if np.absolute(dec_pos_err) > np.absolute(dec_neg_err):
+            dec_err = np.absolute(dec_pos_err)
+        else:
+            dec_err = np.absolute(dec_neg_err)
+        
+    except:
+        dec_err = None
 
     hist, x_contour, y_contour = c2.plotter._get_smoothed_histogram2d(
         chains[0], "ra (deg)", "dec (deg)"
