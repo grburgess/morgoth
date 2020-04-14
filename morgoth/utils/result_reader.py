@@ -4,6 +4,8 @@ import astropy.io.fits as fits
 import numpy as np
 import yaml
 from chainconsumer import ChainConsumer
+from astropy.coordinates import Angle
+from astropy.coordinates import SkyCoord
 
 from morgoth.exceptions.custom_exceptions import *
 from morgoth.utils.env import get_env_value
@@ -22,6 +24,7 @@ class ResultReader(object):
         background_file,
         post_equal_weights_file,
         result_file,
+        trigdat_file,
     ):
         self.grb_name = grb_name
         self.report_type = report_type
@@ -55,8 +58,54 @@ class ResultReader(object):
         # read parameter values
         self._read_post_equal_weights_file(post_equal_weights_file)
 
+        # Read trigdat file
+        self._read_trigdat_file(trigdat_file)
+
         # Create a report containing all the results of the pipeline
         self._build_report()
+
+    def _read_trigdat_file(self, trigdat_file):
+        """
+        Read trigdat file for sc_pos and quats, needed to calculate GRB position in sat frame
+        :param trigdat_file: Path to trigdat data file
+        :return:
+        """
+        ra_center = self._ra * np.pi / 180
+        dec_center = self._dec * np.pi / 180
+        if ra_center > np.pi:
+            ra_center = ra_center - 2 * np.pi
+
+        with fits.open(trigdat_file) as f:
+            quat = f["TRIGRATE"].data["SCATTITD"][0]
+            sc_pos = f["TRIGRATE"].data["EIC"][0]
+            times = f["TRIGRATE"].data["TIME"][0]
+
+        loc_icrs = SkyCoord(
+            ra=ra_center * 180 / np.pi,
+            dec=dec_center * 180 / np.pi,
+            unit="deg",
+            frame="icrs",
+        )
+        
+        q1, q2, q3, q4 = quat
+        scx, scy, scz = sc_pos
+        
+        loc_sat = loc_icrs.transform_to(
+            GBMFrame(
+                quaternion_1=q1,
+                quaternion_2=q2,
+                quaternion_3=q3,
+                quaternion_4=q4,
+                sc_pos_X=scx,
+                sc_pos_Y=scy,
+                sc_pos_Z=scz,
+            )
+        )
+        
+        self._phi_sat = Angle(loc_sat.lon.deg * unit.degree)
+        self._theta_sat = Angle(loc_sat.lat.deg * unit.degree)
+        self._phi_sat.wrap_at("180d", inplace=True)
+
 
     def _read_fit_result(self, result_file):
 
@@ -234,10 +283,10 @@ class ResultReader(object):
                 "spec_xp_err": convert_to_float(self._xp_err),
                 "spec_beta": convert_to_float(self._beta),
                 "spec_beta_err": convert_to_float(self._beta_err),
-                "sat_phi": 15,
-                "sat_theta": 15,
-                "balrog_one_sig_err_circle": 15.0,
-                "balrog_two_sig_err_circle": 20.0,
+                "sat_phi": convert_to_float(self._phi_sat),
+                "sat_theta": convert_to_float(self._theta_sat),
+                "balrog_one_sig_err_circle": convert_to_float(self._balrog_one_sig_err_circle),
+                "balrog_two_sig_err_circle": convert_to_float(self._balrog_two_sig_err_circle),
             },
             "time_selection": {
                 "bkg_neg_start": self._bkg_neg_start,
