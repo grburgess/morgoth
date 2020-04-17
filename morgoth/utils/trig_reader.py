@@ -1,3 +1,4 @@
+
 import numpy as np
 
 import collections
@@ -229,6 +230,7 @@ class TrigReader(object):
                 tstop=self._tstop,
                 mat_type=2,
                 time=0,
+                occult=True
             )
 
             # we will use a single response for each detector

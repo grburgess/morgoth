@@ -388,6 +388,7 @@ class MultinestFitTTE(object):
                 trigdat=self._trigdat_file,
                 mat_type=2,
                 cspecfile=cspec_file,
+                occult=True
             )
 
             det_rsp.append(rsp)

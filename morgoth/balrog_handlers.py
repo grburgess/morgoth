@@ -48,6 +48,7 @@ class ProcessFitResults(luigi.Task):
 
         if self.report_type.lower() == "tte":
             return {
+                "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
                 "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
                 "bkg_fit": BackgroundFitTTE(
@@ -58,6 +59,7 @@ class ProcessFitResults(luigi.Task):
 
         elif self.report_type.lower() == "trigdat":
             return {
+                "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
                 "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
                 "bkg_fit": BackgroundFitTrigdat(
@@ -83,7 +85,26 @@ class ProcessFitResults(luigi.Task):
         }
 
     def run(self):
+        
+        if self.report_type.lower() == "tte":
+            with self.input()["trigdat_version"].open() as f:
+                trigdat_version = yaml.safe_load(f)["trigdat_version"]
 
+            trigdat_file = DownloadTrigdat(
+                grb_name=self.grb_name, version=trigdat_version
+            ).output()
+
+        elif self.report_type.lower() == "trigdat":
+            trigdat_file = DownloadTrigdat(
+                grb_name=self.grb_name, version=self.version
+            ).output()
+
+        else:
+            raise UnkownReportType(
+                f"The report_type '{self.report_type}' is not valid!"
+            )
+
+        
         result_reader = ResultReader(
             grb_name=self.grb_name,
             report_type=self.report_type,
@@ -93,6 +114,7 @@ class ProcessFitResults(luigi.Task):
             background_file=self.input()["bkg_fit"]["bkg_fit_yml"].path,
             post_equal_weights_file=self.input()["balrog"]["post_equal_weights"].path,
             result_file=self.input()["balrog"]["fit_result"].path,
+            trigdat_file=trigdat_file
         )
 
         result_reader.save_result_yml(self.output()["result_file"].path)
