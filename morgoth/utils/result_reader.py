@@ -1,4 +1,8 @@
 from datetime import datetime
+from pytz import timezone
+utc = timezone('UTC')
+goddard = timezone('US/Eastern')
+
 
 import astropy.io.fits as fits
 import numpy as np
@@ -10,8 +14,23 @@ from astropy.coordinates import SkyCoord
 from morgoth.exceptions.custom_exceptions import *
 from morgoth.utils.env import get_env_value
 
+from morgoth.utils.swift_check import check_swift
+
+from gbmgeometry.gbm_frame import GBMFrame
+from astropy.coordinates import SkyCoord
+import astropy.units as unit
+
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
+def tz_diff(date, tz1, tz2):
+    '''
+    Returns the difference in hours between timezone1 and timezone2
+    for a given date.
+    '''
+    date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
+    return (tz1.localize(date) - 
+            tz2.localize(date).astimezone(tz1))\
+            .seconds/3600
 
 class ResultReader(object):
     def __init__(
@@ -75,11 +94,33 @@ class ResultReader(object):
         if ra_center > np.pi:
             ra_center = ra_center - 2 * np.pi
 
-        with fits.open(trigdat_file) as f:
+        with fits.open(trigdat_file.path) as f:
             quat = f["TRIGRATE"].data["SCATTITD"][0]
             sc_pos = f["TRIGRATE"].data["EIC"][0]
             times = f["TRIGRATE"].data["TIME"][0]
 
+            data_timestamp_goddard = f["PRIMARY"].header['DATE']+"Z"
+
+        # To UTC
+        hour_diff = tz_diff(data_timestamp_goddard, goddard, utc)
+        hour_utc = int(data_timestamp_goddard[11:13])-hour_diff
+        if hour_utc<0:
+            day_before = True
+            hour_utc = hour_utc+24
+            day_utc = int(data_timestamp_goddard[8:10])-1
+            if day_utc<10:
+                day_utc = f"0{day_utc}"
+        else:
+            day_before = False
+
+        if hour_utc<10:
+            hour_utc = f"0{hour_utc}"
+
+        if not day_before:
+            self._data_timestamp = f"{data_timestamp_goddard[:11]}{hour_utc}{data_timestamp_goddard[13:]}"
+        else:
+            self._data_timestamp = f"{data_timestamp_goddard[:8]}{day_utc}T{hour_utc}{data_timestamp_goddard[13:]}"
+            
         loc_icrs = SkyCoord(
             ra=ra_center * 180 / np.pi,
             dec=dec_center * 180 / np.pi,
@@ -102,10 +143,12 @@ class ResultReader(object):
             )
         )
         
-        self._phi_sat = Angle(loc_sat.lon.deg * unit.degree)
-        self._theta_sat = Angle(loc_sat.lat.deg * unit.degree)
-        self._phi_sat.wrap_at("180d", inplace=True)
+        phi_sat = Angle(loc_sat.lon.deg * unit.degree)
+        theta_sat = Angle(loc_sat.lat.deg * unit.degree)
+        phi_sat.wrap_at("180d", inplace=True)
 
+        self._phi_sat = phi_sat.value
+        self._theta_sat = theta_sat.value 
 
     def _read_fit_result(self, result_file):
 
@@ -210,17 +253,20 @@ class ResultReader(object):
         with open(trigger_file, "r") as f:
             data = yaml.safe_load(f)
 
-            self._trigger_number = 123456
-            self._trigger_timestamp = datetime.utcnow().strftime(
-                "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-            self._data_timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            self._trigger_number = data["trigger_number"]
+            self._trigger_timestamp = data["trigger_time"]
+
             self._most_likely = f"{data['most_likely']} {data['most_likely_prob']}%"
             self._second_most_likely = (
                 f"{data['most_likely_2']} {data['most_likely_prob_2']}%"
             )
-            self._swift = None
-
+            
+            self._swift = check_swift(datetime.strptime(self._trigger_timestamp,
+                                                        "%Y-%m-%dT%H:%M:%S.%fZ"))
+            #self._swift = {"ra": convert_to_float(swift[ra]),
+            #               "dec": convert_to_float(swift[dec]),
+            #               "trigger": int(swift["trigger"])}
+            
     def _read_time_selection(self, time_selection_file):
         with open(time_selection_file, "r") as f:
             data = yaml.safe_load(f)
