@@ -71,6 +71,7 @@ most_likely_lookup = {
 def parse_trigger_file_and_write(root, payload):
 
     tmp = root.find(".//{*}ISOTime").text
+    trigger_time = tmp + "Z"
     yy, mm, dd = re.match(
         r"^\d{2}(\d{2})-(\d{2})-(\d{2})T\d{2}:\d{2}:\d{2}\.\d{2}$", tmp
     ).groups()
@@ -111,6 +112,9 @@ def parse_trigger_file_and_write(root, payload):
 
     lc_file = root.find(".//Param[@name='LightCurve_URL']").attrib["value"]
 
+    # Trigger number
+    trigger_number = root.find(".//Param[@name='TrigID']").attrib["value"]
+    
     # now we want to store the folder directory
 
     main_ftp_directory = os.path.join("/".join(lc_file.split("/")[:-2]), "current")
@@ -122,6 +126,8 @@ def parse_trigger_file_and_write(root, payload):
     uri = main_ftp_directory
 
     out_file_writer = GBMTriggerFile(
+        trigger_number=trigger_number,
+        trigger_time=trigger_time,
         name=burst_name,
         ra=ra,
         dec=dec,
@@ -160,6 +166,8 @@ def parse_trigger_file_and_write(root, payload):
 class GBMTriggerFile(object):
     def __init__(
         self,
+        trigger_number,
+        trigger_time,
         name,
         ra,
         dec,
@@ -172,6 +180,8 @@ class GBMTriggerFile(object):
     ):
 
         self._params = dict(
+            trigger_number=trigger_number,
+            trigger_time=trigger_time,
             name=name,
             ra=ra,
             dec=dec,
@@ -182,7 +192,8 @@ class GBMTriggerFile(object):
             most_likely_2=most_likely_2,
             most_likely_prob_2=most_likely_prob_2,
         )
-
+        self.trigger_number = trigger_number
+        self.trigger_time = trigger_time
         self.ra = ra
         self.dec = dec
         self.name = name
@@ -207,6 +218,8 @@ class GBMTriggerFile(object):
             stuff = yaml.load(f, Loader=yaml.SafeLoader)
 
         return cls(
+            trigger_number=stuff["trigger_number"],
+            trigger_time=stuff["trigger_time"],
             name=stuff["name"],
             ra=stuff["ra"],
             dec=stuff["dec"],
