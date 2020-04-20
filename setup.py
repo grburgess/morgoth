@@ -23,6 +23,7 @@ extra_files = find_data_files("morgoth/data")
 setup(
     version=versioneer.get_version(),
     include_package_data=True,
+    scripts=['bin/morgoth'],
     package_data={"": extra_files},
     license="GPL3",
     cmdclass=versioneer.get_cmdclass()
