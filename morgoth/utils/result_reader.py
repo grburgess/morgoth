@@ -1,7 +1,5 @@
 from datetime import datetime
-from pytz import timezone
-utc = timezone('UTC')
-goddard = timezone('US/Eastern')
+import pytz
 
 
 import astropy.io.fits as fits
@@ -21,16 +19,6 @@ from astropy.coordinates import SkyCoord
 import astropy.units as unit
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
-
-def tz_diff(date, tz1, tz2):
-    '''
-    Returns the difference in hours between timezone1 and timezone2
-    for a given date.
-    '''
-    date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%SZ")
-    return (tz1.localize(date) - 
-            tz2.localize(date).astimezone(tz1))\
-            .seconds/3600
 
 class ResultReader(object):
     def __init__(
@@ -99,28 +87,13 @@ class ResultReader(object):
             sc_pos = f["TRIGRATE"].data["EIC"][0]
             times = f["TRIGRATE"].data["TIME"][0]
 
-            data_timestamp_goddard = f["PRIMARY"].header['DATE']+"Z"
+            data_timestamp_goddard = f["PRIMARY"].header['DATE']+".000Z"
 
-        # To UTC
-        hour_diff = tz_diff(data_timestamp_goddard, goddard, utc)
-        hour_utc = int(data_timestamp_goddard[11:13])-hour_diff
-        if hour_utc<0:
-            day_before = True
-            hour_utc = hour_utc+24
-            day_utc = int(data_timestamp_goddard[8:10])-1
-            if day_utc<10:
-                day_utc = f"0{day_utc}"
-        else:
-            day_before = False
+        datetime_ob_goddard = pytz.timezone('US/Eastern').localize(datetime.strptime(data_timestamp_goddard, "%Y-%m-%dT%H:%M:%S.%fZ"))
+        datetime_ob_utc = datetime_ob_goddard.astimezone(pytz.timezone("UTC"))
 
-        if hour_utc<10:
-            hour_utc = f"0{hour_utc}"
+        self._data_timestamp = datetime_ob_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        if not day_before:
-            self._data_timestamp = f"{data_timestamp_goddard[:11]}{hour_utc}{data_timestamp_goddard[13:]}"
-        else:
-            self._data_timestamp = f"{data_timestamp_goddard[:8]}{day_utc}T{hour_utc}{data_timestamp_goddard[13:]}"
-            
         loc_icrs = SkyCoord(
             ra=ra_center * 180 / np.pi,
             dec=dec_center * 180 / np.pi,
