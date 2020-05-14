@@ -277,7 +277,7 @@ class ResultReader(object):
         if ra_err is not None:
             self._ra_err = ra_err
 
-        if dec_ett is not None:
+        if dec_err is not None:
             self._dec_err = dec_err
         
     def _build_report(self):
