@@ -89,10 +89,14 @@ class ResultReader(object):
 
             data_timestamp_goddard = f["PRIMARY"].header['DATE']+".000Z"
 
-        datetime_ob_goddard = pytz.timezone('US/Eastern').localize(datetime.strptime(data_timestamp_goddard, "%Y-%m-%dT%H:%M:%S.%fZ"))
-        datetime_ob_utc = datetime_ob_goddard.astimezone(pytz.timezone("UTC"))
+        datetime_ob_goddard = pytz.timezone('US/Eastern').localize(datetime.strptime(data_timestamp_goddard,
+                                                                                     "%Y-%m-%dT%H:%M:%S.%fZ"))
 
-        self._data_timestamp = datetime_ob_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        #datetime_ob_utc = datetime_ob_goddard.astimezone(pytz.timezone("UTC"))
+
+        #self._data_timestamp = datetime_ob_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
+        self._data_timestamp = datetime_ob_goddard.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         loc_icrs = SkyCoord(
             ra=ra_center * 180 / np.pi,
@@ -259,15 +263,23 @@ class ResultReader(object):
 
     def _read_post_equal_weights_file(self, post_equal_weights_file):
 
+        # Sometimes chainconsumer does not give an error - In this case we will need the errors from the
+        # 3ml fits files
         (
             self._ra,
-            self._ra_err,
+            ra_err,
             self._dec,
-            self._dec_err,
+            dec_err,
             self._balrog_one_sig_err_circle,
             self._balrog_two_sig_err_circle,
         ) = get_best_fit_with_errors(post_equal_weights_file, self._model)
 
+        if ra_err is not None:
+            self._ra_err = ra_err
+
+        if dec_err is not None:
+            self._dec_err = dec_err
+        
     def _build_report(self):
         self._report = {
             "general": {
