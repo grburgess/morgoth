@@ -20,6 +20,7 @@ import astropy.units as unit
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
+
 class ResultReader(object):
     def __init__(
         self,
@@ -92,14 +93,15 @@ class ResultReader(object):
             sc_pos = f["TRIGRATE"].data["EIC"][0]
             times = f["TRIGRATE"].data["TIME"][0]
 
-            data_timestamp_goddard = f["PRIMARY"].header['DATE']+".000Z"
+            data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
 
-        datetime_ob_goddard = pytz.timezone('US/Eastern').localize(datetime.strptime(data_timestamp_goddard,
-                                                                                     "%Y-%m-%dT%H:%M:%S.%fZ"))
+        datetime_ob_goddard = pytz.timezone("US/Eastern").localize(
+            datetime.strptime(data_timestamp_goddard, "%Y-%m-%dT%H:%M:%S.%fZ")
+        )
 
-        #datetime_ob_utc = datetime_ob_goddard.astimezone(pytz.timezone("UTC"))
+        # datetime_ob_utc = datetime_ob_goddard.astimezone(pytz.timezone("UTC"))
 
-        #self._data_timestamp = datetime_ob_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        # self._data_timestamp = datetime_ob_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         self._data_timestamp = datetime_ob_goddard.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
@@ -109,10 +111,10 @@ class ResultReader(object):
             unit="deg",
             frame="icrs",
         )
-        
+
         q1, q2, q3, q4 = quat
         scx, scy, scz = sc_pos
-        
+
         loc_sat = loc_icrs.transform_to(
             GBMFrame(
                 quaternion_1=q1,
@@ -124,13 +126,13 @@ class ResultReader(object):
                 sc_pos_Z=scz,
             )
         )
-        
+
         phi_sat = Angle(loc_sat.lon.deg * unit.degree)
         theta_sat = Angle(loc_sat.lat.deg * unit.degree)
         phi_sat.wrap_at("180d", inplace=True)
 
         self._phi_sat = phi_sat.value
-        self._theta_sat = theta_sat.value 
+        self._theta_sat = theta_sat.value
 
     def _read_fit_result(self, result_file):
 
@@ -242,13 +244,14 @@ class ResultReader(object):
             self._second_most_likely = (
                 f"{data['most_likely_2']} {data['most_likely_prob_2']}%"
             )
-            
-            self._swift = check_swift(datetime.strptime(self._trigger_timestamp,
-                                                        "%Y-%m-%dT%H:%M:%S.%fZ"))
-            #self._swift = {"ra": convert_to_float(swift[ra]),
+
+            self._swift = check_swift(
+                datetime.strptime(self._trigger_timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
+            )
+            # self._swift = {"ra": convert_to_float(swift[ra]),
             #               "dec": convert_to_float(swift[dec]),
             #               "trigger": int(swift["trigger"])}
-            
+
     def _read_time_selection(self, time_selection_file):
         with open(time_selection_file, "r") as f:
             data = yaml.safe_load(f)
@@ -322,8 +325,12 @@ class ResultReader(object):
                 "spec_beta_err": convert_to_float(self._beta_err),
                 "sat_phi": convert_to_float(self._phi_sat),
                 "sat_theta": convert_to_float(self._theta_sat),
-                "balrog_one_sig_err_circle": convert_to_float(self._balrog_one_sig_err_circle),
-                "balrog_two_sig_err_circle": convert_to_float(self._balrog_two_sig_err_circle),
+                "balrog_one_sig_err_circle": convert_to_float(
+                    self._balrog_one_sig_err_circle
+                ),
+                "balrog_two_sig_err_circle": convert_to_float(
+                    self._balrog_two_sig_err_circle
+                ),
             },
             "time_selection": {
                 "bkg_neg_start": self._bkg_neg_start,
@@ -520,18 +527,18 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
 
     except:
         ra_err = None
-        
+
     dec = summ["dec (deg)"][1]
-    
+
     try:
         dec_pos_err = summ["dec (deg)"][2] - summ["dec (deg)"][1]
         dec_neg_err = summ["dec (deg)"][1] - summ["dec (deg)"][0]
-        
+
         if np.absolute(dec_pos_err) > np.absolute(dec_neg_err):
             dec_err = np.absolute(dec_pos_err)
         else:
             dec_err = np.absolute(dec_neg_err)
-        
+
     except:
         dec_err = None
 
