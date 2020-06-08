@@ -1,6 +1,6 @@
 from datetime import datetime
 import pytz
-
+import urllib
 
 import astropy.io.fits as fits
 import numpy as np
@@ -67,6 +67,11 @@ class ResultReader(object):
 
         # Read trigdat file
         self._read_trigdat_file(trigdat_file)
+
+        # Check the GCN Archive for the GRB letter
+        self._grb_name_gcn = check_letter(
+            trigger_number=self._trigger_number, grb_name=self.grb_name
+        )
 
         # Create a report containing all the results of the pipeline
         self._build_report()
@@ -279,11 +284,12 @@ class ResultReader(object):
 
         if dec_err is not None:
             self._dec_err = dec_err
-        
+
     def _build_report(self):
         self._report = {
             "general": {
                 "grb_name": f"{self.grb_name}",
+                "grb_name_gcn": f"{self._grb_name_gcn}",
                 "report_type": f"{self.report_type}",
                 "version": f"{self.version}",
                 "trigger_number": self._trigger_number,
@@ -405,6 +411,73 @@ model_param_lookup = {
         "kT-brems",
     ],
 }
+
+
+def check_letter(trigger_number, grb_name):
+    """
+    Method to get the GRB Letter from the GCN Archive
+    """
+    try:
+        day = grb_name[3 : 3 + 6]
+        gcn_ids = []
+        used_names = []
+        final_name = "???"
+
+        # Get the GCN archive
+        page = urllib.request.urlopen("https://gcn.gsfc.nasa.gov/gcn3_archive.html")
+
+        # Iterate over all gcn titles
+        for line in page.readlines():
+            line_str = line.decode()
+
+            # Check if the day and "GRB appear in the line"
+            if day in line_str and "GRB " in line_str:
+                # Get the id of the GCN notice and the gcn_name
+                gcn_id = line_str.split("</A>")[0][-5:]
+                gcn_grb_name = line_str.split("GRB ")[1][:7]
+
+                # Check if its a Fermi GBM GCN
+                if "Fermi GBM" in line_str:
+
+                    # Open the GCN and check if its the same trigger_number
+                    gcn = urllib.request.urlopen(
+                        "https://gcn.gsfc.nasa.gov/gcn3/{}.gcn3".format(gcn_id)
+                    )
+
+                    same_trigger = False
+
+                    for gcn_line in gcn.readlines():
+                        gcn_line_str = gcn_line.decode()
+
+                        if str(trigger_number) in gcn_line_str:
+                            # We found a Fermi GBM GCN with the same trigger number
+                            # So we can use their gcn_grb_name
+                            final_name = gcn_grb_name
+                            break
+
+                gcn_ids.append(gcn_id)
+                used_names.append(gcn_grb_name)
+
+    except Exception as e:
+        print(e)
+        final_name = "???"
+
+    if final_name == "???":
+
+        # Check if there have been GRBs during that day
+        if len(used_names) > 0:
+            # Get unique values by converting to set and back to list
+            # Then sort this list
+            used_names = list(set(used_names))
+            used_names = sorted(used_names)
+
+            # Now we need to correlate the times to check if its the same GRB
+            # This is currently not implemented and has to be done by hand!
+            print(used_names)
+
+        return final_name
+    else:
+        return "GRB{}".format(final_name)
 
 
 def get_best_fit_with_errors(post_equal_weigts_file, model):
