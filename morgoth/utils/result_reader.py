@@ -437,7 +437,7 @@ def check_letter(trigger_number, grb_name):
         for line in page.readlines():
             line_str = line.decode()
 
-            # Check if the day and "GRB appear in the line"
+            # Check if the day and "GRB" appear in the line
             if day in line_str and "GRB " in line_str:
                 # Get the id of the GCN notice and the gcn_name
                 gcn_id = line_str.split("</A>")[0][-5:]
