@@ -52,6 +52,7 @@ def create_report_from_result(result):
 
     report = {
         "name": result["general"]["grb_name"],
+        "name_gcn": result["general"]["grb_name_gcn"],
         "hide_burst": False,
         "trigger_number": result["general"]["trigger_number"],
         "trigger_timestamp": result["general"]["trigger_timestamp"],
