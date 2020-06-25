@@ -569,7 +569,7 @@ class MultinestFitTTE(object):
         # Create the chains directory
         chains_dir, temp_chains_dir = self._create_chains_dir()
 
-        chains_path = os.path.join(temp_chains_dir, f"trigdat_{self._version}_")
+        chains_path = os.path.join(temp_chains_dir, f"tte_{self._version}_")
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
@@ -612,11 +612,11 @@ class MultinestFitTTE(object):
         :return:
         """
         chains_dir = os.path.join(
-            base_dir, self._grb_name, "trigdat", self._version, "chains"
+            base_dir, self._grb_name, "tte", self._version, "chains"
         )
 
         temp_chains_dir = os.path.join(
-            base_dir, self._grb_name, f"c_trig_{self._version}"
+            base_dir, self._grb_name, f"c_tte_{self._version}"
         )
 
         if using_mpi:
