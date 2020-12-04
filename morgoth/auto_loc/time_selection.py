@@ -67,6 +67,8 @@ class TimeSelection(object):
         self._active_time = f"{active_time_start}-{active_time_stop}"
         self._max_time = max_time
 
+        self._poly_order = -1
+
     def save_yaml(self, path):
         """
         Save the automatic time selection in a yaml file
@@ -83,7 +85,7 @@ class TimeSelection(object):
                 "after": {"start": self._bkg_pos_start, "stop": self._bkg_pos_stop},
             },
             "max_time": self._max_time,
-            "poly_order": -1,
+            "poly_order": self._poly_order,
         }
 
         # Poly_Order entry with -1 (default). But we need this entry in the
@@ -158,3 +160,47 @@ class TimeSelection(object):
     def set_max_time(self, max_time):
 
         self._max_time = max_time
+
+class TimeSelectionKnown(TimeSelection):
+
+    def __init__(self, active_time, background_time_neg,
+                 background_time_pos, poly_order=-1, max_time=None):
+        self._active_time = active_time
+        self._background_time_neg = background_time_neg
+        self._background_time_pos = background_time_pos
+        self._max_time = max_time
+        self._poly_order = poly_order
+
+        # get start and stop times
+        inter = self._active_time.split("-")
+        if len(inter)==2:
+            self._active_time_start = float(inter[0])
+            self._active_time_stop = float(inter[1])
+        elif len(inter)==3:
+            self._active_time_start = -1*float(inter[1])
+            self._active_time_stop = float(inter[2])
+        else:
+            self._active_time_start = -1*float(inter[1])
+            self._active_time_stop = -1*float(inter[3])
+
+        inter = self._background_time_pos.split("-")
+        if len(inter)==2:
+            self._bkg_pos_start = float(inter[0])
+            self._bkg_pos_stop = float(inter[1])
+        elif len(inter)==3:
+            self._bkg_pos_start = -1*float(inter[1])
+            self._bkg_pos_stop = float(inter[2])
+        else:
+            self._bkg_pos_start = -1*float(inter[1])
+            self._bkg_pos_stop = -1*float(inter[3])
+
+        inter = self._background_time_neg.split("-")
+        if len(inter)==2:
+            self._bkg_neg_start = float(inter[0])
+            self._bkg_neg_stop = float(inter[1])
+        elif len(inter)==3:
+            self._bkg_neg_start = -1*float(inter[1])
+            self._bkg_neg_stop = float(inter[2])
+        else:
+            self._bkg_neg_start = -1*float(inter[1])
+            self._bkg_neg_stop = -1*float(inter[3])
