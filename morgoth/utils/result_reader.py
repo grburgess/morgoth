@@ -88,6 +88,14 @@ class ResultReader(object):
         if ra_center > np.pi:
             ra_center = ra_center - 2 * np.pi
 
+        if type(trigdat_file)==str:
+            with fits.open(trigdat_file) as f:
+                quat = f["TRIGRATE"].data["SCATTITD"][0]
+                sc_pos = f["TRIGRATE"].data["EIC"][0]
+                times = f["TRIGRATE"].data["TIME"][0]
+
+                data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
+
         with fits.open(trigdat_file.path) as f:
             quat = f["TRIGRATE"].data["SCATTITD"][0]
             sc_pos = f["TRIGRATE"].data["EIC"][0]
