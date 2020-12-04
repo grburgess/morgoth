@@ -95,13 +95,13 @@ class ResultReader(object):
                 times = f["TRIGRATE"].data["TIME"][0]
 
                 data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
+        else:
+            with fits.open(trigdat_file.path) as f:
+                quat = f["TRIGRATE"].data["SCATTITD"][0]
+                sc_pos = f["TRIGRATE"].data["EIC"][0]
+                times = f["TRIGRATE"].data["TIME"][0]
 
-        with fits.open(trigdat_file.path) as f:
-            quat = f["TRIGRATE"].data["SCATTITD"][0]
-            sc_pos = f["TRIGRATE"].data["EIC"][0]
-            times = f["TRIGRATE"].data["TIME"][0]
-
-            data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
+                data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
 
         datetime_ob_goddard = pytz.timezone("US/Eastern").localize(
             datetime.strptime(data_timestamp_goddard, "%Y-%m-%dT%H:%M:%S.%fZ")
