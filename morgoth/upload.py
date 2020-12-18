@@ -12,7 +12,11 @@ from morgoth.plots import (
     CreateLocationPlot,
     CreateMollLocationPlot,
     CreateSatellitePlot,
-    CreateSpectrumPlot,
+    CreateSpectrumPlot
+)
+from morgoth.data_files import (
+    CreateHealpixSysErr,
+    CreateHealpix
 )
 from morgoth.configuration import morgoth_config
 from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
@@ -63,6 +67,114 @@ class UploadReport(luigi.Task):
         with open(report_path, "w") as f:
             yaml.dump(report, f, default_flow_style=False)
 
+class UploadAllDataFiles(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "healpix": UploadHealpix(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "healpixSysErr": UploadHealpixSysErr(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+        }
+
+    def output(self):
+        filename = f"{self.report_type}_{self.version}_upload_datafiles.done"
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                self.version,
+                "upload",
+                filename,
+            )
+        )
+
+    def run(self):
+        filename = f"{self.report_type}_{self.version}_upload_datafiles.done"
+        tmp = os.path.join(
+            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
+        )
+
+        if_dir_containing_file_not_existing_then_make(tmp)
+        os.system(f"touch {tmp}")
+
+class UploadHealpix(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    detector = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "create_report": UploadReport(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "data_file": CreateHealpix(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                detector=self.detector,
+                version=self.version,
+            ),
+        }
+
+    def output(self):
+        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_healpix.done"
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                self.version,
+                "upload",
+                filename,
+            )
+        )
+
+class UploadHealpixSysErr(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    detector = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "create_report": UploadReport(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "data_file": CreateHealpixSysErr(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                detector=self.detector,
+                version=self.version,
+            ),
+        }
+
+    def output(self):
+        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_healpixsyserr.done"
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                self.version,
+                "upload",
+                filename,
+            )
+        )
 
 class UploadAllPlots(luigi.Task):
     grb_name = luigi.Parameter()
