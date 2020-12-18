@@ -1019,21 +1019,6 @@ def interactive_3D_plot(
     with open(save_path, "w") as text_file:
         text_file.write(output)
 
-
-def healpix(self, nside=32):
-    result_file = "{}/GRB{}/v0{}/fit_result/GRB{}_v0{}_loc_results.fits".format(
-        self._save_folder, self._trigger, self._version, self._trigger, self._version
-    )
-    save_file = "{}/GRB{}/v0{}/fit_files/GRB{}_healpix_v0{}.fits".format(
-        self._save_folder, self._trigger, self._version, self._trigger, self._version
-    )
-    if os.path.exists(save_file):
-        os.remove(save_file)
-    results = load_analysis_results(result_file)
-    healpix = BALROGHealpixMap(results, nside=nside)
-    healpix.write_map(save_file)
-
-
 def loadtxt2d(intext):
     try:
         return np.loadtxt(intext, ndmin=2)
