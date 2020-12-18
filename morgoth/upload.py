@@ -211,8 +211,8 @@ class UploadHealpixSysErr(luigi.Task):
         upload_datafile(
             grb_name=self.grb_name,
             report_type=self.report_type,
-            plot_file=self.input()["data_file"].path,
-            plot_type="healpixSysErr",
+            data_file=self.input()["data_file"].path,
+            file_type="healpixSysErr",
             version=self.version,
             wait_time=float(
                 morgoth_config["upload"]["plot"]["interval"]

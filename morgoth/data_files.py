@@ -42,7 +42,7 @@ class CreateHealpix(luigi.Task):
             nside=512,
             result_path=os.path.join(base_dir, self.grb_name,
                                      self.report_type, self.version,
-                                     f"{self.report_type}_{self.version}_loc_results.fits",
+                                     f"{self.report_type}_{self.version}_loc_results.fits"),
             save_path=self.output().path,
         )
 
@@ -80,6 +80,6 @@ class CreateHealpixSysErr(luigi.Task):
             sat_phi=result["fit_result"]["sat_phi"],
             result_path=os.path.join(base_dir, self.grb_name,
                                      self.report_type, self.version,
-                                     f"{self.report_type}_{self.version}_loc_results.fits",
+                                     f"{self.report_type}_{self.version}_loc_results.fits"),
             save_path=self.output().path,
         )

@@ -409,7 +409,7 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_t
                     verify=False,
                 )
                 if response.status_code == 201:
-                    print("Uploaded new plot")
+                    print("Uploaded new data file")
                     flag = False
 
                 elif response.status_code == 401:
