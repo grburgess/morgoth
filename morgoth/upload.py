@@ -21,7 +21,7 @@ from morgoth.data_files import (
 from morgoth.configuration import morgoth_config
 from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 from morgoth.utils.env import get_env_value
-from morgoth.utils.upload_utils import upload_grb_report, upload_plot
+from morgoth.utils.upload_utils import upload_grb_report, upload_plot, upload_datafile
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -142,6 +142,33 @@ class UploadHealpix(luigi.Task):
             )
         )
 
+    def run(self):
+        data_dir = os.path.join((self.input()["data_file"].path).split("/")[:-1])
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
+
+        upload_datafile(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            data_file=self.input()["data_file"].path,
+            file_type="healpix",
+            version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
+        )
+
+        filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
+        tmp = os.path.join(
+            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
+        )
+
+        if_dir_containing_file_not_existing_then_make(tmp)
+        os.system(f"touch {tmp}")
+
 class UploadHealpixSysErr(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
@@ -175,6 +202,33 @@ class UploadHealpixSysErr(luigi.Task):
                 filename,
             )
         )
+
+    def run(self):
+        data_dir = os.path.join((self.input()["data_file"].path).split("/")[:-1])
+        if not os.path.exists(data_dir):
+            os.mkdir(data_dir)
+
+        upload_datafile(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            plot_file=self.input()["data_file"].path,
+            plot_type="healpixSysErr",
+            version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
+        )
+
+        filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
+        tmp = os.path.join(
+            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
+        )
+
+        if_dir_containing_file_not_existing_then_make(tmp)
+        os.system(f"touch {tmp}")
 
 class UploadAllPlots(luigi.Task):
     grb_name = luigi.Parameter()
