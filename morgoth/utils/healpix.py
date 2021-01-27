@@ -2,6 +2,7 @@ import numpy as np
 from threeML import *
 import healpy as hp
 import copy
+import os
 
 class HealpixMap(object):
 

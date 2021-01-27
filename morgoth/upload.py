@@ -72,6 +72,7 @@ class UploadAllDataFiles(luigi.Task):
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
+    
     def requires(self):
         return {
             "healpix": UploadHealpix(
@@ -111,7 +112,6 @@ class UploadAllDataFiles(luigi.Task):
 class UploadHealpix(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
-    detector = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
     def requires(self):
@@ -124,13 +124,12 @@ class UploadHealpix(luigi.Task):
             "data_file": CreateHealpix(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
-                detector=self.detector,
                 version=self.version,
             ),
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_healpix.done"
+        filename = f"{self.report_type}_{self.version}_upload_healpix.done"
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
@@ -143,10 +142,7 @@ class UploadHealpix(luigi.Task):
         )
 
     def run(self):
-        data_dir = os.path.join((self.input()["data_file"].path).split("/")[:-1])
-        if not os.path.exists(data_dir):
-            os.mkdir(data_dir)
-
+        
         upload_datafile(
             grb_name=self.grb_name,
             report_type=self.report_type,
@@ -161,18 +157,12 @@ class UploadHealpix(luigi.Task):
             ),
         )
 
-        filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
-        tmp = os.path.join(
-            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
-        )
-
-        if_dir_containing_file_not_existing_then_make(tmp)
-        os.system(f"touch {tmp}")
+        if_dir_containing_file_not_existing_then_make(self.output().path)
+        os.system(f"touch {self.output().path}")
 
 class UploadHealpixSysErr(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
-    detector = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
     def requires(self):
@@ -185,13 +175,12 @@ class UploadHealpixSysErr(luigi.Task):
             "data_file": CreateHealpixSysErr(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
-                detector=self.detector,
                 version=self.version,
             ),
         }
 
     def output(self):
-        filename = f"{self.report_type}_{self.version}_{self.detector}_upload_healpixsyserr.done"
+        filename = f"{self.report_type}_{self.version}_upload_healpixsyserr.done"
         return luigi.LocalTarget(
             os.path.join(
                 base_dir,
@@ -204,9 +193,6 @@ class UploadHealpixSysErr(luigi.Task):
         )
 
     def run(self):
-        data_dir = os.path.join((self.input()["data_file"].path).split("/")[:-1])
-        if not os.path.exists(data_dir):
-            os.mkdir(data_dir)
 
         upload_datafile(
             grb_name=self.grb_name,
@@ -227,8 +213,8 @@ class UploadHealpixSysErr(luigi.Task):
             base_dir, self.grb_name, self.report_type, self.version, "upload", filename
         )
 
-        if_dir_containing_file_not_existing_then_make(tmp)
-        os.system(f"touch {tmp}")
+        if_dir_containing_file_not_existing_then_make(self.output().path)
+        os.system(f"touch {self.output().path}")
 
 class UploadAllPlots(luigi.Task):
     grb_name = luigi.Parameter()

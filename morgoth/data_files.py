@@ -5,8 +5,10 @@ import yaml
 
 from morgoth.exceptions.custom_exceptions import UnkownReportType
 from morgoth.utils.env import get_env_value
+from morgoth.balrog_handlers import ProcessFitResults
 
 from morgoth.utils.healpix import healpix_no_sys, healpix_with_sys
+from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -14,10 +16,11 @@ class CreateHealpix(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
-
     def requires(self):
         return ProcessFitResults(
-            grb_name=self.grb_name, report_type=self.report_type, version=self.version
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            version=self.version
         )
 
     def output(self):
@@ -34,10 +37,11 @@ class CreateHealpix(luigi.Task):
                 filename,
             )
         )
+    
     def run(self):
         with self.input()["result_file"].open() as f:
             result = yaml.safe_load(f)
-
+        if_dir_containing_file_not_existing_then_make(self.output().path)
         healpix_no_sys(
             nside=512,
             result_path=os.path.join(base_dir, self.grb_name,
@@ -74,6 +78,8 @@ class CreateHealpixSysErr(luigi.Task):
         with self.input()["result_file"].open() as f:
             result = yaml.safe_load(f)
 
+        if_dir_containing_file_not_existing_then_make(self.output().path)
+        
         healpix_with_sys(
             nside=512,
             n_samples_point=100,

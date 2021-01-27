@@ -9,7 +9,6 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 class CreateAllPages(luigi.WrapperTask):
     grb_name = luigi.Parameter()
-
     def requires(self):
         return {
             "tte_v00": CreateReportTTE(grb_name=self.grb_name),
