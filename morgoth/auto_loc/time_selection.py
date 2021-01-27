@@ -9,12 +9,13 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelection(object):
-    def __init__(self, grb_name, trigdat_file):
+    def __init__(self, grb_name, trigdat_file, fine=False):
         """
         Object for time selection of a GRB event.
         :param grb_name: Name of GRB
         :param version: Version of trigdat data file
         """
+        self._fine = fine
         self._grb_name = grb_name
         self._trigdat_file = trigdat_file
 
@@ -86,6 +87,7 @@ class TimeSelection(object):
             },
             "max_time": self._max_time,
             "poly_order": self._poly_order,
+            "fine": self._fine,
         }
 
         # Poly_Order entry with -1 (default). But we need this entry in the
@@ -164,7 +166,9 @@ class TimeSelection(object):
 class TimeSelectionKnown(TimeSelection):
 
     def __init__(self, active_time, background_time_neg,
-                 background_time_pos, poly_order=-1, max_time=None):
+                 background_time_pos, poly_order=-1, max_time=None,
+                 fine=False):
+        self._fine = fine 
         self._active_time = active_time
         self._background_time_neg = background_time_neg
         self._background_time_pos = background_time_pos

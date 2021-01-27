@@ -84,6 +84,7 @@ class MultinestFitTrigdat(object):
             self._active_time = (
                 f"{data['active_time']['start']}-{data['active_time']['stop']}"
             )
+            self._fine = data['fine']
 
         self._trigdat_file = trigdat_file
 
@@ -101,7 +102,7 @@ class MultinestFitTrigdat(object):
             try:
                 trig_reader = TrigReader(
                     self._trigdat_file,
-                    fine=False,
+                    fine=self._fine,
                     verbose=False,
                     restore_poly_fit=self._bkg_fit_files,
                 )
