@@ -118,7 +118,7 @@ class TrigReader(object):
             # Create a starting list of array indices.
             # We will dumb then ones that are not needed
 
-            all_index = range(len(self._tstart))
+            all_index = list(range(len(self._tstart)))
 
             # masks for all the different delta times and
             # the mid points for the different binnings
@@ -132,32 +132,24 @@ class TrigReader(object):
 
             # Dump any index that occurs in a lower resolution
             # binning when a finer resolution covers the interval
+
             for indx in np.where(temp2)[0]:
                 for x in midT1:
                     if self._tstart[indx] < x < self._tstop[indx]:
-                        try:
-
+                        if indx in all_index:
                             all_index.remove(indx)
-                        except:
-                            pass
 
             for indx in np.where(temp3)[0]:
                 for x in midT2:
                     if self._tstart[indx] < x < self._tstop[indx]:
-                        try:
-
+                        if indx in all_index:
                             all_index.remove(indx)
 
-                        except:
-                            pass
             for indx in np.where(temp4)[0]:
                 for x in midT3:
                     if self._tstart[indx] < x < self._tstop[indx]:
-                        try:
-
+                        if indx in all_index:
                             all_index.remove(indx)
-                        except:
-                            pass
 
             all_index = np.array(all_index)
         else:
