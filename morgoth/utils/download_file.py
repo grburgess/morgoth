@@ -88,7 +88,7 @@ class BackgroundDownload(object):
 
                     # we are out of time so give up
 
-                    flag = False
+                    break
 
                 else:
 
@@ -100,4 +100,7 @@ class BackgroundDownload(object):
 
                     time_spent += self._wait_time
 
+        if flag:
+            raise AssertionError(f"File not found in {self._max_time} seconds. Maybe try a newer version?")
+        
         return path
