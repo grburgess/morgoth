@@ -265,9 +265,9 @@ class ResultReader(object):
             data = yaml.safe_load(f)
 
             self._bkg_neg_start = data["background_time"]["before"]["start"]
-            self._bkg_neg_stop = data["background_time"]["after"]["stop"]
-            self._bkg_pos_start = data["background_time"]["before"]["start"]
-            self._bkg_pos_stop = data["background_time"]["before"]["stop"]
+            self._bkg_neg_stop = data["background_time"]["before"]["stop"]
+            self._bkg_pos_start = data["background_time"]["after"]["start"]
+            self._bkg_pos_stop = data["background_time"]["after"]["stop"]
             self._active_time_start = data["active_time"]["start"]
             self._active_time_stop = data["active_time"]["stop"]
             self._poly_order = data["poly_order"]
