@@ -26,7 +26,7 @@ class TimeSelection(object):
         Function to calcuate the time selection for a given trigger event. This is done iterative.
         :return:
         """
-        trig_reader = TrigReader(self._trigdat_file, fine=False, verbose=False)
+        trig_reader = TrigReader(self._trigdat_file, fine=self._fine, verbose=False)
 
         # Inital bkg and active time selection - We will change this recursivly to explain most of
         # the bkg by a polynomial

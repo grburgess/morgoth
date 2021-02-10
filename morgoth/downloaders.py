@@ -32,20 +32,14 @@ class GatherTrigdatDownload(luigi.Task):
             if DownloadTrigdat(grb_name=self.grb_name, version="v00").complete():
                 version = "v00"
                 break
-            else:
-                print("version 0 not complete")
 
             if DownloadTrigdat(grb_name=self.grb_name, version="v01").complete():
                 version = "v01"
                 break
-            else:
-                print("version 1 not complete")
 
             if DownloadTrigdat(grb_name=self.grb_name, version="v02").complete():
                 version = "v02"
                 break
-            else:
-                print("version 2 not complete")
 
             time.sleep(2)
 
