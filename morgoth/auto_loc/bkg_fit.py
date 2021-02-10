@@ -61,9 +61,10 @@ class BkgFittingTrigdat(object):
             bkg_time_neg = data["background_time"]["before"]
             bkg_time_pos = data["background_time"]["after"]
             poly_order = data["poly_order"]
+            fine = data["fine"]
 
         self._trig_reader = TrigReader(
-            self._trigdat_file, fine=False, verbose=False, poly_order=poly_order
+            self._trigdat_file, fine=fine, verbose=False, poly_order=poly_order
         )
 
         self._trig_reader.set_active_time_interval(
@@ -172,7 +173,7 @@ class BkgFittingTrigdat(object):
         bkg_fit_dict["use_dets"] = self._use_dets
         bkg_fit_dict["bkg_fit_files"] = self._bkg_fits_files
         bkg_fit_dict["lightcurve_plots"] = self._lightcurve_plots
-
+        
         with open(path, "w") as outfile:
             yaml.dump(bkg_fit_dict, outfile, default_flow_style=False)
 

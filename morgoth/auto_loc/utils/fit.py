@@ -84,6 +84,7 @@ class MultinestFitTrigdat(object):
             self._active_time = (
                 f"{data['active_time']['start']}-{data['active_time']['stop']}"
             )
+            self._fine = data['fine']
 
         self._trigdat_file = trigdat_file
 
@@ -101,7 +102,7 @@ class MultinestFitTrigdat(object):
             try:
                 trig_reader = TrigReader(
                     self._trigdat_file,
-                    fine=False,
+                    fine=self._fine,
                     verbose=False,
                     restore_poly_fit=self._bkg_fit_files,
                 )
@@ -217,15 +218,13 @@ class MultinestFitTrigdat(object):
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(
-            800,
-            chain_name=chain_path,
-            importance_nested_sampling=False,
-            const_efficiency_mode=False,
-            wrapped_params=wrap,
-            verbose=True,
-            resume=True,
-        )
+        
+        self._bayes.set_sampler("multinest", share_spectrum=True)
+        self._bayes.sampler.setup(n_live_points=800,
+                                chain_name=chain_path,
+                                wrapped_params=wrap,
+                                verbose=True)
+        self._bayes.sample()
 
     def save_fit_result(self):
         """
@@ -561,15 +560,14 @@ class MultinestFitTTE(object):
 
         # use multinest to sample the posterior
         # set main_path+trigger to whatever you want to use
-        _ = self._bayes.sample_multinest(
-            800,
-            chain_name=chain_path,
-            importance_nested_sampling=False,
-            const_efficiency_mode=False,
-            wrapped_params=wrap,
-            verbose=True,
-            resume=True,
-        )
+
+        self._bayes.set_sampler("multinest", share_spectrum=True)
+        
+        self._bayes.sampler.setup(n_live_points=800,
+                                chain_name=chain_path,
+                                wrapped_params=wrap,
+                                verbose=True)
+        self._bayes.sample()
 
     def save_fit_result(self):
         """

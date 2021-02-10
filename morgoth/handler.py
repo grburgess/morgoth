@@ -1,6 +1,6 @@
 import shlex
 import subprocess
-
+import os
 import gcn
 
 from morgoth import morgoth_config
@@ -33,7 +33,8 @@ def handler(payload, root):
     cmd = form_morgoth_cmd_string(grb)
 
     # launch luigi
-    subprocess.Popen(cmd)
+    os.system(" ".join(cmd))
+    #subprocess.Popen(cmd)
 
 
 def form_morgoth_cmd_string(grb):
@@ -50,7 +51,7 @@ def form_morgoth_cmd_string(grb):
 
     cmd = f"{base_cmd} CreateAllPages --grb-name {grb} "
 
-    cmd += f"--workers {n_workers} --scheduler-host localhost"
+    cmd += f"--workers {n_workers} --scheduler-host localhost --log-level INFO"
 
     cmd = shlex.split(cmd)
 

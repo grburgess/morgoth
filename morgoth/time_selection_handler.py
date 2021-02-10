@@ -29,7 +29,7 @@ class TimeSelectionHandler(luigi.Task):
         ).output()
 
         time_selection = TimeSelection(
-            grb_name=self.grb_name, trigdat_file=trigdat_file.path
+            grb_name=self.grb_name, trigdat_file=trigdat_file.path, fine=True
         )
 
         time_selection.save_yaml(

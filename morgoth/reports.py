@@ -2,14 +2,13 @@ import luigi
 import os
 
 from morgoth.utils.env import get_env_value
-from morgoth.upload import UploadReport, UploadAllPlots
+from morgoth.upload import UploadReport, UploadAllPlots, UploadAllDataFiles
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class CreateAllPages(luigi.WrapperTask):
     grb_name = luigi.Parameter()
-
     def requires(self):
         return {
             "tte_v00": CreateReportTTE(grb_name=self.grb_name),
@@ -31,6 +30,9 @@ class CreateReportTTE(luigi.Task):
             "upload_all_plots": UploadAllPlots(
                 grb_name=self.grb_name, report_type="tte", version=self.version
             ),
+            "upload_all_data_files": UploadAllDataFiles(
+                grb_name=self.grb_name, report_type="tte", version=self.version
+            )
         }
 
     def output(self):
@@ -53,6 +55,9 @@ class CreateReportTrigdat(luigi.Task):
             "upload_all_plots": UploadAllPlots(
                 grb_name=self.grb_name, report_type="trigdat", version=self.version
             ),
+            "upload_all_data_files": UploadAllDataFiles(
+                grb_name=self.grb_name, report_type="trigdat", version=self.version
+            )
         }
 
     def output(self):

@@ -88,12 +88,20 @@ class ResultReader(object):
         if ra_center > np.pi:
             ra_center = ra_center - 2 * np.pi
 
-        with fits.open(trigdat_file.path) as f:
-            quat = f["TRIGRATE"].data["SCATTITD"][0]
-            sc_pos = f["TRIGRATE"].data["EIC"][0]
-            times = f["TRIGRATE"].data["TIME"][0]
+        if type(trigdat_file)==str:
+            with fits.open(trigdat_file) as f:
+                quat = f["TRIGRATE"].data["SCATTITD"][0]
+                sc_pos = f["TRIGRATE"].data["EIC"][0]
+                times = f["TRIGRATE"].data["TIME"][0]
 
-            data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
+                data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
+        else:
+            with fits.open(trigdat_file.path) as f:
+                quat = f["TRIGRATE"].data["SCATTITD"][0]
+                sc_pos = f["TRIGRATE"].data["EIC"][0]
+                times = f["TRIGRATE"].data["TIME"][0]
+
+                data_timestamp_goddard = f["PRIMARY"].header["DATE"] + ".000Z"
 
         datetime_ob_goddard = pytz.timezone("US/Eastern").localize(
             datetime.strptime(data_timestamp_goddard, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -257,9 +265,9 @@ class ResultReader(object):
             data = yaml.safe_load(f)
 
             self._bkg_neg_start = data["background_time"]["before"]["start"]
-            self._bkg_neg_stop = data["background_time"]["after"]["stop"]
-            self._bkg_pos_start = data["background_time"]["before"]["start"]
-            self._bkg_pos_stop = data["background_time"]["before"]["stop"]
+            self._bkg_neg_stop = data["background_time"]["before"]["stop"]
+            self._bkg_pos_start = data["background_time"]["after"]["start"]
+            self._bkg_pos_stop = data["background_time"]["after"]["stop"]
             self._active_time_start = data["active_time"]["start"]
             self._active_time_stop = data["active_time"]["stop"]
             self._poly_order = data["poly_order"]

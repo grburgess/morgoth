@@ -9,12 +9,13 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelection(object):
-    def __init__(self, grb_name, trigdat_file):
+    def __init__(self, grb_name, trigdat_file, fine=False):
         """
         Object for time selection of a GRB event.
         :param grb_name: Name of GRB
         :param version: Version of trigdat data file
         """
+        self._fine = fine
         self._grb_name = grb_name
         self._trigdat_file = trigdat_file
 
@@ -25,7 +26,7 @@ class TimeSelection(object):
         Function to calcuate the time selection for a given trigger event. This is done iterative.
         :return:
         """
-        trig_reader = TrigReader(self._trigdat_file, fine=False, verbose=False)
+        trig_reader = TrigReader(self._trigdat_file, fine=self._fine, verbose=False)
 
         # Inital bkg and active time selection - We will change this recursivly to explain most of
         # the bkg by a polynomial
@@ -67,6 +68,8 @@ class TimeSelection(object):
         self._active_time = f"{active_time_start}-{active_time_stop}"
         self._max_time = max_time
 
+        self._poly_order = -1
+
     def save_yaml(self, path):
         """
         Save the automatic time selection in a yaml file
@@ -83,7 +86,8 @@ class TimeSelection(object):
                 "after": {"start": self._bkg_pos_start, "stop": self._bkg_pos_stop},
             },
             "max_time": self._max_time,
-            "poly_order": -1,
+            "poly_order": self._poly_order,
+            "fine": self._fine,
         }
 
         # Poly_Order entry with -1 (default). But we need this entry in the
@@ -158,3 +162,49 @@ class TimeSelection(object):
     def set_max_time(self, max_time):
 
         self._max_time = max_time
+
+class TimeSelectionKnown(TimeSelection):
+
+    def __init__(self, active_time, background_time_neg,
+                 background_time_pos, poly_order=-1, max_time=None,
+                 fine=False):
+        self._fine = fine 
+        self._active_time = active_time
+        self._background_time_neg = background_time_neg
+        self._background_time_pos = background_time_pos
+        self._max_time = max_time
+        self._poly_order = poly_order
+
+        # get start and stop times
+        inter = self._active_time.split("-")
+        if len(inter)==2:
+            self._active_time_start = float(inter[0])
+            self._active_time_stop = float(inter[1])
+        elif len(inter)==3:
+            self._active_time_start = -1*float(inter[1])
+            self._active_time_stop = float(inter[2])
+        else:
+            self._active_time_start = -1*float(inter[1])
+            self._active_time_stop = -1*float(inter[3])
+
+        inter = self._background_time_pos.split("-")
+        if len(inter)==2:
+            self._bkg_pos_start = float(inter[0])
+            self._bkg_pos_stop = float(inter[1])
+        elif len(inter)==3:
+            self._bkg_pos_start = -1*float(inter[1])
+            self._bkg_pos_stop = float(inter[2])
+        else:
+            self._bkg_pos_start = -1*float(inter[1])
+            self._bkg_pos_stop = -1*float(inter[3])
+
+        inter = self._background_time_neg.split("-")
+        if len(inter)==2:
+            self._bkg_neg_start = float(inter[0])
+            self._bkg_neg_stop = float(inter[1])
+        elif len(inter)==3:
+            self._bkg_neg_start = -1*float(inter[1])
+            self._bkg_neg_stop = float(inter[2])
+        else:
+            self._bkg_neg_start = -1*float(inter[1])
+            self._bkg_neg_stop = -1*float(inter[3])
