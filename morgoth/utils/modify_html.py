@@ -44,6 +44,12 @@ def modify_index_html():
         """<link href="lib/AdminLTE/css/skin-green-light.min.css" rel="stylesheet"/>""",
         """<link href="lib/AdminLTE/css/skin-mpe.min.css" rel="stylesheet"/>""",
     )
+    
+    filedata = filedata.replace(
+        """<li class=""><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>""",
+        """<li class=""><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>
+           <li class=""><a class="" href="https://grb.mpe.mpg.de">GRB Website</a></li>""",
+    )
 
     with open(os.path.join(visualizer_dir, "index.html"), "w") as f:
         f.write(filedata)
