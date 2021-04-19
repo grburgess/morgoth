@@ -46,9 +46,9 @@ def modify_index_html():
     )
     
     filedata = filedata.replace(
-        """<li class=""><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>""",
-        """<li class=""><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>
-           <li class=""><a class="" href="https://grb.mpe.mpg.de">GRB Website</a></li>""",
+        """<li><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>""",
+        """<li><a class="js-nav-link" href="#tab=resource" data-tab="resourceList">Resources</a></li>
+           <li><a class="" href="https://grb.mpe.mpg.de">GRB Website</a></li>""",
     )
 
     with open(os.path.join(visualizer_dir, "index.html"), "w") as f:
