@@ -18,6 +18,11 @@ from gbmgeometry.gbm_frame import GBMFrame
 from astropy.coordinates import SkyCoord
 import astropy.units as unit
 
+from astropy.table import Table
+import pandas as pd
+import os, ssl
+
+
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
@@ -295,6 +300,60 @@ class ResultReader(object):
 
         if dec_err is not None:
             self._dec_err = dec_err
+            
+            
+    def sepList(self):
+        
+    #for the case of certification errror
+        if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+        getattr(ssl, '_create_unverified_context', None)):
+            ssl._create_default_https_context = ssl._create_unverified_context
+
+    #read in table from website   
+        table_MN = pd.read_html("https://swift.gsfc.nasa.gov/results/transients/BAT_current.html")
+        df = table_MN[0]
+
+    #delete unwanted string
+        df.rename(columns={'Peak*': 'Peak'}, inplace=True)
+
+    #filter by peak value
+        df = df.drop(df[df.Peak=="-"].index)
+        df = df.astype({"Peak": int})
+        df_filtered = df[df['Peak']>400]
+        
+    #for table of catalog
+        table = Table.from_pandas(df_filtered)
+        #table.show_in_browser(jsviewer=True)
+        
+    #transform input in SkyCoord
+        position=SkyCoord(self._ra*unit.deg, self._dec*unit.deg, frame="icrs")
+        
+    #transform table data in SkyCoord
+        coords = []
+        for i in range(len(df_filtered['RA J2000 Degs'])):
+            ra = table[i]['RA J2000 Degs']  
+            dec = table[i]['Dec J2000 Degs']
+            coords.append(SkyCoord(ra*unit.deg, dec*unit.deg, frame="icrs"))
+            
+    #get separation value
+        separations = []
+        for i in coords:
+            z = i.separation(position)
+            separations.append(z.to(unit.deg))
+            
+    #for table of separations
+        table["Separation Degs"] = separations
+        table.round(3)
+        table.sort("Separation Degs")
+        #table.show_in_browser(jsviewer=True)
+            
+    #create dictionary
+        dic = {}
+        for i in range(len(table["Source Name"])):
+            dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'], "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
+
+        return dic
+    
 
     def _build_report(self):
         self._report = {
@@ -349,7 +408,9 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
-        }
+            "source comparison": self.sepList()
+            }
+
 
     def save_result_yml(self, file_path):
         with open(file_path, "w") as f:
