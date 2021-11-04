@@ -19,8 +19,10 @@ from astropy.coordinates import SkyCoord
 import astropy.units as unit
 
 from astropy.table import Table
+from astropy.coordinates import Angle
 import pandas as pd
 import os, ssl
+import requests
 
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
@@ -81,6 +83,9 @@ class ResultReader(object):
 
         # Check catalog of bright gamma sources and get separation to GRB position
         self._sep_bright_sources()
+
+        # Check catalog of SGRs and get separation to GRB position
+        self._sep_SGRs()
 
         # Create a report containing all the results of the pipeline
         self._build_report()
@@ -356,6 +361,50 @@ class ResultReader(object):
             dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'], "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
 
         self.dic_bright_sources = dic
+
+
+    def _sep_SGRs(self):
+
+        #get csv data from website
+        url = 'http://www.physics.mcgill.ca/~pulsar/magnetar/TabO1.csv'
+        r = requests.get(url, allow_redirects=True)
+        open('SGRList.csv', 'wb').write(r.content)
+        df = pd.read_csv('SGRList.csv')
+
+        #for table of catalog
+        table = Table.from_pandas(df)
+    
+        #transform table data in SkyCoord
+        coords = []
+        for i in range(len(df['RA'])):
+            hour_ra = Angle(table[i]['RA']+" hours")
+            ra = hour_ra.to(unit.deg)
+            arc_dec = table[i]['Decl']
+            dec = Angle(tuple(map(float,arc_dec.split(' '))), unit=unit.deg)
+            coords.append(SkyCoord(ra, dec, frame="icrs"))
+                
+        #transform input in SkyCoord
+        position=SkyCoord(self._ra*unit.deg, self._dec*unit.deg, frame="icrs")
+        
+        #get separation value
+        separations = []
+        for i in coords:
+            z = i.separation(position)
+            separations.append(z.to(unit.deg))
+        
+        #for table of separations
+        table["Separation Degs"] = separations
+        table["Coords Degs"] = coords
+        table.round(3)
+        table.sort("Separation Degs")
+        #table.show_in_browser(jsviewer=True)
+        
+        #create dictionary
+        dic = {}
+        for i in range(len(table["Name"])):
+            dic[table[i]['Name']]={"ra":round(table[i]['Coords Degs'].ra.degree,3), "dec":round(table[i]['Coords Degs'].dec.degree,3), "separation":table[i]["Separation Degs"]}
+
+        self.dic_SGRs = dic
     
 
     def _build_report(self):
@@ -411,7 +460,8 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
-            "bright sources": self.dic_bright_sources
+            "bright sources": self.dic_bright_sources,
+            "SGRs": self.dic_SGRs
             }
 
 
