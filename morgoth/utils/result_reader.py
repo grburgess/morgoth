@@ -79,6 +79,9 @@ class ResultReader(object):
             trigger_number=self._trigger_number, grb_name=self.grb_name
         )
 
+        # Check catalog of bright gamma sources and get separation to GRB position
+        self._sep_bright_sources()
+
         # Create a report containing all the results of the pipeline
         self._build_report()
 
@@ -302,57 +305,57 @@ class ResultReader(object):
             self._dec_err = dec_err
             
             
-    def sepList(self):
-        
-    #for the case of certification errror
+    def _sep_bright_sources(self):
+
+        #for the case of certification errror
         if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
         getattr(ssl, '_create_unverified_context', None)):
             ssl._create_default_https_context = ssl._create_unverified_context
 
-    #read in table from website   
+        #read in table from website   
         table_MN = pd.read_html("https://swift.gsfc.nasa.gov/results/transients/BAT_current.html")
         df = table_MN[0]
 
-    #delete unwanted string
+        #delete unwanted string
         df.rename(columns={'Peak*': 'Peak'}, inplace=True)
 
-    #filter by peak value
+        #filter by peak value
         df = df.drop(df[df.Peak=="-"].index)
         df = df.astype({"Peak": int})
         df_filtered = df[df['Peak']>400]
         
-    #for table of catalog
+        #for table of catalog
         table = Table.from_pandas(df_filtered)
         #table.show_in_browser(jsviewer=True)
         
-    #transform input in SkyCoord
+        #transform input in SkyCoord
         position=SkyCoord(self._ra*unit.deg, self._dec*unit.deg, frame="icrs")
         
-    #transform table data in SkyCoord
+        #transform table data in SkyCoord
         coords = []
         for i in range(len(df_filtered['RA J2000 Degs'])):
             ra = table[i]['RA J2000 Degs']  
             dec = table[i]['Dec J2000 Degs']
             coords.append(SkyCoord(ra*unit.deg, dec*unit.deg, frame="icrs"))
             
-    #get separation value
+        #get separation value
         separations = []
         for i in coords:
             z = i.separation(position)
             separations.append(z.to(unit.deg))
             
-    #for table of separations
+        #for table of separations
         table["Separation Degs"] = separations
         table.round(3)
         table.sort("Separation Degs")
         #table.show_in_browser(jsviewer=True)
             
-    #create dictionary
+        #create dictionary
         dic = {}
         for i in range(len(table["Source Name"])):
             dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'], "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
 
-        return dic
+        self.dic_bright_sources = dic
     
 
     def _build_report(self):
@@ -408,7 +411,7 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
-            "source comparison": self.sepList()
+            "bright sources": self.dic_bright_sources
             }
 
 
