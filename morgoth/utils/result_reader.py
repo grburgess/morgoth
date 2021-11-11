@@ -318,7 +318,8 @@ class ResultReader(object):
             ssl._create_default_https_context = ssl._create_unverified_context
 
         #read in table from website   
-        table_MN = pd.read_html("https://swift.gsfc.nasa.gov/results/transients/BAT_current.html")
+        url = "https://swift.gsfc.nasa.gov/results/transients/BAT_current.html" 
+        table_MN = pd.read_html(url)
         df = table_MN[0]
 
         #delete unwanted string
@@ -334,7 +335,7 @@ class ResultReader(object):
         #table.show_in_browser(jsviewer=True)
         
         #transform input in SkyCoord
-        position=SkyCoord(self._ra*unit.deg, self._dec*unit.deg, frame="icrs")
+        position = SkyCoord(self._ra*unit.deg, self._dec*unit.deg, frame="icrs")
         
         #transform table data in SkyCoord
         coords = []
@@ -358,9 +359,10 @@ class ResultReader(object):
         #create dictionary
         dic = {}
         for i in range(len(table["Source Name"])):
-            dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'], "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
+            dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'],
+            "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
 
-        self.dic_bright_sources = dic
+        self._dic_bright_sources = dic
 
 
     def _sep_SGRs(self):
@@ -402,9 +404,11 @@ class ResultReader(object):
         #create dictionary
         dic = {}
         for i in range(len(table["Name"])):
-            dic[table[i]['Name']]={"ra":round(table[i]['Coords Degs'].ra.degree,3), "dec":round(table[i]['Coords Degs'].dec.degree,3), "separation":table[i]["Separation Degs"]}
+            dic[table[i]['Name']]={"ra":round(table[i]['Coords Degs'].ra.degree,3),
+            "dec":round(table[i]['Coords Degs'].dec.degree,3),
+            "separation":table[i]["Separation Degs"]}
 
-        self.dic_SGRs = dic
+        self._dic_SGRs = dic
     
 
     def _build_report(self):
@@ -460,8 +464,8 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
-            "bright sources": self.dic_bright_sources,
-            "SGRs": self.dic_SGRs
+            "bright sources": self._dic_bright_sources,
+            "SGRs": self._dic_SGRs
             }
 
 
