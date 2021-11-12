@@ -464,9 +464,11 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
-            "bright sources": self._dic_bright_sources,
-            "SGRs": self._dic_SGRs
+            "separation_values": {
+                "bright_sources": self._dic_bright_sources,
+                "SGRs": self._dic_SGRs
             }
+        }
 
 
     def save_result_yml(self, file_path):
