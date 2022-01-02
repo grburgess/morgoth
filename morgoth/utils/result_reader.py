@@ -358,7 +358,7 @@ class ResultReader(object):
             
         #create dictionary
         dic = {}
-        for i in range(len(table["Source Name"])):
+        for i in range(3):
             dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'],
             "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
 
@@ -403,7 +403,7 @@ class ResultReader(object):
         
         #create dictionary
         dic = {}
-        for i in range(len(table["Name"])):
+        for i in range(3):
             dic[table[i]['Name']]={"ra":round(table[i]['Coords Degs'].ra.degree,3),
             "dec":round(table[i]['Coords Degs'].dec.degree,3),
             "separation":table[i]["Separation Degs"]}
