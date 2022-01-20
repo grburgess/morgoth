@@ -432,27 +432,44 @@ def brightobjects_plot(
         verticalalignment="bottom",
     )
 
+    #different markers for better visualization
+    markers=["o","X","^"]
+
     # Plot Bright Sources
+    m=0
     for name, dictionary in bright_sources.items():
         counter = 0
         for key, value in dictionary.items():
             counter += 1
             if counter == 1:
                 ra_bs = value
+                ra_center = ra_bs * np.pi / 180
+                if ra_center > np.pi:
+                    ra_center = ra_center - 2 * np.pi
             if counter == 2:
                 dec_bs = value
-        ax.scatter(ra_bs, dec_bs, label=name, s=30, color="red")
+                dec_center = dec_bs * np.pi / 180
+        ax.scatter(ra_center, dec_center, label=name, s=30, color="red",
+        marker=markers[m])
+        m += 1
 
     # Plot SGRs
+    m=0
     for name, dictionary in SGRs.items():
         counter = 0
         for key, value in dictionary.items():
             counter += 1
             if counter == 1:
                 ra_sgr = value
+                ra_center = ra_sgr * np.pi / 180
+                if ra_center > np.pi:
+                    ra_center = ra_center - 2 * np.pi
             if counter == 2:
                 dec_sgr = value
-        ax.scatter(ra_sgr, dec_sgr, label=name, s=30, color="darkorange")
+                dec_center = dec_sgr * np.pi / 180
+        ax.scatter(ra_center, dec_center, label=name, s=30, color="darkorange",
+        marker=markers[m])
+        m += 1
 
     # if we have a swift position plot it here
     if swift is not None:
