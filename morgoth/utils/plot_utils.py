@@ -436,40 +436,20 @@ def brightobjects_plot(
     markers=["o","X","^"]
 
     # Plot Bright Sources
-    m=0
-    for name, dictionary in bright_sources.items():
-        counter = 0
-        for key, value in dictionary.items():
-            counter += 1
-            if counter == 1:
-                ra_bs = value
-                ra_center = ra_bs * np.pi / 180
-                if ra_center > np.pi:
-                    ra_center = ra_center - 2 * np.pi
-            if counter == 2:
-                dec_bs = value
-                dec_center = dec_bs * np.pi / 180
-        ax.scatter(ra_center, dec_center, label=name, s=30, color="red",
-        marker=markers[m])
-        m += 1
+    for m, (name, dictionary) in enumerate(bright_sources.items()):
+        ra = np.deg2rad(dictionary["ra"])
+        dec = np.deg2rad(dictionary["dec"])
+        if ra>np.pi:
+            ra-=2*np.pi
+        ax.scatter(ra, dec, label=name, s=30, color="red",marker=markers[m])
 
     # Plot SGRs
-    m=0
-    for name, dictionary in SGRs.items():
-        counter = 0
-        for key, value in dictionary.items():
-            counter += 1
-            if counter == 1:
-                ra_sgr = value
-                ra_center = ra_sgr * np.pi / 180
-                if ra_center > np.pi:
-                    ra_center = ra_center - 2 * np.pi
-            if counter == 2:
-                dec_sgr = value
-                dec_center = dec_sgr * np.pi / 180
-        ax.scatter(ra_center, dec_center, label=name, s=30, color="darkorange",
-        marker=markers[m])
-        m += 1
+    for m, (name, dictionary) in enumerate(SGRs.items()):
+        ra = np.deg2rad(dictionary["ra"])
+        dec = np.deg2rad(dictionary["dec"])
+        if ra>np.pi:
+            ra-=2*np.pi
+        ax.scatter(ra, dec, label=name, s=30, color="orange",marker=markers[m])
 
     # if we have a swift position plot it here
     if swift is not None:
