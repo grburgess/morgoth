@@ -359,8 +359,9 @@ class ResultReader(object):
         #create dictionary
         dic = {}
         for i in range(3):
-            dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'],
-            "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
+            dic[str(table[i]['Source Name'])]={"ra":float(table[i]['RA J2000 Degs']),
+            "dec":float(table[i]['Dec J2000 Degs']),
+            "separation":float(table[i]["Separation Degs"])}
 
         self._dic_bright_sources = dic
 
@@ -404,9 +405,9 @@ class ResultReader(object):
         #create dictionary
         dic = {}
         for i in range(3):
-            dic[table[i]['Name']]={"ra":round(table[i]['Coords Degs'].ra.degree,3),
-            "dec":round(table[i]['Coords Degs'].dec.degree,3),
-            "separation":table[i]["Separation Degs"]}
+            dic[str(table[i]['Name'])]={"ra":float(round(table[i]['Coords Degs'].ra.degree,3)),
+            "dec":float(round(table[i]['Coords Degs'].dec.degree,3)),
+            "separation":float(table[i]["Separation Degs"])}
 
         self._dic_SGRs = dic
     
