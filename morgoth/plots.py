@@ -13,6 +13,7 @@ from morgoth.utils.plot_utils import (
     create_corner_loc_plot,
     interactive_3D_plot,
     mollweide_plot,
+    brightobjects_plot,
     swift_gbm_plot,
 )
 
@@ -42,6 +43,11 @@ class CreateAllPlots(luigi.Task):
                 version=self.version,
             ),
             "molllocation": CreateMollLocationPlot(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "brightobjects": CreateBrightObjectsLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
@@ -344,6 +350,67 @@ class CreateMollLocationPlot(luigi.Task):
             model=result["fit_result"]["model"],
             ra=result["fit_result"]["ra"],
             dec=result["fit_result"]["dec"],
+            swift=result["general"]["swift"],
+            save_path=self.output().path,
+        )
+
+
+class CreateBrightObjectsLocationPlot(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "fit_result": ProcessFitResults(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
+        }
+
+    def output(self):
+        filename = (
+            f"{base_dir}/{self.grb_name}/{self.report_type}/{self.version}/plots/"
+            f"{self.grb_name}_brightobjects_plot_{self.report_type}_{self.version}.png"
+        )
+        return luigi.LocalTarget(filename)
+
+    def run(self):
+        with self.input()["fit_result"]["result_file"].open() as f:
+            result = yaml.safe_load(f)
+
+        if self.report_type.lower() == "tte":
+            with self.input()["trigdat_version"].open() as f:
+                trigdat_version = yaml.safe_load(f)["trigdat_version"]
+
+            trigdat_file = DownloadTrigdat(
+                grb_name=self.grb_name, version=trigdat_version
+            ).output()
+
+        elif self.report_type.lower() == "trigdat":
+            trigdat_file = DownloadTrigdat(
+                grb_name=self.grb_name, version=self.version
+            ).output()
+
+        else:
+            raise UnkownReportType(
+                f"The report_type '{self.report_type}' is not valid!"
+            )
+
+        brightobjects_plot(
+            grb_name=self.grb_name,
+            trigdat_file=trigdat_file.path,
+            post_equal_weights_file=self.input()["fit_result"][
+                "post_equal_weights"
+            ].path,
+            used_dets=result["time_selection"]["used_detectors"],
+            model=result["fit_result"]["model"],
+            ra=result["fit_result"]["ra"],
+            dec=result["fit_result"]["dec"],
+            bright_sources=result["separation_values"]["bright_sources"],
+            SGRs=result["separation_values"]["SGRs"],
             swift=result["general"]["swift"],
             save_path=self.output().path,
         )

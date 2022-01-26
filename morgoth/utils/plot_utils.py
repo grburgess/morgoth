@@ -331,6 +331,168 @@ def mollweide_plot(
     fig.savefig(save_path, bbox_inches="tight", dpi=1000)
 
 
+def brightobjects_plot( 
+    grb_name,
+    trigdat_file,
+    post_equal_weights_file,
+    used_dets,
+    model,
+    ra,
+    dec,
+    save_path,
+    bright_sources,
+    SGRs,
+    swift=None,
+):
+    # get earth pointing in icrs and the pointing of dets in icrs
+    with fits.open(trigdat_file) as f:
+        quat = f["TRIGRATE"].data["SCATTITD"][0]
+        sc_pos = f["TRIGRATE"].data["EIC"][0]
+        times = f["TRIGRATE"].data["TIME"][0]
+
+    # get a det object and calculate with this the position of the earth from the satellite
+    # in the icrs system
+    det_1 = gbm_detector_list[_gbm_detectors[used_dets[-1]]](
+        quaternion=quat, sc_pos=sc_pos, time=astro_time.Time(utc(times))
+    )
+    earth_pos = det_1.earth_position_icrs
+    # get pointing of all used dets
+    det_pointing = {}
+    for det_number in used_dets:
+        det = gbm_detector_list[_gbm_detectors[det_number]](
+            quaternion=quat, sc_pos=sc_pos
+        )
+        det_pointing[_gbm_detectors[det_number]] = det.det_ra_dec_icrs
+
+    # set a figure with a hammer projection
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="hammer")
+
+    # plot EARTH shadow
+    ra_e = earth_pos.ra.rad
+    dec_e = earth_pos.dec.rad
+    if ra_e > np.pi:
+        ra_e = ra_e - 2 * np.pi
+
+    earth_opening = 67  # degree
+    earth = FOV(ra_e, dec_e, earth_opening * np.pi / 180)
+    if len(earth) == 2:
+        ax.fill(earth[0], earth[1], "b", alpha=0.2, label="EARTH")
+    else:
+        ax.fill(earth[0], earth[1], "b", alpha=0.2, label="EARTH")
+        ax.fill(earth[2], earth[3], "b", alpha=0.2)
+
+    # Plot GRB contours from fit
+    # Get contours
+    (
+        x_contour,
+        y_contour,
+        val_contour,
+        x_contour_1,
+        x_contour_2,
+        val_contour_1,
+        val_contour_2,
+    ) = get_contours(model, post_equal_weights_file)
+
+    if len(x_contour_1) > 0:
+        ax.contourf(
+            x_contour_1,
+            y_contour,
+            val_contour_1,
+            levels=[0, 0.68268949, 0.9545],
+            colors=["navy", "lightgreen"],
+        )
+    if len(x_contour_2) > 0:
+        ax.contourf(
+            x_contour_2,
+            y_contour,
+            val_contour_2,
+            levels=[0, 0.68268949, 0.9545],
+            colors=["navy", "lightgreen"],
+        )
+
+    # Plot GRB best fit
+    ra_center = ra * np.pi / 180
+    dec_center = dec * np.pi / 180
+    if ra_center > np.pi:
+        ra_center = ra_center - 2 * np.pi
+
+    ax.scatter(
+        ra_center, dec_center, label="Balrog Position", s=40, color="green", marker="*"
+    )
+    ax.annotate(
+        f"Balrog Position {grb_name}",
+        xy=(ra_center, dec_center),  # theta, radius
+        xytext=(0.55, 0.15),  # fraction, fraction
+        textcoords="figure fraction",
+        arrowprops=dict(
+            facecolor="black", shrink=0.02, width=1, headwidth=5, headlength=5
+        ),
+        horizontalalignment="left",
+        verticalalignment="bottom",
+    )
+
+    #different markers for better visualization
+    markers=["o","X","^"]
+
+    # Plot Bright Sources
+    for m, (name, dictionary) in enumerate(bright_sources.items()):
+        ra = np.deg2rad(dictionary["ra"])
+        dec = np.deg2rad(dictionary["dec"])
+        if ra>np.pi:
+            ra-=2*np.pi
+        ax.scatter(ra, dec, label=name, s=30, color="red",marker=markers[m])
+
+    # Plot SGRs
+    for m, (name, dictionary) in enumerate(SGRs.items()):
+        ra = np.deg2rad(dictionary["ra"])
+        dec = np.deg2rad(dictionary["dec"])
+        if ra>np.pi:
+            ra-=2*np.pi
+        ax.scatter(ra, dec, label=name, s=30, color="orange",marker=markers[m])
+
+    # if we have a swift position plot it here
+    if swift is not None:
+        # Plot SWIFT position if there is one
+        ra_swift = float(swift["ra"]) * np.pi / 180
+        dec_swift = float(swift["dec"]) * np.pi / 180
+        if ra_swift > np.pi:
+            ra_swift = ra_swift - 2 * np.pi
+        ax.scatter(
+            ra_swift,
+            dec_swift,
+            label="SWIFT Position",
+            s=40,
+            marker="X",
+            color="magenta",
+            alpha=0.2,
+        )
+        ax.annotate(
+            "SWIFT Position SWIFT-trigger {}".format(swift["trigger"]),
+            xy=(ra_swift, dec_swift),  # theta, radius
+            xytext=(0.55, 0.78),  # fraction, fraction
+            textcoords="figure fraction",
+            arrowprops=dict(
+                facecolor="black", shrink=0.02, width=1, headwidth=5, headlength=5
+            ),
+            horizontalalignment="left",
+            verticalalignment="bottom",
+        )
+
+    # set title, legend and grid
+    plt.title(f"{grb_name} Bright Objects (J2000)", y=1.08)
+    ax.grid()
+    # Shrink current axis by 20%
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    # Put a legend to the right of the current axis
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), prop={"size": 6})
+
+    # save figure
+    file_utils.if_dir_containing_file_not_existing_then_make(save_path)
+    fig.savefig(save_path, bbox_inches="tight", dpi=500)
+
+
 def azimuthal_plot_sat_frame(grb_name, trigdat_file, ra, dec, save_path):
     """
     plot azimuth plot in sat frame to check if burst comes from the solar panel sides
