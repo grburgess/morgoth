@@ -105,8 +105,10 @@ def create_report_from_result(result):
                 "balrog_two_sig_err_circle": result["fit_result"][
                     "balrog_two_sig_err_circle"
                 ],
+                "bright_sources": result["separation_values"]["bright_sources"],
+                "SGRs": result["separation_values"]["SGRs"]
             }
-        ],
+        ]
     }
     return report
 
