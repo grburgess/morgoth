@@ -265,9 +265,6 @@ class TimeSelectionBB:
         # combine most significant lightcurves
         self._fixSelections()
 
-        # save to yaml - same style as old one
-        self.save_yaml()
-
     def timeselection(self, lower_trigger_bound=-4, upper_trigger_bound=50, max_trigger_length=10.24):
         """runs timeselection for each detector in self.dets individually
 
