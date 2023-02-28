@@ -259,7 +259,7 @@ def new_intervals(time_intervals_all):
     # choose max_time (time up to which the bkg selection is made) to be 150 seconds or if the lower boundary for
     # bkg selection after the burst is to close such that we use at least a period of 50 seconds
     max_time = 150
-    #end_of_active = sr_large_min
+    # end_of_active = sr_large_min
     if sr_large_min < 10:
         sr_large_min = 50
     if sr_large_min < 25:
@@ -290,7 +290,8 @@ def get_new_intervals(sigma_lim, trig_reader):
     tstart, tstop = trig_reader.tstart_tstop()
     # get the times for which the difference between data and previous bkg is less then a threshold sigma
     # this is done for each detector (ignore when only one time bin is above)
-    time_intervals_all = time_with_less_sigma(residuals, tstart, tstop, sigma_lim)
+    time_intervals_all = time_with_less_sigma(
+        residuals, tstart, tstop, sigma_lim)
     # get new intervals out of the new time_intervals_all
     sr_large_min, sr_small_max, max_time, end_of_active = new_intervals(
         time_intervals_all
@@ -332,7 +333,8 @@ def active_time_selection(
     i = 0
     found_low = False
     found_high = False
-    print("sr_small_max: {}, end_of_active:{}".format(sr_small_max, end_of_active))
+    print("sr_small_max: {}, end_of_active:{}".format(
+        sr_small_max, end_of_active))
     while i < len(tstart) - 1:
         if tstart[i] > sr_small_max and not found_low:
             low_index = i
@@ -428,14 +430,16 @@ def active_time_selection(
 
         elif tstop[index_list[np.argmax(index_list)]] - tstart[max_index] < 5:
             active_time_start = tstart[max_index] - (
-                10 - (tstop[index_list[np.argmax(index_list)]] - tstart[max_index])
+                10 - (tstop[index_list[np.argmax(index_list)]] -
+                      tstart[max_index])
             )
             active_time_stop = tstop[index_list[np.argmax(index_list)]]
 
         else:
             active_time_start = tstart[index_list[np.argmin(index_list)]]
             active_time_stop = tstart[max_index] + (
-                10 - (tstart[max_index] - tstart[index_list[np.argmin(index_list)]])
+                10 - (tstart[max_index] -
+                      tstart[index_list[np.argmin(index_list)]])
             )
 
     else:
@@ -444,3 +448,44 @@ def active_time_selection(
 
     print(f"Active Time: {active_time_start}-{active_time_stop}")
     return float(active_time_start), float(active_time_stop)
+
+
+def bb_binner(t, x, edges):
+    """bins x- and t-values into blocks with given edges
+
+    Args:
+        t (array like): times of measurements
+        x (array like): measurments
+        edges (array like): edges of bayesian blocks
+
+    Returns:
+        list: bin start times, bin values, bin widths
+    """
+    bb_w = [edges[i+1]-edges[i]
+            for i in range(len(edges)-1)]  # set width of BB
+    bb_t = edges[:-1]  # Times of BB
+    bb_x = []  # Count Rate oßf BB
+
+    i = 0  # iterator over timeseries
+    for edge_id, edge in enumerate(bb_t):
+        avg = []    # list containing count rates over which will be averaged
+        # list with weights for averaging (= length of time interval)
+        weights = []
+
+        # iterate over timeseries and append avg and weights
+        while edges[edge_id+1] > t[i+1]:
+            avg.append(x[i])
+            weights.append(t[i+1]-t[i])
+            i += 1
+
+        # if edge is in between two time points set weight accordingly
+        if edges[edge_id+1] <= t[i+1] and edges[edge_id+1] > t[i]:
+            avg.append(x[i])
+            weights.append(edges[edge_id+1]-t[i])
+        # treat first block seperatly because it sucks
+        elif edge == t[0] and edges[edge_id+1] < t[1]:
+            avg.append(x[0])
+            weights.append(edges[edge_id+1]-t[0])
+        bb_x.append(np.average(avg, axis=0, weights=weights))
+
+    return bb_t, bb_x, bb_w

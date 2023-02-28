@@ -332,7 +332,7 @@ class TimeSelectionBB:
         self._bayesianBlocks(det)
 
         # rebinning and timeselection
-        self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bbBinner(
+        self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bb_binner(
             self._times, obs_combined, self._bayesian_block_edges[det])
 
         self.getStartStopTrigger(det)
@@ -385,7 +385,7 @@ class TimeSelectionBB:
         """
         self._bayesian_block_edges[det] = bayesian_blocks(
             self._times, self._cps_dets[det], fitness="events", gamma=self._gamma)
-        self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bbBinner(
+        self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bb_binner(
             self._times, self._cps_dets[det], self._bayesian_block_edges[det])
 
     def getStartStopTrigger(self, det):
