@@ -265,6 +265,10 @@ class TimeSelectionBB(TimeSelection):
         # combine most significant lightcurves
         self.fixSelections()
 
+    @property
+    def trigdatObject(self):
+        return self._trigdat_obj
+
     def timeselection(self, lower_trigger_bound=-4, upper_trigger_bound=50, max_trigger_length=10.24):
         """runs timeselection for each detector in self.dets individually
 
@@ -323,7 +327,7 @@ class TimeSelectionBB(TimeSelection):
                 self._cps_dets[list(significance_max.keys())[i]])
 
         print(
-            "The detecots {det} had the highest significance and are used to fix the selections")
+            f'The detecors {det} had the highest significance and are used to fix the selections')
         obs_combined = np.sum(obs_combined, axis=0)
         self._cps_dets[det] = obs_combined
         self._bayesianBlocks(det)
@@ -334,7 +338,7 @@ class TimeSelectionBB(TimeSelection):
 
         self._calcStartStopTrigger(det)
         start_trigger = self._start_trigger_dict[det]
-        end_trigger = self._start_trigger_dict[det]
+        end_trigger = self._end_trigger_dict[det]
 
         bkgSelector = BackgroundSelector(self, det)
         bkgSelector.runSelector()
@@ -344,7 +348,9 @@ class TimeSelectionBB(TimeSelection):
 
         self._background_time_pos = f'{background_sel[1][0]}-{background_sel[1][1]}'
         self._background_time_neg = f'{background_sel[0][0]}-{background_sel[0][1]}'
+
         self._active_time = f'{start_trigger}-{end_trigger}'
+
         self._max_time = background_sel[1][1]
 
         background_sel_strings = self._background_time_neg, self._background_time_pos
@@ -452,6 +458,8 @@ class TimeSelectionBB(TimeSelection):
 
         self._start_trigger_dict[det] = start_trigger
         self._end_trigger_dict[det] = end_trigger
+        print(
+            f'Set trigger time for det {det} to {start_trigger}-{end_trigger}')
 
     def _getNewLength(self, length_in, id_l, id_h, det):
         """ Tries to get new length for trigger selection for bayesian blocks
@@ -566,34 +574,6 @@ class TimeSelectionBB(TimeSelection):
         bkg = bkg[self.dets.index(det)]
         sig = Significance(obs, bkg)
         self._significance_dict[det] = sig.li_and_ma()
-
-    def save_yaml(self, yaml_path):
-        """
-        Save the automatic time selection in a yaml file
-        :param yaml_path: Path where to save the yaml file
-        :return:
-        """
-        det_yaml = list(self.neg_bkg_dict.keys)[-1]
-        time_select = {
-            "active_time": {
-                "start": float(self._start_trigger_dict[det_yaml]),
-                "stop": float(self._end_trigger_dict[det_yaml]),
-            },
-            "background_time": {
-                "before": {"start": float(self.pos_bkg_dict[det_yaml][0]), "stop": float(self.pos_bkg_dict[det_yaml][-1])},
-                "after": {"start": float(self.neg_bkg_dict[det_yaml]), "stop": float(self.neg_bkg_dict[det_yaml][-1])},
-            },
-            "max_time": float(self._times[-1]),
-            "poly_order": -1,
-            "fine": False,
-        }
-
-        # Poly_Order entry with -1 (default). But we need this entry in the
-        # yaml file to give us the possibility to alter it if we see that it screws up one of
-        # the det fits
-
-        with open(yaml_path, "w") as outfile:
-            yaml.dump(time_select, outfile, default_flow_style=False)
 
 
 class BackgroundSelector:
