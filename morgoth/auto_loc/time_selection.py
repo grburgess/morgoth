@@ -217,7 +217,7 @@ class TimeSelectionKnown(TimeSelection):
             self._bkg_neg_stop = -1*float(inter[3])
 
 
-class TimeSelectionBB:
+class TimeSelectionBB(TimeSelection):
     """Automatically sets active trigger time as well as neg and pos (before and after trigger) background
     """
 
@@ -351,26 +351,6 @@ class TimeSelectionBB:
 
         bkgSelector._polyFit(
             background_sel_strings=background_sel_strings, active_sel_string=self._active_time)
-
-    @property
-    def background_time_neg(self):
-
-        return self._background_time_neg
-
-    @property
-    def background_time_pos(self):
-
-        return self._background_time_pos
-
-    @property
-    def active_time(self):
-
-        return self._active_time
-
-    @property
-    def max_time(self):
-
-        return self._max_time
 
     def _processTrigdat(self):
         """ Loads trigdat data and stores times, observed cps and bin widths
