@@ -254,7 +254,7 @@ class TimeSelectionBB:
         self.pos_bkg = {}
         self.neg_bkg = {}
         self._bkg_list = {}
-        self.significance = {}
+        self._significance = {}
 
         # get relevant data from Trigdat object
         self._processTrigdat()
@@ -263,7 +263,7 @@ class TimeSelectionBB:
         self.timeselection()
 
         # combine most significant lightcurves
-        self._fixSelections()
+        self.fixSelections()
 
     def timeselection(self, lower_trigger_bound=-4, upper_trigger_bound=50, max_trigger_length=10.24):
         """runs timeselection for each detector in self.dets individually
@@ -282,7 +282,7 @@ class TimeSelectionBB:
             # calculate BB for det
             self._bayesianBlocks(det)
 
-            self.getStartStopTrigger(det)
+            self._calcStartStopTrigger(det)
             self.neg_bkg[det] = []
             self.pos_bkg[det] = []
             self._bkg_list[det] = []
@@ -292,9 +292,9 @@ class TimeSelectionBB:
             bkgSelectorDets.runSelector()
 
             # calculate the significance during the trigger time
-            self.getSignificance(det)
+            self._getSignificance(det)
 
-    def _fixSelections(self, significance_dets_nr=3):
+    def fixSelections(self, significance_dets_nr=3):
         """Improves the timeselection by combining multiple detectors with the highest significance in the data
 
         Args:
@@ -303,7 +303,7 @@ class TimeSelectionBB:
         significance_max = {}
 
         # TODO apply constraints on time for significance!
-        for det, sign in self.significance.items():
+        for det, sign in self._significance.items():
             # set the significance outside the trigger selection to zero to prevent "false" high significance
             sign[:self._times.index(self._start_trigger[det])] = 0
             sign[self._times.index(self._end_trigger[det]):] = 0
@@ -332,7 +332,7 @@ class TimeSelectionBB:
         self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bb_binner(
             self._times, obs_combined, self._bayesian_block_edges[det])
 
-        self.getStartStopTrigger(det)
+        self._calcStartStopTrigger(det)
         start_trigger = self._start_trigger[det]
         end_trigger = self._start_trigger[det]
 
@@ -344,7 +344,7 @@ class TimeSelectionBB:
         background_sel_strings = f'{background_sel[0][0]}-{background_sel[0][1]}', f'{background_sel[1][0]}-{background_sel[1][1]}'
         active_sel_string = f'{start_trigger}-{end_trigger}'
 
-        bkgSelector.runPolyFit(
+        bkgSelector._polyFit(
             background_sel_strings=background_sel_strings, active_sel_string=active_sel_string)
 
     def _processTrigdat(self):
@@ -385,7 +385,7 @@ class TimeSelectionBB:
         self._bayesian_block_times[det], self._bayesian_block_cps[det], self._bayesian_block_widths[det] = bb_binner(
             self._times, self._cps_dets[det], self._bayesian_block_edges[det])
 
-    def getStartStopTrigger(self, det):
+    def _calcStartStopTrigger(self, det):
         """Calculates the start and stop time of the trigger
 
         Args:
@@ -415,7 +415,7 @@ class TimeSelectionBB:
         id_h = id_max_cps_bb
 
         while True:
-            length_out, id_l, id_h = self.getNewLength(
+            length_out, id_l, id_h = self._getNewLength(
                 length_in, id_l, id_h, det)
             if length_in == length_out:
                 break
@@ -438,7 +438,7 @@ class TimeSelectionBB:
         end_trigger = self._times[end_trigger_id]
         length_in = end_trigger-start_trigger
         while True:
-            length_out, start_trigger_id, end_trigger_id = self.getNewLength(
+            length_out, start_trigger_id, end_trigger_id = self._getNewLength(
                 length_in, start_trigger_id, end_trigger_id, det)
             if length_in == length_out:
                 break
@@ -448,7 +448,7 @@ class TimeSelectionBB:
         self._start_trigger[det] = start_trigger
         self._end_trigger[det] = end_trigger
 
-    def getNewLength(self, length_in, id_l, id_h, det):
+    def _getNewLength(self, length_in, id_l, id_h, det):
         """ Tries to get new length for trigger selection for bayesian blocks
 
         Args:
@@ -547,7 +547,7 @@ class TimeSelectionBB:
 
         return start_trigger_id, end_trigger_id
 
-    def getSignificance(self, det):
+    def _getSignificance(self, det):
         """Calculates the significance for a given detector
 
         Args:
@@ -558,7 +558,7 @@ class TimeSelectionBB:
         obs = obs[self.dets.index(det)]
         bkg = bkg[self.dets.index(det)]
         sig = Significance(obs, bkg)
-        self.significance[det] = sig.li_and_ma()
+        self._significance[det] = sig.li_and_ma()
 
     def save_yaml(self, yaml_path):
         """
@@ -610,13 +610,13 @@ class BackgroundSelector:
     def runSelector(self):
         """Runs the Background selection
         """
-        self._timeSelection.neg_bkg[self._det], self._timeSelection.pos_bkg[self._det] = self.selectBackground(
+        self._timeSelection.neg_bkg[self._det], self._timeSelection.pos_bkg[self._det] = self._selectBackground(
         )
         self._timeSelection._bkg_list[self._det] = [
             self._timeSelection.neg_bkg[self._det], self._timeSelection.pos_bkg[self._det]]
-        self.runPolyFit()
+        self._polyFit()
 
-    def selectBackground(self):
+    def _selectBackground(self):
         """Selects the pos and neg bkg times
 
         Returns:
@@ -657,7 +657,7 @@ class BackgroundSelector:
             if self._bkg_bin_min_length - 1 > 0:
 
                 self._bkg_bin_min_length -= 1
-                return self.selectBackground()
+                return self._selectBackground()
             else:
 
                 try:
@@ -671,7 +671,7 @@ class BackgroundSelector:
                 except UnboundLocalError:
                     return [self._timeSelection._bayesian_block_times[self._det][0], start_trigger-30], [end_trigger+50, self._timeSelection._bayesian_block_times[self._det][-1]]
 
-    def runPolyFit(self, background_sel_strings=None, active_sel_string=None, det_sel=None):
+    def _polyFit(self, background_sel_strings=None, active_sel_string=None, det_sel=None):
         """Runs the background fit by setting active times and bkg times
 
         Args:
