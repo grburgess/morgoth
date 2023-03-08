@@ -392,9 +392,13 @@ class TimeSelectionBB(TimeSelection):
 
         w_ori = [times_dets[i+1]-times_dets[i]
                  for i in range(len(times_dets)-1)]
+
         # set last bin length the same as the one before (approx 8s)
         w_ori.append(w_ori[-1])
+
         self._times = times_dets
+        self._max_time = times_dets[-1]
+
         self._cps_dets = {}
         self._timebin_widths = {}
         for det_nr, det in enumerate(self.dets):
@@ -609,6 +613,7 @@ class BackgroundSelector:
         self._bkg_distance_trigger = min_distance_trigger
         self._timeSelection = timeSelection
         self._det = det
+        self._max_time = timeSelection.max_time
 
     def runSelector(self):
         """Runs the Background selection
@@ -627,18 +632,19 @@ class BackgroundSelector:
         """
         # TODO this needs improvement
 
-        start_trigger = self._timeSelection.start_trigger_dict[self._det]
-        end_trigger = self._timeSelection.end_trigger_dict[self._det]
-        start_trigger -= self._bkg_distance_trigger
-        end_trigger += self._bkg_distance_trigger
+        start_trigger_sector = self._timeSelection.start_trigger_dict[self._det] - \
+            self._bkg_distance_trigger
+        end_trigger_sector = self._timeSelection.end_trigger_dict[self._det] + \
+            self._bkg_distance_trigger
 
         before_trigger = [i for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1) if self._timeSelection.bayesian_block_times_dict[self._det]
-                          [i+1] < start_trigger and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length]
-        # [i for i in range(len(bb_t)-1) if bb_t[i]> end_trigger and bb_w[i]>=bkgd_min_length]
+                          [i+1] <= start_trigger_sector and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length]
+
         after_trigger = []
         for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1, 0, -1):
-            if self._timeSelection.bayesian_block_times_dict[self._det][i] > end_trigger and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
-                after_trigger.append(i)
+            if self._timeSelection.bayesian_block_times_dict[self._det][i] >= end_trigger_sector and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
+                if self._timeSelection.bayesian_block_times_dict[self._det][i+1] <= self._max_time:
+                    after_trigger.append(i)
         try:
             before_trigger_end = self._timeSelection.bayesian_block_times_dict[
                 self._det][before_trigger[-1]+1]
@@ -649,30 +655,31 @@ class BackgroundSelector:
             before_trigger_bounds = [
                 self._timeSelection.bayesian_block_times_dict[self._det][0], before_trigger_end]
             after_trigger_bounds = [
-                after_trigger_start, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
+                after_trigger_start, self._max_time]
             return before_trigger_bounds, after_trigger_bounds
 
         except IndexError:
-            # TODO maybe dont use distance to tigger 0
-            print(
-                f'Conditions too hard, decreasing min length of blocks and setting distance to trigger to 0')
 
             if self._bkg_bin_min_length - 1 > 0:
-
                 self._bkg_bin_min_length -= 1
+                if self._bkg_distance_trigger - 1 > 0:
+                    self._bkg_distance_trigger -= 1
+                print(
+                    f'Conditions too hard, decreasing min length of blocks to {self._bkg_bin_min_length} and setting distance to trigger to {self._bkg_distance_trigger}')
                 return self._selectBackground()
             else:
-
+                print(f'Conditions still too hard - setting background without checking')
                 try:
                     if len(before_trigger_bounds) > 0 and len(after_trigger_bounds) == 0:
                         before_trigger_bounds, [
-                            end_trigger+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
+                            end_trigger_sector+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
                     elif len(before_trigger_bounds) == 0 and len(after_trigger_bounds) > 0:
-                        return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger-30], after_trigger_bounds
+                        return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger_sector-30], after_trigger_bounds
                     else:
-                        return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger-30], [end_trigger+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
+                        return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger_sector-30], [end_trigger_sector+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
+
                 except UnboundLocalError:
-                    return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger-30], [end_trigger+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
+                    return [self._timeSelection.bayesian_block_times_dict[self._det][0], start_trigger_sector-30], [end_trigger_sector+50, self._timeSelection.bayesian_block_times_dict[self._det][-1]]
 
     def _polyFit(self, background_sel_strings=None, active_sel_string=None, det_sel=None):
         """Runs the background fit by setting active times and bkg times
