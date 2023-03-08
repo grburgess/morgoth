@@ -630,27 +630,37 @@ class BackgroundSelector:
         Returns:
             (list,list): (neg_bkg_bounds, pos_bkg_bounds)
         """
-        # TODO this needs improvement
 
         start_trigger_sector = self._timeSelection.start_trigger_dict[self._det] - \
             self._bkg_distance_trigger
         end_trigger_sector = self._timeSelection.end_trigger_dict[self._det] + \
             self._bkg_distance_trigger
 
-        before_trigger = [i for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1) if self._timeSelection.bayesian_block_times_dict[self._det]
-                          [i+1] <= start_trigger_sector and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length]
+        before_trigger = []
+        for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1):
+            if self._timeSelection.bayesian_block_times_dict[self._det][i+1] <= start_trigger_sector:
+                if self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
+                    before_trigger.append(i)
+                elif self._timeSelection.bayesian_block_widths_dict[self._det][i] < self._bkg_bin_min_length and self._timeSelection.bayesian_block_widths_dict[self._det][i+1] >= self._bkg_bin_min_length:
+                    if self._timeSelection.bayesian_block_times_dict[self._det][i+2] <= start_trigger_sector:
+                        before_trigger.append(i)
 
         after_trigger = []
         for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1, 0, -1):
-            if self._timeSelection.bayesian_block_times_dict[self._det][i] >= end_trigger_sector and self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
+            if self._timeSelection.bayesian_block_times_dict[self._det][i] >= end_trigger_sector:
                 if self._timeSelection.bayesian_block_times_dict[self._det][i+1] <= self._max_time:
-                    after_trigger.append(i)
+                    if self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
+                        after_trigger.append(i)
+                    elif self._timeSelection.bayesian_block_widths_dict[self._det][i] < self._bkg_bin_min_length and self._timeSelection.bayesian_block_widths_dict[self._det][i-1] >= self._bkg_bin_min_length:
+                        if self._timeSelection.bayesian_block_times_dict[self._det][i-1] >= end_trigger_sector:
+                            after_trigger.append(i)
         try:
             before_trigger_end = self._timeSelection.bayesian_block_times_dict[
                 self._det][before_trigger[-1]+1]
-            # Adapted
+
             after_trigger_start = self._timeSelection.bayesian_block_times_dict[
                 self._det][after_trigger[-1]]
+
             # TODO apply condition only 2 consecutive smaller blocks allowed
             before_trigger_bounds = [
                 self._timeSelection.bayesian_block_times_dict[self._det][0], before_trigger_end]
