@@ -34,6 +34,7 @@ class TimeSelection(object):
         trig_reader = TrigReader(
             self._trigdat_file, fine=self._fine, verbose=False)
 
+        self.trig_reader = trig_reader
         # Inital bkg and active time selection - We will change this recursivly to explain most of
         # the bkg by a polynomial
         trig_reader.set_active_time_interval("0-0")
@@ -285,6 +286,14 @@ class TimeSelectionBB(TimeSelection):
     def bayesian_block_widths_dict(self):
         return self._bayesian_block_widths_dict
 
+    @property
+    def start_trigger(self):
+        return self._start_trigger
+
+    @property
+    def end_trigger(self):
+        return self._end_trigger
+
     def timeselection(self, lower_trigger_bound=-4, upper_trigger_bound=50, max_trigger_length=10.24):
         """runs timeselection for each detector in self.dets individually
 
@@ -367,12 +376,21 @@ class TimeSelectionBB(TimeSelection):
 
         self._active_time = f'{start_trigger}-{end_trigger}'
 
+        self._start_trigger = start_trigger
+        self._end_trigger = end_trigger
+
         self._max_time = background_sel[1][1]
 
         background_sel_strings = self._background_time_neg, self._background_time_pos
 
         bkgSelector._polyFit(
             background_sel_strings=background_sel_strings, active_sel_string=self._active_time)
+
+    def set_max_time(self, max_time):
+
+        self._max_time = max_time
+        self.timeselection()
+        self.fixSelections()
 
     def _processTrigdat(self):
         """ Loads trigdat data and stores times, observed cps and bin widths
@@ -642,18 +660,24 @@ class BackgroundSelector:
                 if self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
                     before_trigger.append(i)
                 elif self._timeSelection.bayesian_block_widths_dict[self._det][i] < self._bkg_bin_min_length and self._timeSelection.bayesian_block_widths_dict[self._det][i+1] >= self._bkg_bin_min_length:
-                    if self._timeSelection.bayesian_block_times_dict[self._det][i+2] <= start_trigger_sector:
-                        before_trigger.append(i)
+                    try:
+                        if self._timeSelection.bayesian_block_times_dict[self._det][i+2] <= start_trigger_sector:
+                            before_trigger.append(i)
+                    except IndexError:
+                        pass
 
         after_trigger = []
         for i in range(len(self._timeSelection.bayesian_block_times_dict[self._det])-1, 0, -1):
             if self._timeSelection.bayesian_block_times_dict[self._det][i] >= end_trigger_sector:
-                if self._timeSelection.bayesian_block_times_dict[self._det][i+1] <= self._max_time:
-                    if self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
-                        after_trigger.append(i)
-                    elif self._timeSelection.bayesian_block_widths_dict[self._det][i] < self._bkg_bin_min_length and self._timeSelection.bayesian_block_widths_dict[self._det][i-1] >= self._bkg_bin_min_length:
-                        if self._timeSelection.bayesian_block_times_dict[self._det][i-1] >= end_trigger_sector:
+                try:
+                    if self._timeSelection.bayesian_block_times_dict[self._det][i+1] <= self._max_time:
+                        if self._timeSelection.bayesian_block_widths_dict[self._det][i] >= self._bkg_bin_min_length:
                             after_trigger.append(i)
+                        elif self._timeSelection.bayesian_block_widths_dict[self._det][i] < self._bkg_bin_min_length and self._timeSelection.bayesian_block_widths_dict[self._det][i-1] >= self._bkg_bin_min_length:
+                            if self._timeSelection.bayesian_block_times_dict[self._det][i-1] >= end_trigger_sector:
+                                after_trigger.append(i)
+                except IndexError:
+                    pass
         try:
             before_trigger_end = self._timeSelection.bayesian_block_times_dict[
                 self._det][before_trigger[-1]+1]
