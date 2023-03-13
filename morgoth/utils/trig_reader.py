@@ -63,6 +63,7 @@ class TrigReader(object):
         self._time_resolved = time_resolved
         self._poly_order = poly_order
         self._restore_poly_fit = restore_poly_fit
+        self._trigdat_file = trigdat_file
         # Read the trig data file and get the appropriate info
 
         trigdat = fits.open(trigdat_file)
@@ -222,9 +223,8 @@ class TrigReader(object):
             # we will create binned spectra for each time slice
 
             drm_gen = DRMGenTrig(
-                self._qauts,
-                self._sc_pos,
-                det_num,  # det number
+                trigdat_file=self._trigdat_file,
+                det=det_num,  # det number
                 tstart=self._tstart,
                 tstop=self._tstop,
                 mat_type=2,
