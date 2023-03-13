@@ -222,7 +222,7 @@ class TimeSelectionBB(TimeSelection):
     """Automatically sets active trigger time as well as neg and pos (before and after trigger) background
     """
 
-    def __init__(self, trigdat_file, trigger_name, fine=False, gamma=0.776):
+    def __init__(self, grb_name, trigdat_file, fine=False, gamma=0.776):
         """ Starts Timeselection
 
         Args:
@@ -239,7 +239,7 @@ class TimeSelectionBB(TimeSelection):
 
         self.dets = ["n0", "n1", "n2", "n3", "n4", "n5",
                      "n6", "n7", "n8", "n9", "na", "nb", "b0", "b1"]
-        self.trigger_name = trigger_name
+        self.trigger_name = grb_name
 
         self._gamma = gamma
 
