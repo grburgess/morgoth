@@ -257,6 +257,8 @@ class TimeSelectionBB(TimeSelection):
         self._bkg_list_dict = {}
         self._significance_dict = {}
 
+        self._poly_order = -1
+
         # get relevant data from Trigdat object
         self._processTrigdat()
 
@@ -288,11 +290,11 @@ class TimeSelectionBB(TimeSelection):
 
     @property
     def start_trigger(self):
-        return self._start_trigger
+        return self._active_time_start
 
     @property
     def end_trigger(self):
-        return self._end_trigger
+        return self._active_time_stop
 
     def timeselection(self, lower_trigger_bound=-4, upper_trigger_bound=50, max_trigger_length=10.24):
         """runs timeselection for each detector in self.dets individually
@@ -376,10 +378,16 @@ class TimeSelectionBB(TimeSelection):
 
         self._active_time = f'{start_trigger}-{end_trigger}'
 
-        self._start_trigger = start_trigger
-        self._end_trigger = end_trigger
+        self._active_time_start = start_trigger
+        self._active_time_stop = end_trigger
 
-        self._max_time = background_sel[1][1]
+        self._bkg_neg_start = float(background_sel[0][0])
+        self._bkg_neg_stop = float(background_sel[0][1])
+
+        self._bkg_pos_start = float(background_sel[1][0])
+        self._bkg_pos_stop = float(background_sel[1][1])
+
+        self._max_time = float(background_sel[1][1])
 
         background_sel_strings = self._background_time_neg, self._background_time_pos
 
@@ -607,11 +615,12 @@ class TimeSelectionBB(TimeSelection):
             det (str): detector name
         """
 
-        obs, bkg = self._trigdat_obj.observed_and_background()
-        obs = obs[self.dets.index(det)]
-        bkg = bkg[self.dets.index(det)]
-        sig = Significance(obs, bkg)
-        self._significance_dict[det] = sig.li_and_ma()
+        # obs, bkg = self._trigdat_obj.observed_and_background()
+        # obs = obs[self.dets.index(det)]
+        # bkg = bkg[self.dets.index(det)]
+        # sig = Significance(obs, bkg)
+        # self._significance_dict[det] = sig.li_and_ma()
+        self._significance_dict[det] = self._trigdat_obj.time_series[det].significance_per_interval
 
 
 class BackgroundSelector:
