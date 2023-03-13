@@ -201,6 +201,10 @@ class TrigReader(object):
 
         self._create_timeseries()
 
+    @property
+    def time_series(self):
+        return self._time_series
+
     def _create_timeseries(self):
         """
         create all the time series for each detector
