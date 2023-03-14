@@ -331,7 +331,7 @@ class BkgFittingTTE(object):
         """
         # Max time from yaml file
         with open(self._time_selection_file_path, "r") as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
             max_time = data["max_time"]
 
         file_utils.if_dir_containing_file_not_existing_then_make(dir_path)
