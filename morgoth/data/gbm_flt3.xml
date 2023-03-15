@@ -29,8 +29,8 @@
     <Param name="Data_Signif"    value="7.60" unit="sigma" ucd="stat.snr" />
     <Param name="Phi"            value="127.00" unit="deg" ucd="pos.az.azi" />
     <Param name="Theta"          value="115.00" unit="deg" ucd="pos.az.zd" />
-    <Param name="SC_Long"        value="312.63" unit="deg" ucd="pos.earth.lon" />
-    <Param name="SC_Lat"         value="6.03" unit="deg" ucd="pos.earth.lat" />
+    <Param name="SC_Long"        value="118.18" unit="deg" ucd="pos.earth.lon" />
+    <Param name="SC_Lat"         value="-6.04" unit="deg" ucd="pos.earth.lat" />
     <Param name="Algorithm"             value="7" unit="dn" />
     <Param name="Most_Likely_Index"     value="3" unit="dn" />
     <Param name="Most_Likely_Prob"      value="97" />
