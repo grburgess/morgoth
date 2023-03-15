@@ -15,6 +15,9 @@ from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.trigger import OpenGBMFile
 from morgoth.utils.env import get_env_value
 from morgoth.utils.result_reader import ResultReader
+from threeML import loud_mode
+
+loud_mode()
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 n_cores_multinest = morgoth_config["multinest"]["n_cores"]
@@ -76,7 +79,8 @@ class ProcessFitResults(luigi.Task):
             )
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
+        base_job = os.path.join(base_dir, self.grb_name,
+                                self.report_type, self.version)
         result_name = f"{self.report_type}_{self.version}_fit_result.yml"
 
         return {
@@ -85,7 +89,7 @@ class ProcessFitResults(luigi.Task):
         }
 
     def run(self):
-        
+
         if self.report_type.lower() == "tte":
             with self.input()["trigdat_version"].open() as f:
                 trigdat_version = yaml.safe_load(f)["trigdat_version"]
@@ -104,7 +108,6 @@ class ProcessFitResults(luigi.Task):
                 f"The report_type '{self.report_type}' is not valid!"
             )
 
-        
         result_reader = ResultReader(
             grb_name=self.grb_name,
             report_type=self.report_type,
@@ -112,7 +115,8 @@ class ProcessFitResults(luigi.Task):
             trigger_file=self.input()["gbm_file"].path,
             time_selection_file=self.input()["time_selection"].path,
             background_file=self.input()["bkg_fit"]["bkg_fit_yml"].path,
-            post_equal_weights_file=self.input()["balrog"]["post_equal_weights"].path,
+            post_equal_weights_file=self.input(
+            )["balrog"]["post_equal_weights"].path,
             result_file=self.input()["balrog"]["fit_result"].path,
             trigdat_file=trigdat_file
         )
@@ -144,7 +148,7 @@ class RunBalrogTTE(ExternalProgramTask):
                     base_job, "chains", f"tte_{self.version}_post_equal_weights.dat"
                 )
             ),
-            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            # 'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
@@ -164,6 +168,7 @@ class RunBalrogTTE(ExternalProgramTask):
             "mpiexec",
             f"-n",
             f"{n_cores_multinest}",
+            f"--bind-to core",
             f"{path_to_python}",
             f"{fit_script_path}",
             f"{self.grb_name}",
@@ -193,7 +198,8 @@ class RunBalrogTrigdat(ExternalProgramTask):
         }
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name, "trigdat", self.version)
+        base_job = os.path.join(base_dir, self.grb_name,
+                                "trigdat", self.version)
         fit_result_name = f"trigdat_{self.version}_loc_results.fits"
         spectral_plot_name = f"{self.grb_name}_spectrum_plot_trigdat_{self.version}.png"
 
@@ -204,7 +210,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
                     base_job, "chains", f"trigdat_{self.version}_post_equal_weights.dat"
                 )
             ),
-            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            # 'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
@@ -216,6 +222,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "mpiexec",
             f"-n",
             f"{n_cores_multinest}",
+            f"--bind-to core",
             f"{path_to_python}",
             f"{fit_script_path}",
             f"{self.grb_name}",
