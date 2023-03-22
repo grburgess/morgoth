@@ -451,7 +451,7 @@ def active_time_selection(
 
 
 def bb_binner(t, x, edges):
-    """bins x- and t-values into blocks with given edges
+    """bins x- and t-values into blocks with given edges (BB = Bayesian Blocks)
 
     Args:
         t (array like): times of measurements
@@ -464,7 +464,7 @@ def bb_binner(t, x, edges):
     bb_w = [edges[i+1]-edges[i]
             for i in range(len(edges)-1)]  # set width of BB
     bb_t = edges[:-1]  # Times of BB
-    bb_x = []  # Count Rate oßf BB
+    bb_x = []  # Count Rate of BB
 
     i = 0  # iterator over timeseries
     for edge_id, edge in enumerate(bb_t):
