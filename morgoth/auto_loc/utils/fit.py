@@ -234,7 +234,7 @@ class MultinestFitTrigdat(object):
         # set main_path+trigger to whatever you want to use
 
         self._bayes.set_sampler("multinest", share_spectrum=True)
-        self._bayes.sampler.setup(n_live_points=400,
+        self._bayes.sampler.setup(n_live_points=800,
                                   chain_name=chain_path,
                                   wrapped_params=wrap,
                                   verbose=True)
@@ -592,7 +592,7 @@ class MultinestFitTTE(object):
 
         self._bayes.set_sampler("multinest", share_spectrum=True)
 
-        self._bayes.sampler.setup(n_live_points=400,
+        self._bayes.sampler.setup(n_live_points=800,
                                   chain_name=chain_path,
                                   wrapped_params=wrap,
                                   verbose=True)
