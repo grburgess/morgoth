@@ -602,7 +602,7 @@ class TimeSelectionBB(TimeSelection):
             start_trigger=start_trigger, end_trigger=end_trigger
         )
         start_trigger = self._times[start_trigger_id]
-        end_trigger = self._times[end_trigger_id]
+        end_trigger = self._times[end_trigger_id + 1]
 
         self._start_trigger_dict[det] = start_trigger
         self._stop_trigger_dict[det] = end_trigger
@@ -632,7 +632,7 @@ class TimeSelectionBB(TimeSelection):
         # create mask selecting 50s before and 50s after allowed trigger times
         mask = np.zeros_like(self._cps_dets[det])
         mask[min_id_start:min_id] = 1
-        mask[max_id:max_id_stop] = 1
+        mask[max_id + 1 : max_id_stop] = 1
         # caclulate the weighted average of the selected area
         mean_cps_trigger_area = np.average(
             self._cps_dets[det] * mask, weights=self._timebin_widths[det[:2]] * mask
@@ -692,9 +692,17 @@ class TimeSelectionBB(TimeSelection):
 
         elif (
             self._bayesian_block_cps_dict[det][id_l - 1]
-            <= mean_cps_trigger_area * mean_factor
-            and self._bayesian_block_cps_dict[det][id_h + 1]
-            <= mean_cps_trigger_area * mean_factor
+            < mean_cps_trigger_area * mean_factor
+            and self._bayesian_block_cps_dict[det][id_l - 2]
+            < mean_cps_trigger_area * mean_factor
+        ):
+            return length_in, id_l, id_h
+
+        elif (
+            self._bayesian_block_cps_dict[det][id_h + 1]
+            < mean_cps_trigger_area * mean_factor
+            and self._bayesian_block_cps_dict[det][id_h + 2]
+            < mean_cps_trigger_area * mean_factor
         ):
             return length_in, id_l, id_h
 
@@ -704,7 +712,7 @@ class TimeSelectionBB(TimeSelection):
             and length_l > self._max_trigger_length
             and self._bayesian_block_times_dict[det][id_h + 1]
             < self._upper_trigger_bound
-            and cps_h > mean_cps_trigger_area * mean_factor
+            and cps_h >= mean_cps_trigger_area * mean_factor
         ):
             return length_h, id_l, id_h + 1
 
@@ -715,7 +723,7 @@ class TimeSelectionBB(TimeSelection):
             < self._lower_trigger_bound
             and self._bayesian_block_times_dict[det][id_h + 1]
             < self._upper_trigger_bound
-            and cps_h > mean_cps_trigger_area * mean_factor
+            and cps_h >= mean_cps_trigger_area * mean_factor
         ):
             return length_h, id_l, id_h + 1
 
@@ -725,7 +733,7 @@ class TimeSelectionBB(TimeSelection):
             and length_l <= self._max_trigger_length
             and self._bayesian_block_times_dict[det][id_l - 1]
             > self._lower_trigger_bound
-            and cps_l > mean_factor * mean_cps_trigger_area
+            and cps_l >= mean_factor * mean_cps_trigger_area
         ):
             return length_l, id_l - 1, id_h
 
@@ -736,7 +744,7 @@ class TimeSelectionBB(TimeSelection):
             > self._lower_trigger_bound
             and self._bayesian_block_times_dict[det][id_h + 1]
             > self._upper_trigger_bound
-            and cps_l > mean_cps_trigger_area * mean_factor
+            and cps_l >= mean_cps_trigger_area * mean_factor
         ):
             return length_l, id_l - 1, id_h
 
@@ -750,8 +758,8 @@ class TimeSelectionBB(TimeSelection):
             < self._upper_trigger_bound
         ):
             if (
-                cps_l > mean_factor * mean_cps_trigger_area
-                and cps_h > mean_factor * mean_cps_trigger_area
+                cps_l >= mean_factor * mean_cps_trigger_area
+                and cps_h >= mean_factor * mean_cps_trigger_area
             ):
                 if counts_h > counts_l:
                     return length_h, id_l, id_h + 1
@@ -762,13 +770,21 @@ class TimeSelectionBB(TimeSelection):
                 elif counts_h == counts_l:
 
                     if (
-                        self._bayesian_block_times_dict[det][id_l - 1]
+                        self._bayesian_block_times_dict[det][id_l - 2]
                         > self._lower_trigger_bound
+                        and self._bayesian_block_cps_dict[det][id_l - 2]
+                        >= mean_cps_trigger_area * mean_factor
                     ):
                         return length_l, id_l - 1, id_h
-
-                    else:
-                        return length_h, id_l, id_h + 1
+                elif (
+                    self._bayesian_block_times_dict[det][id_h + 2]
+                    < self._upper_trigger_bound
+                    and self._bayesian_block_cps_dict[det][id_h + 2]
+                    >= mean_cps_trigger_area * mean_factor
+                ):
+                    return length_h, id_l, id_h + 1
+                else:
+                    return length_in, id_l, id_h
             elif (
                 cps_l > mean_factor * mean_cps_trigger_area
                 and cps_h <= mean_factor * mean_cps_trigger_area
@@ -796,7 +812,7 @@ class TimeSelectionBB(TimeSelection):
             (int, int): start id, end id
         """
         start_trigger_id = 0
-        end_trigger_id = len(self._times)
+        end_trigger_id = len(self._times) - 1
         for i, t in enumerate(self._times):
             if t < start_trigger and i > start_trigger_id:
                 start_trigger_id = i
