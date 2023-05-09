@@ -602,7 +602,7 @@ class TimeSelectionBB(TimeSelection):
             start_trigger=start_trigger, end_trigger=end_trigger
         )
         start_trigger = self._times[start_trigger_id]
-        end_trigger = self._times[end_trigger_id + 1]
+        end_trigger = self._times[end_trigger_id]
 
         self._start_trigger_dict[det] = start_trigger
         self._stop_trigger_dict[det] = end_trigger
