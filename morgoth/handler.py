@@ -51,7 +51,7 @@ def form_morgoth_cmd_string(grb):
 
     cmd = f"{base_cmd} CreateAllPages --grb-name {grb} "
 
-    cmd += f"--workers {n_workers} --scheduler-host localhost --log-level INFO"
+    cmd += f"--workers {n_workers} --scheduler-host localhost --scheduler-port 8883 --log-level INFO"
 
     cmd = shlex.split(cmd)
 
