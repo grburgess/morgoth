@@ -9,5 +9,5 @@ if not testing:
 else:
     from lxml.etree import fromstring
     import pkg_resources
-    payload = pkg_resources.resource_string('morgoth', '/data/gbm_flt5.xml')
+    payload = pkg_resources.resource_string('morgoth', '/data/bn170817529.xml')
     handler(payload, fromstring(payload))
