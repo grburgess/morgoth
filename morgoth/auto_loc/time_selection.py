@@ -594,6 +594,9 @@ class TimeSelectionBB(TimeSelection):
         start_trigger_id, end_trigger_id = self.startStopToObsTimes(
             start_trigger=start_trigger, end_trigger=end_trigger
         )
+        if start_trigger_id == end_trigger_id:
+            end_trigger_id += 1
+
         start_trigger = self._times[start_trigger_id]
         end_trigger = self._times[end_trigger_id]
 
