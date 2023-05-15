@@ -278,7 +278,11 @@ class TimeSelectionBB(TimeSelection):
         self._bkg_list_dict = {}  # lists containing pos and neg bkg for each det
         self._significance_dict = (
             {}
-        )  # used for selecting detectors for finalizing times
+        )
+
+        # debugging break conditions
+        self.break_reason = {}
+        # used for selecting detectors for finalizing times
 
         self._poly_order = -1
 
@@ -375,7 +379,7 @@ class TimeSelectionBB(TimeSelection):
         self,
         lower_trigger_bound=-10,
         upper_trigger_bound=50,
-        max_trigger_length=10.24,
+        max_trigger_length=10.25,
     ):
         """runs timeselection for each detector in self.dets individually
 
@@ -574,6 +578,7 @@ class TimeSelectionBB(TimeSelection):
         id_l = int(id_max_cps_bb)  # index of the satrting bin
         id_h = int(id_max_cps_bb)  # index of the stopping bin
 
+        #TODO
         # iteratively get new length
         while True:
             length_out, id_l, id_h = self._getNewLength(length_in, id_l, id_h, det)
@@ -620,7 +625,7 @@ class TimeSelectionBB(TimeSelection):
             self._lower_trigger_bound, self._upper_trigger_bound
         )
         min_id_start, max_id_stop = self.startStopToObsTimes(
-            self._lower_trigger_bound - 50, self._upper_trigger_bound + 50
+            self._lower_trigger_bound - 20, self._upper_trigger_bound + 20
         )
 
         # create mask selecting 50s before and 50s after allowed trigger times
@@ -637,14 +642,8 @@ class TimeSelectionBB(TimeSelection):
         length_l = length_in + self._bayesian_block_widths_dict[det][id_l - 1]
         cps_h = self._bayesian_block_cps_dict[det][id_h + 1]
         cps_l = self._bayesian_block_cps_dict[det][id_l - 1]
-        counts_l = np.sum(
-            self._bayesian_block_cps_dict[det][id_l - 1 : id_h]
-            @ self.bayesian_block_times_dict[det][id_l - 1 : id_h]
-        )
-        counts_h = np.sum(
-            self._bayesian_block_cps_dict[det][id_l : id_h + 1]
-            @ self.bayesian_block_times_dict[det][id_l : id_h + 1]
-        )
+        counts_l = self._bayesian_block_cps_dict[det][id_l-1] * self.bayesian_block_widths_dict[det][id_l-1]
+        counts_h = self._bayesian_block_cps_dict[det][id_h+1] * self._bayesian_block_widths_dict[det][id_h+1]
 
         length_r = length_in
         id_l_r = id_l
@@ -660,6 +659,7 @@ class TimeSelectionBB(TimeSelection):
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
+                self.break_reason[det] = "cps condition in both directions"
             else:
                 length_r, id_l_r, id_h_r = self._check_cps_cond(
                     length_h,
@@ -673,12 +673,12 @@ class TimeSelectionBB(TimeSelection):
                     cps_cond,
                 )
         elif cps_l >= cps_cond and cps_h < cps_cond:
-            if length_l <= self._max_trigger_length:
+            if length_l <= self._max_trigger_length and self._bayesian_block_times_dict[det][id_l-1] >= self._lower_trigger_bound:
                 length_r = length_l
                 id_l_r = id_l - 1
                 id_h_r = id_h
         elif cps_h >= cps_cond and cps_l < cps_cond:
-            if length_h <= self._max_trigger_length:
+            if length_h <= self._max_trigger_length and self._bayesian_block_times_dict[det][id_h+1] <= self._upper_trigger_bound:
                 length_r = length_h
                 id_l_r = id_l
                 id_h_r = id_h + 1
@@ -712,7 +712,8 @@ class TimeSelectionBB(TimeSelection):
                 else:
                     length_r = length_h
                     id_l_r = id_l
-                    id_h_r = id_h
+                    id_h_r = id_h + 1
+
             elif (
                 self._bayesian_block_times_dict[det][id_l - 1]
                 >= self._lower_trigger_bound
@@ -752,7 +753,7 @@ class TimeSelectionBB(TimeSelection):
             id_l_r = id_l
             id_h_r = id_h + 1
         else:
-            pass
+            self.break_reason[det] = "in counts check"
 
         return length_r, id_l_r, id_h_r
 
@@ -793,6 +794,7 @@ class TimeSelectionBB(TimeSelection):
                     id_l_r = id_l
                     id_h_r = id_h + 1
                 else:
+                    self.break_reason[det] = "check cps for inital lower failed"
                     pass
             elif counts_h > counts_l and length_h <= self._max_trigger_length:
                 if (
@@ -807,13 +809,14 @@ class TimeSelectionBB(TimeSelection):
                     >= self._lower_trigger_bound
                     and length_l <= self._max_trigger_length
                 ):
-                    length_r = length_h
+                    length_r = length_l
                     id_l_r = id_l - 1
                     id_h_r = id_h
             else:
-                length_r = length_h
+                length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
+                self.break_reason[det] = "check cps for inital upper fauled"
         elif (
             self._bayesian_block_cps_dict[det][id_l - 2] < cps_cond
             and self._bayesian_block_cps_dict[det][id_h + 2] >= cps_cond
@@ -833,7 +836,7 @@ class TimeSelectionBB(TimeSelection):
             id_l_r = id_l - 1
             id_h_r = id_h
         else:
-            pass
+            self.break_reason[det] = "Failed in check cps"
         return length_r, id_l_r, id_h_r
 
     def startStopToObsTimes(self, start_trigger, end_trigger):
