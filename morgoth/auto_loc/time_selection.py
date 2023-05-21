@@ -524,6 +524,7 @@ class TimeSelectionBB(TimeSelection):
         self._cps_dets = {}
         self._timebin_widths = {}
         for det_nr, det in enumerate(self.dets):
+            assert len(obs_dets[det_nr]) == len(self._times), "Length of times and values does not match!"
             self._cps_dets[det] = obs_dets[det_nr]
             self._timebin_widths[det] = width[det_nr]
 
