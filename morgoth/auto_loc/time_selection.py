@@ -280,8 +280,6 @@ class TimeSelectionBB(TimeSelection):
             {}
         )
 
-        # debugging break conditions
-        self.break_reason = {}
         # used for selecting detectors for finalizing times
 
         self._poly_order = -1
@@ -418,7 +416,6 @@ class TimeSelectionBB(TimeSelection):
         """
         significance_max = {}
 
-        # TODO apply constraints on time for significance!
         for det, sign in self._significance_dict.items():
             # set the significance outside the trigger selection to zero to prevent "false" high significance
             sign[: self._times.index(self._start_trigger_dict[det])] = 0
@@ -669,7 +666,7 @@ class TimeSelectionBB(TimeSelection):
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
-                self.break_reason[det] = "cps condition in both directions"
+
             else:
                 length_r, id_l_r, id_h_r = self._check_cps_cond(
                     length_h,
@@ -763,7 +760,7 @@ class TimeSelectionBB(TimeSelection):
             id_l_r = id_l
             id_h_r = id_h + 1
         else:
-            self.break_reason[det] = "in counts check"
+            pass
 
         return length_r, id_l_r, id_h_r
 
@@ -804,7 +801,6 @@ class TimeSelectionBB(TimeSelection):
                     id_l_r = id_l
                     id_h_r = id_h + 1
                 else:
-                    self.break_reason[det] = "check cps for inital lower failed"
                     pass
             elif counts_h > counts_l and length_h <= self._max_trigger_length:
                 if (
@@ -826,7 +822,7 @@ class TimeSelectionBB(TimeSelection):
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
-                self.break_reason[det] = "check cps for inital upper fauled"
+
         elif (
             self._bayesian_block_cps_dict[det][id_l - 2] < cps_cond
             and self._bayesian_block_cps_dict[det][id_h + 2] >= cps_cond
@@ -846,7 +842,7 @@ class TimeSelectionBB(TimeSelection):
             id_l_r = id_l - 1
             id_h_r = id_h
         else:
-            self.break_reason[det] = "Failed in check cps"
+            pass
         return length_r, id_l_r, id_h_r
 
     def startStopToObsTimes(self, start_trigger, end_trigger):
