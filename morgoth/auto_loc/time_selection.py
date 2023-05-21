@@ -497,7 +497,6 @@ class TimeSelectionBB(TimeSelection):
         obs_array, _ = self._trigreader_obj.observed_and_background()
         start_times, end_times = self._trigreader_obj.tstart_tstop()
         times_dets = start_times.tolist()
-
         # Fix for bayesian Blocks (add an additional block with count rate zero )
         times_dets.append(end_times[-1])
         obs_dets = []
@@ -510,8 +509,19 @@ class TimeSelectionBB(TimeSelection):
 
         # set last bin length the same as the one before (approx 8s)
         width.append(width[-1])
+        times_no_duplicates = []
+        times_duplicates = []
+        for i, t in enumerate(times_dets):
+            if t not in times_no_duplicates:
+                times_no_duplicates.append(t)
+            else:
+                times_duplicates.append(i)
 
-        self._times = times_dets
+        for i_d in times_duplicates:
+            for det_nr in range((len(obs_dets))):
+                obs_dets[det_nr].pop(i_d)
+
+        self._times = times_no_duplicates
         self._max_time = times_dets[-1]
 
         self._cps_dets = {}
