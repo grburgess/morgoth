@@ -640,10 +640,20 @@ class TimeSelectionBB(TimeSelection):
         mask = np.zeros_like(self._cps_dets[det])
         mask[min_id_start:min_id] = 1
         mask[max_id + 1 : max_id_stop] = 1
-        # caclulate the weighted average of the selected area
-        mean_cps_trigger_area = np.average(
-            self._cps_dets[det] * mask, weights=self._timebin_widths[det[:2]] * mask
-        )
+
+        if np.sum(mask)!= 0:
+            # caclulate the weighted average of the selected area
+            try:
+                mean_cps_trigger_area = np.average(
+                    self._cps_dets[det] * mask, weights=self._timebin_widths[det[:2]] * mask
+                )
+            except ZeroDivisionError:
+                mean_cps_trigger_area = np.mean(self._cps_dets[det]*mask)
+        else:
+            mean_cps_trigger_area =  np.average(
+                    self._cps_dets[det] , weights=self._timebin_widths[det[:2]]
+                )
+
         cps_cond = mean_cps_trigger_area * self._mean_factor
 
         length_h = length_in + self._bayesian_block_widths_dict[det][id_h + 1]
