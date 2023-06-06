@@ -650,9 +650,8 @@ class TimeSelectionBB(TimeSelection):
             except ZeroDivisionError:
                 mean_cps_trigger_area = np.mean(self._cps_dets[det]*mask)
         else:
-            mean_cps_trigger_area =  np.average(
-                    self._cps_dets[det] , weights=self._timebin_widths[det[:2]]
-                )
+            mean_cps_trigger_area =  np.mean(
+                    self._cps_dets[det])
 
         cps_cond = mean_cps_trigger_area * self._mean_factor
 
