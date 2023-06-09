@@ -34,7 +34,7 @@ class BackgroundFitTTE(luigi.Task):
 
     def requires(self):
         return {
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version,report_type = "tte"),
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "tte_files": [
                 DownloadTTEFile(
@@ -108,7 +108,7 @@ class BackgroundFitTrigdat(luigi.Task):
             "trigdat_file": DownloadTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "trigdat"),
         }
 
     def output(self):

@@ -53,7 +53,7 @@ class ProcessFitResults(luigi.Task):
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+                "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "tte"),
                 "bkg_fit": BackgroundFitTTE(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -64,7 +64,7 @@ class ProcessFitResults(luigi.Task):
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+                "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version=self.version, report_type = "trigdat"),
                 "bkg_fit": BackgroundFitTrigdat(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -133,7 +133,7 @@ class RunBalrogTTE(ExternalProgramTask):
         return {
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "bkg_fit": BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "tte"),
         }
 
     def output(self):
@@ -195,7 +195,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "bkg_fit": BackgroundFitTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "trigdat"),
         }
 
     def output(self):
