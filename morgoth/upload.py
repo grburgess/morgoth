@@ -11,6 +11,7 @@ from morgoth.plots import (
     CreateLightcurve,
     CreateLocationPlot,
     CreateMollLocationPlot,
+    CreateBrightObjectsLocationPlot,
     CreateSatellitePlot,
     CreateSpectrumPlot
 )
@@ -239,6 +240,11 @@ class UploadAllPlots(luigi.Task):
                 version=self.version,
             ),
             "molllocation": UploadMollLocationPlot(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "brightobjects": UploadBrightObjectsLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
@@ -626,6 +632,62 @@ class UploadMollLocationPlot(luigi.Task):
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.done"
+        tmp = os.path.join(
+            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
+        )
+
+        if_dir_containing_file_not_existing_then_make(tmp)
+        os.system(f"touch {tmp}")
+
+
+class UploadBrightObjectsLocationPlot(luigi.Task):
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "create_report": UploadReport(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "plot_file": CreateBrightObjectsLocationPlot(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+        }
+
+    def output(self):
+        filename = f"{self.report_type}_{self.version}_upload_plot_brightobjects.done"
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                self.version,
+                "upload",
+                filename,
+            )
+        )
+
+    def run(self):
+        upload_plot(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            plot_file=self.input()["plot_file"].path,
+            plot_type="brightobjects",
+            version=self.version,
+            wait_time=float(
+                morgoth_config["upload"]["plot"]["interval"]
+            ),
+            max_time=float(
+                morgoth_config["upload"]["plot"]["max_time"]
+            ),
+        )
+
+        filename = f"{self.report_type}_{self.version}_upload_plot_brightobjects.done"
         tmp = os.path.join(
             base_dir, self.grb_name, self.report_type, self.version, "upload", filename
         )
