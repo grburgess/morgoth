@@ -58,6 +58,10 @@ class ResultReader(object):
         self._beta = None
         self._beta_err = None
 
+        # sun separation
+        self._sun_sep_center = None
+        self._sun_sep_error = None
+
         # read trigger output
         self._read_trigger(trigger_file)
 
@@ -154,6 +158,22 @@ class ResultReader(object):
 
         self._phi_sat = phi_sat.value
         self._theta_sat = theta_sat.value
+
+        # calculating sun separation from center
+        grb_center = SkyCoord(ra=self._ra, dec=self._dec, unit="deg", frame="icrs")
+        sun = gbm_detector_list["n0"](quaternion=quat, sc_pos=sc_pos, time=utc(times))
+        self._sun_sep_center = sun.separation(grb_center).deg
+
+        # check if sun is within error of localization
+        ra_distance = self._ra - sun.ra.deg
+        dec_distance = self._dec - sun.dec.deg
+        if (
+            np.abs(ra_distance) <= self._ra_err
+            and np.abs(dec_distance) <= self._dec_err
+        ):
+            self._sun_sep_error = True
+        else:
+            self._sun_sep_error = False
 
     def _read_fit_result(self, result_file):
         with fits.open(result_file) as f:
@@ -472,6 +492,8 @@ class ResultReader(object):
             "separation_values": {
                 "bright_sources": self._dic_bright_sources,
                 "SGRs": self._dic_SGRs,
+                "sun_center": convert_to_float(self._sun_sep_center),
+                "sun_within_error": bool(self._sun_sep_min),
             },
         }
 
