@@ -331,7 +331,7 @@ def mollweide_plot(
     fig.savefig(save_path, bbox_inches="tight", dpi=1000)
 
 
-def brightobjects_plot( 
+def brightobjects_plot(
     grb_name,
     trigdat_file,
     post_equal_weights_file,
@@ -432,24 +432,33 @@ def brightobjects_plot(
         verticalalignment="bottom",
     )
 
-    #different markers for better visualization
-    markers=["o","X","^"]
+    # different markers for better visualization
+    markers = ["o", "X", "^"]
 
     # Plot Bright Sources
     for m, (name, dictionary) in enumerate(bright_sources.items()):
         ra = np.deg2rad(dictionary["ra"])
         dec = np.deg2rad(dictionary["dec"])
-        if ra>np.pi:
-            ra-=2*np.pi
-        ax.scatter(ra, dec, label=name, s=30, color="red",marker=markers[m])
+        if ra > np.pi:
+            ra -= 2 * np.pi
+        ax.scatter(
+            ra, dec, label=name.replace("#", ""), s=30, color="red", marker=markers[m]
+        )
 
     # Plot SGRs
     for m, (name, dictionary) in enumerate(SGRs.items()):
         ra = np.deg2rad(dictionary["ra"])
         dec = np.deg2rad(dictionary["dec"])
-        if ra>np.pi:
-            ra-=2*np.pi
-        ax.scatter(ra, dec, label=name, s=30, color="orange",marker=markers[m])
+        if ra > np.pi:
+            ra -= 2 * np.pi
+        ax.scatter(
+            ra,
+            dec,
+            label=name.replace("#", ""),
+            s=30,
+            color="orange",
+            marker=markers[m],
+        )
 
     # if we have a swift position plot it here
     if swift is not None:
@@ -1181,6 +1190,7 @@ def interactive_3D_plot(
     with open(save_path, "w") as text_file:
         text_file.write(output)
 
+
 def loadtxt2d(intext):
     try:
         return np.loadtxt(intext, ndmin=2)
@@ -1322,37 +1332,37 @@ def phi_0(theta, ra_c, dec_c, rad_r):
     d = np.cos(rad_r)
     z = (
         -c
-        + (a ** 2 * c / (a ** 2 + b ** 2))
+        + (a**2 * c / (a**2 + b**2))
         + d
-        - (a ** 2 * d / (a ** 2 + b ** 2))
-        + (a * np.sqrt(-(b ** 2) * (-(a ** 2) - b ** 2 + c ** 2 - 2 * c * d + d ** 2)))
-        / (a ** 2 + b ** 2)
+        - (a**2 * d / (a**2 + b**2))
+        + (a * np.sqrt(-(b**2) * (-(a**2) - b**2 + c**2 - 2 * c * d + d**2)))
+        / (a**2 + b**2)
     ) / b
     n = (
         -a * c
         + a * d
         - np.sqrt(
-            a ** 2 * b ** 2
-            + b ** 4
-            - b ** 2 * c ** 2
-            + 2 * b ** 2 * c * d
-            - b ** 2 * d ** 2
+            a**2 * b**2
+            + b**4
+            - b**2 * c**2
+            + 2 * b**2 * c * d
+            - b**2 * d**2
         )
-    ) / (a ** 2 + b ** 2)
+    ) / (a**2 + b**2)
     phi = np.arctan2(z, n)
     return phi
 
 
 def phi_1(theta, ra_c, dec_c, rad_r):
     """
-   Gives the corresponding phi value to the given theta for which the separation to ra_c, dec_c is the angle rad_r
-   This has two solutions. So phi_0 and phi_1 corresponse to the two solutions.
-   :param theta:
-   :param ra_c:
-   :param dec_c:
-   :param rad_r:
-   :return:
-   """
+    Gives the corresponding phi value to the given theta for which the separation to ra_c, dec_c is the angle rad_r
+    This has two solutions. So phi_0 and phi_1 corresponse to the two solutions.
+    :param theta:
+    :param ra_c:
+    :param dec_c:
+    :param rad_r:
+    :return:
+    """
     detx = np.cos(ra_c) * np.cos(dec_c)
     dety = np.sin(ra_c) * np.cos(dec_c)
     detz = np.sin(dec_c)
@@ -1362,23 +1372,23 @@ def phi_1(theta, ra_c, dec_c, rad_r):
     d = np.cos(rad_r)
     z = (
         -c
-        + (a ** 2 * c / (a ** 2 + b ** 2))
+        + (a**2 * c / (a**2 + b**2))
         + d
-        - (a ** 2 * d / (a ** 2 + b ** 2))
-        - (a * np.sqrt(-(b ** 2) * (-(a ** 2) - b ** 2 + c ** 2 - 2 * c * d + d ** 2)))
-        / (a ** 2 + b ** 2)
+        - (a**2 * d / (a**2 + b**2))
+        - (a * np.sqrt(-(b**2) * (-(a**2) - b**2 + c**2 - 2 * c * d + d**2)))
+        / (a**2 + b**2)
     ) / b
     n = (
         -a * c
         + a * d
         + np.sqrt(
-            a ** 2 * b ** 2
-            + b ** 4
-            - b ** 2 * c ** 2
-            + 2 * b ** 2 * c * d
-            - b ** 2 * d ** 2
+            a**2 * b**2
+            + b**4
+            - b**2 * c**2
+            + 2 * b**2 * c * d
+            - b**2 * d**2
         )
-    ) / (a ** 2 + b ** 2)
+    ) / (a**2 + b**2)
     phi = np.arctan2(z, n)
     return phi
 
