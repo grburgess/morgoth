@@ -8,7 +8,7 @@ from morgoth.exceptions.custom_exceptions import (
     GRBNotFound,
     UnauthorizedRequest,
     UnexpectedStatusCode,
-    UploadFailed
+    UploadFailed,
 )
 from morgoth.utils.env import get_env_value
 
@@ -35,7 +35,7 @@ def check_grb_on_website(grb_name):
         return True
 
     elif response.status_code == 401:
-        raise UnauthorizedRequest('The authentication token is not valid')
+        raise UnauthorizedRequest("The authentication token is not valid")
 
     # This should not happen, but we will try to upload anyway
     else:
@@ -106,9 +106,11 @@ def create_report_from_result(result):
                     "balrog_two_sig_err_circle"
                 ],
                 "bright_sources": result["separation_values"]["bright_sources"],
-                "SGRs": result["separation_values"]["SGRs"]
+                "SGRs": result["separation_values"]["SGRs"],
+                "sun_separation": result["separation_values"]["sun_separation"],
+                "sun_within_error": result["separation_values"]["sun_within_error"],
             }
-        ]
+        ],
     }
     return report
 
@@ -159,7 +161,7 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
                 flag = False
 
             elif response.status_code == 401:
-                raise UnauthorizedRequest('The authentication token is not valid')
+                raise UnauthorizedRequest("The authentication token is not valid")
 
             elif response.status_code == 409 and not upload_new_version:
                 print("GRB already existing, try uploading new version")
@@ -172,7 +174,9 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
                 flag = False
 
             else:
-                raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
+                raise UnexpectedStatusCode(
+                    f"Request returned unexpected status {response.status_code} with message {response.text}"
+                )
 
         except UnauthorizedRequest as e:
             raise e
@@ -189,7 +193,7 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
 
                 # we are out of time so give up
 
-                raise UploadFailed('The max time has been exceeded!')
+                raise UploadFailed("The max time has been exceeded!")
 
             else:
 
@@ -245,10 +249,12 @@ def update_grb_report(grb_name, result, wait_time, max_time):
                 flag = False
 
             elif response.status_code == 401:
-                raise UnauthorizedRequest('The authentication token is not valid')
+                raise UnauthorizedRequest("The authentication token is not valid")
 
             else:
-                raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
+                raise UnexpectedStatusCode(
+                    f"Request returned unexpected status {response.status_code} with message {response.text}"
+                )
 
         except UnauthorizedRequest as e:
             raise e
@@ -265,7 +271,7 @@ def update_grb_report(grb_name, result, wait_time, max_time):
 
                 # we are out of time so give up
 
-                raise UploadFailed('The max time has been exceeded!')
+                raise UploadFailed("The max time has been exceeded!")
 
             else:
 
@@ -281,7 +287,16 @@ def update_grb_report(grb_name, result, wait_time, max_time):
             print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time, max_time, det_name=""):
+def upload_plot(
+    grb_name,
+    report_type,
+    plot_file,
+    plot_type,
+    version,
+    wait_time,
+    max_time,
+    det_name="",
+):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
@@ -324,7 +339,7 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                     flag = False
 
                 elif response.status_code == 401:
-                    raise UnauthorizedRequest('The authentication token is not valid')
+                    raise UnauthorizedRequest("The authentication token is not valid")
 
                 elif response.status_code == 204:
                     raise EmptyFileError("The plot file is empty")
@@ -336,7 +351,9 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                     flag = False
 
                 else:
-                    raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
+                    raise UnexpectedStatusCode(
+                        f"Request returned unexpected status {response.status_code} with message {response.text}"
+                    )
 
             except UnauthorizedRequest as e:
                 raise e
@@ -356,7 +373,7 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
 
                     # we are out of time so give up
 
-                    raise UploadFailed('The max time has been exceeded!')
+                    raise UploadFailed("The max time has been exceeded!")
 
                 else:
 
@@ -372,7 +389,9 @@ def upload_plot(grb_name, report_type, plot_file, plot_type, version, wait_time,
                 print(f"Response {response.status_code} at {url}: {response.text}")
 
 
-def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_time, max_time):
+def upload_datafile(
+    grb_name, report_type, data_file, file_type, version, wait_time, max_time
+):
     headers = {
         "Authorization": "Token {}".format(auth_token),
     }
@@ -415,7 +434,7 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_t
                     flag = False
 
                 elif response.status_code == 401:
-                    raise UnauthorizedRequest('The authentication token is not valid')
+                    raise UnauthorizedRequest("The authentication token is not valid")
 
                 elif response.status_code == 204:
                     raise EmptyFileError("The datafile was empty")
@@ -427,7 +446,9 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_t
                     flag = False
 
                 else:
-                    raise UnexpectedStatusCode(f'Request returned unexpected status {response.status_code} with message {response.text}')
+                    raise UnexpectedStatusCode(
+                        f"Request returned unexpected status {response.status_code} with message {response.text}"
+                    )
 
             except UnauthorizedRequest as e:
                 raise e
@@ -447,7 +468,7 @@ def upload_datafile(grb_name, report_type, data_file, file_type, version, wait_t
 
                     # we are out of time so give up
 
-                    raise UploadFailed('The max time has been exceeded!')
+                    raise UploadFailed("The max time has been exceeded!")
 
                 else:
 
