@@ -3,6 +3,7 @@ import pytz
 import urllib
 
 import astropy.io.fits as fits
+import astropy.time as astro_time
 import numpy as np
 import yaml
 from chainconsumer import ChainConsumer
@@ -163,7 +164,11 @@ class ResultReader(object):
 
         # calculating sun separation from center
         grb_center = SkyCoord(ra=self._ra, dec=self._dec, unit="deg", frame="icrs")
-        sun = gbm_detector_list["n0"](quaternion=quat, sc_pos=sc_pos, time=utc(times))
+        sun = gbm_detector_list["n0"](
+            quaternion=quat,
+            sc_pos=sc_pos,
+            time=astro_time.Time(GBMTime.from_MET(times).time.fits),
+        )
         self._sun_sep_center = sun.separation(grb_center).deg
 
         # check if sun is within error of localization
