@@ -500,7 +500,7 @@ class ResultReader(object):
                 "bright_sources": self._dic_bright_sources,
                 "SGRs": self._dic_SGRs,
                 "sun_center": convert_to_float(self._sun_sep_center),
-                "sun_within_error": bool(self._sun_sep_min),
+                "sun_within_error": bool(self._sun_sep_error),
             },
         }
 
