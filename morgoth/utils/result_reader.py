@@ -435,7 +435,7 @@ class ResultReader(object):
         # create dictionary
         dic = {}
         for i in range(3):
-            dic[str(table[i])["Name"]] = {
+            dic[str(table[i]["Name"])] = {
                 "ra": float(round(table[i]["Coords Degs"].ra.degree, 3)),
                 "dec": float(round(table[i]["Coords Degs"].dec.degree, 3)),
                 "separation": float(table[i]["Separation Degs"]),
