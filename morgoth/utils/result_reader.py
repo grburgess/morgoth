@@ -168,7 +168,7 @@ class ResultReader(object):
             quaternion=quat,
             sc_pos=sc_pos,
             time=astro_time.Time(GBMTime.from_MET(times).time.fits),
-        )
+        ).sun_position_icrs
         self._sun_sep_center = sun.separation(grb_center).deg
 
         # check if sun is within error of localization
