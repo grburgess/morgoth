@@ -435,7 +435,7 @@ class ResultReader(object):
         # create dictionary
         dic = {}
         for i in range(3):
-            dic[table[i]["Name"]] = {
+            dic[str(table[i])["Name"]] = {
                 "ra": float(round(table[i]["Coords Degs"].ra.degree, 3)),
                 "dec": float(round(table[i]["Coords Degs"].dec.degree, 3)),
                 "separation": float(table[i]["Separation Degs"]),
@@ -499,8 +499,10 @@ class ResultReader(object):
             "separation_values": {
                 "bright_sources": self._dic_bright_sources,
                 "SGRs": self._dic_SGRs,
-                "sun_center": convert_to_float(self._sun_sep_center),
-                "sun_within_error": bool(self._sun_sep_error),
+                "Sun": {
+                    "sun_separation": convert_to_float(self._sun_sep_center),
+                    "sun_within_error": bool(self._sun_sep_error),
+                },
             },
         }
 
