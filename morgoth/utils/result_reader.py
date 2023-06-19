@@ -757,3 +757,12 @@ def convert_to_float(value):
         return float(value)
     else:
         return None
+
+
+def utc(met):
+    """
+    get utc time from met time
+    :return:
+    """
+    time = GBMTime.from_MET(met)
+    return time.time.fits
