@@ -107,8 +107,10 @@ def create_report_from_result(result):
                 ],
                 "bright_sources": result["separation_values"]["bright_sources"],
                 "SGRs": result["separation_values"]["SGRs"],
-                "sun_separation": result["separation_values"]["sun_separation"],
-                "sun_within_error": result["separation_values"]["sun_within_error"],
+                "sun_separation": result["separation_values"]["Sun"]["sun_separation"],
+                "sun_within_error": result["separation_values"]["Sun"][
+                    "sun_within_error"
+                ],
             }
         ],
     }
@@ -141,10 +143,8 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
     time_spent = 0  # seconds
 
     while flag:
-
         # try to download the file
         try:
-
             response = requests.post(
                 url=url, data=json.dumps(report), headers=headers, verify=False
             )
@@ -182,7 +182,6 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
             raise e
 
         except Exception as e:
-
             print(e)
 
             # ok, we have not uploaded the grb yet
@@ -190,13 +189,11 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
             # see if we should still wait for the upload
 
             if time_spent >= max_time:
-
                 # we are out of time so give up
 
                 raise UploadFailed("The max time has been exceeded!")
 
             else:
-
                 # ok, let's sleep for a bit and then check again
 
                 time.sleep(wait_time)
@@ -205,7 +202,6 @@ def upload_grb_report(grb_name, result, wait_time, max_time):
 
                 time_spent += wait_time
         else:
-
             print(f"Response {response.status_code} at {url}: {response.text}")
     return report
 
@@ -235,10 +231,8 @@ def update_grb_report(grb_name, result, wait_time, max_time):
     time_spent = 0  # seconds
 
     while flag:
-
         # try to download the file
         try:
-
             response = requests.put(
                 url=url, data=json.dumps(report), headers=headers, verify=False
             )
@@ -260,7 +254,6 @@ def update_grb_report(grb_name, result, wait_time, max_time):
             raise e
 
         except Exception as e:
-
             print(e)
 
             # ok, we have not uploaded the grb yet
@@ -268,13 +261,11 @@ def update_grb_report(grb_name, result, wait_time, max_time):
             # see if we should still wait for the upload
 
             if time_spent >= max_time:
-
                 # we are out of time so give up
 
                 raise UploadFailed("The max time has been exceeded!")
 
             else:
-
                 # ok, let's sleep for a bit and then check again
 
                 time.sleep(wait_time)
@@ -283,7 +274,6 @@ def update_grb_report(grb_name, result, wait_time, max_time):
 
                 time_spent += wait_time
         else:
-
             print(f"Response {response.status_code} at {url}: {response.text}")
 
 
@@ -322,9 +312,7 @@ def upload_plot(
     time_spent = 0  # seconds
 
     with open(plot_file, "rb") as file_:
-
         while flag:
-
             # try to download the file
             try:
                 response = requests.post(
@@ -362,7 +350,6 @@ def upload_plot(
                 raise e
 
             except Exception as e:
-
                 print(e)
 
                 # ok, we have not uploaded the grb yet
@@ -370,13 +357,11 @@ def upload_plot(
                 # see if we should still wait for the upload
 
                 if time_spent >= max_time:
-
                     # we are out of time so give up
 
                     raise UploadFailed("The max time has been exceeded!")
 
                 else:
-
                     # ok, let's sleep for a bit and then check again
 
                     time.sleep(wait_time)
@@ -385,7 +370,6 @@ def upload_plot(
 
                     time_spent += wait_time
             else:
-
                 print(f"Response {response.status_code} at {url}: {response.text}")
 
 
@@ -417,9 +401,7 @@ def upload_datafile(
     time_spent = 0  # seconds
 
     with open(data_file, "rb") as file_:
-
         while flag:
-
             # try to download the file
             try:
                 response = requests.post(
@@ -457,7 +439,6 @@ def upload_datafile(
                 raise e
 
             except Exception as e:
-
                 print(e)
 
                 # ok, we have not uploaded the grb yet
@@ -465,13 +446,11 @@ def upload_datafile(
                 # see if we should still wait for the upload
 
                 if time_spent >= max_time:
-
                     # we are out of time so give up
 
                     raise UploadFailed("The max time has been exceeded!")
 
                 else:
-
                     # ok, let's sleep for a bit and then check again
 
                     time.sleep(wait_time)
@@ -480,5 +459,4 @@ def upload_datafile(
 
                     time_spent += wait_time
             else:
-
                 print(f"Response {response.status_code} at {url}: {response.text}")
