@@ -658,10 +658,10 @@ class MultinestFitTTE(object):
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
                 ca = spectrum_plot.gca()
-                ylims = ca.get_lims()
+                ylims = ca.get_ylim()
                 if y_lims[0] < 10e-5:
                     y_lims_new = [10e-5, y_lims[1]]
-                    ca.set_lim(y_lims_new)
+                    ca.set_ylim(y_lims_new)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
