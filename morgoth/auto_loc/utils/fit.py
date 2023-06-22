@@ -75,8 +75,7 @@ class MultinestFitTrigdat(object):
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
             data = yaml.safe_load(f)
-            self._use_dets = np.array(_gbm_detectors)[
-                np.array(data["use_dets"])]
+            self._use_dets = np.array(_gbm_detectors)[np.array(data["use_dets"])]
 
             self._bkg_fit_files = data["bkg_fit_files"]
 
@@ -85,7 +84,7 @@ class MultinestFitTrigdat(object):
             self._active_time = (
                 f"{data['active_time']['start']}-{data['active_time']['stop']}"
             )
-            self._fine = data['fine']
+            self._fine = data["fine"]
 
         self._trigdat_file = trigdat_file
 
@@ -130,40 +129,31 @@ class MultinestFitTrigdat(object):
         if spectrum == "cpl":
             # we define the spectral model
             cpl = Cutoff_powerlaw()
-            cpl.K.max_value = 10 ** 4
-            cpl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 4)
+            cpl.K.max_value = 10**4
+            cpl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**4)
             cpl.xc.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             cpl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource(
-                "GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
+            self._model = Model(PointSource("GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
 
         elif spectrum == "band":
-
             band = Band()
-            band.K.prior = Log_uniform_prior(
-                lower_bound=1e-5, upper_bound=1200)
+            band.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=1200)
             band.alpha.set_uninformative_prior(Uniform_prior)
             band.xp.prior = Log_uniform_prior(lower_bound=10, upper_bound=1e4)
             band.beta.set_uninformative_prior(Uniform_prior)
 
-            self._model = Model(PointSource(
-                "GRB_band", 0.0, 0.0, spectral_shape=band))
+            self._model = Model(PointSource("GRB_band", 0.0, 0.0, spectral_shape=band))
 
         elif spectrum == "pl":
-
             pl = Powerlaw()
-            pl.K.max_value = 10 ** 4
-            pl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 4)
+            pl.K.max_value = 10**4
+            pl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**4)
             pl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource(
-                "GRB_pl", 0.0, 0.0, spectral_shape=pl))
+            self._model = Model(PointSource("GRB_pl", 0.0, 0.0, spectral_shape=pl))
 
         elif spectrum == "sbpl":
-
             sbpl = SmoothlyBrokenPowerLaw()
             sbpl.K.min_value = 1e-5
             sbpl.K.max_value = 1e4
@@ -171,18 +161,14 @@ class MultinestFitTrigdat(object):
             sbpl.alpha.set_uninformative_prior(Uniform_prior)
             sbpl.beta.set_uninformative_prior(Uniform_prior)
             sbpl.break_energy.min_value = 1
-            sbpl.break_energy.prior = Log_uniform_prior(
-                lower_bound=1, upper_bound=1e4)
-            self._model = Model(PointSource(
-                "GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
+            sbpl.break_energy.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
+            self._model = Model(PointSource("GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
 
         elif spectrum == "solar_flare":
-
             # broken powerlaw
             bpl = Broken_powerlaw()
-            bpl.K.max_value = 10 ** 5
-            bpl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 5)
+            bpl.K.max_value = 10**5
+            bpl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**5)
             bpl.xb.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             bpl.alpha.set_uninformative_prior(Uniform_prior)
             bpl.beta.set_uninformative_prior(Uniform_prior)
@@ -191,11 +177,9 @@ class MultinestFitTrigdat(object):
             tb = Thermal_bremsstrahlung_optical_thin()
             tb.K.max_value = 1e5
             tb.K.min_value = 1e-5
-            tb.K.prior = Log_uniform_prior(
-                lower_bound=1e-5, upper_bound=10 ** 5)
+            tb.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=10**5)
             tb.kT.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=1e4)
-            tb.Epiv.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=1e4)
+            tb.Epiv.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=1e4)
 
             # combined
             total = bpl + tb
@@ -204,8 +188,7 @@ class MultinestFitTrigdat(object):
                 PointSource("Solar_flare", 0.0, 0.0, spectral_shape=total)
             )
         else:
-            raise Exception(
-                "Use valid model type: cpl, pl, sbpl, band or solar_flare")
+            raise Exception("Use valid model type: cpl, pl, sbpl, band or solar_flare")
 
     def fit(self):
         """
@@ -223,8 +206,7 @@ class MultinestFitTrigdat(object):
         self._temp_chains_dir = os.path.join(
             base_dir, self._grb_name, f"c_trig_{self._version}"
         )
-        chain_path = os.path.join(
-            self._temp_chains_dir, f"trigdat_{self._version}_")
+        chain_path = os.path.join(self._temp_chains_dir, f"trigdat_{self._version}_")
 
         # Make temp chains folder if it does not exists already
         if not os.path.exists(self._temp_chains_dir):
@@ -234,10 +216,9 @@ class MultinestFitTrigdat(object):
         # set main_path+trigger to whatever you want to use
 
         self._bayes.set_sampler("multinest", share_spectrum=True)
-        self._bayes.sampler.setup(n_live_points=800,
-                                  chain_name=chain_path,
-                                  wrapped_params=wrap,
-                                  verbose=True)
+        self._bayes.sampler.setup(
+            n_live_points=800, chain_name=chain_path, wrapped_params=wrap, verbose=True
+        )
         self._bayes.sample()
 
     def save_fit_result(self):
@@ -312,7 +293,6 @@ class MultinestFitTrigdat(object):
 
         if using_mpi:
             if rank == 0:
-
                 if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
@@ -321,18 +301,16 @@ class MultinestFitTrigdat(object):
                     )
                     ca = spectrum_plot.gca()
                     ylims = ca.get_ylims()
-                    if y_lims[0]<10e-5:
-                        y_lims_new = [10e-5,y_lims[1]]
+                    if y_lims[0] < 10e-5:
+                        y_lims_new = [10e-5, y_lims[1]]
                         ca.set_ylims(y_lims_new)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except Exception as e:
-
                     print("No spectral plot possible...")
                     print(e)
 
         else:
-
             if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
@@ -341,13 +319,12 @@ class MultinestFitTrigdat(object):
                 )
                 ca = spectrum_plot.gca()
                 ylims = ca.get_ylims()
-                if y_lims[0]<10e-5:
-                    y_lims_new = [10e-5,y_lims[1]]
+                if y_lims[0] < 10e-5:
+                    y_lims_new = [10e-5, y_lims[1]]
                     ca.set_ylims(y_lims_new)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
-
                 print("No spectral plot possible...")
 
 
@@ -375,8 +352,7 @@ class MultinestFitTTE(object):
         # Load yaml information
         with open(self._bkg_fit_yaml_file, "r") as f:
             data = yaml.safe_load(f)
-            self._use_dets = np.array(_gbm_detectors)[
-                np.array(data["use_dets"])]
+            self._use_dets = np.array(_gbm_detectors)[np.array(data["use_dets"])]
             self._bkg_fit_files = data["bkg_fit_files"]
 
         with open(self._time_selection_yaml_file, "r") as f:
@@ -400,7 +376,6 @@ class MultinestFitTTE(object):
         det_rsp = []
 
         for det in self._use_dets:
-
             # set up responses
             tte_file = f"{base_dir}/{self._grb_name}/tte/data/glg_tte_{det}_bn{self._grb_name[3:]}_{self._version}.fit"
             cspec_file = f"{base_dir}/{self._grb_name}/tte/data/glg_cspec_{det}_bn{self._grb_name[3:]}_{self._version}.pha"
@@ -410,7 +385,7 @@ class MultinestFitTTE(object):
                 trigdat=self._trigdat_file,
                 mat_type=2,
                 cspecfile=cspec_file,
-                occult=True
+                occult=True,
             )
 
             det_rsp.append(rsp)
@@ -459,8 +434,7 @@ class MultinestFitTTE(object):
             det_ts.append(ts)
 
         # Mean of active time
-        rsp_time = (float(self._active_time_start) +
-                    float(self._active_time_stop)) / 2
+        rsp_time = (float(self._active_time_start) + float(self._active_time_stop)) / 2
 
         # Spectrum Like
         det_sl = []
@@ -495,40 +469,31 @@ class MultinestFitTTE(object):
         if spectrum == "cpl":
             # we define the spectral model
             cpl = Cutoff_powerlaw()
-            cpl.K.max_value = 10 ** 4
-            cpl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 4)
+            cpl.K.max_value = 10**4
+            cpl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**4)
             cpl.xc.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             cpl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource(
-                "GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
+            self._model = Model(PointSource("GRB_cpl_", 0.0, 0.0, spectral_shape=cpl))
 
         elif spectrum == "band":
-
             band = Band()
-            band.K.prior = Log_uniform_prior(
-                lower_bound=1e-5, upper_bound=1200)
+            band.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=1200)
             band.alpha.set_uninformative_prior(Uniform_prior)
             band.xp.prior = Log_uniform_prior(lower_bound=10, upper_bound=1e4)
             band.beta.set_uninformative_prior(Uniform_prior)
 
-            self._model = Model(PointSource(
-                "GRB_band", 0.0, 0.0, spectral_shape=band))
+            self._model = Model(PointSource("GRB_band", 0.0, 0.0, spectral_shape=band))
 
         elif spectrum == "pl":
-
             pl = Powerlaw()
-            pl.K.max_value = 10 ** 4
-            pl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 4)
+            pl.K.max_value = 10**4
+            pl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**4)
             pl.index.set_uninformative_prior(Uniform_prior)
             # we define a point source model using the spectrum we just specified
-            self._model = Model(PointSource(
-                "GRB_pl", 0.0, 0.0, spectral_shape=pl))
+            self._model = Model(PointSource("GRB_pl", 0.0, 0.0, spectral_shape=pl))
 
         elif spectrum == "sbpl":
-
             sbpl = SmoothlyBrokenPowerLaw()
             sbpl.K.min_value = 1e-5
             sbpl.K.max_value = 1e4
@@ -536,18 +501,14 @@ class MultinestFitTTE(object):
             sbpl.alpha.set_uninformative_prior(Uniform_prior)
             sbpl.beta.set_uninformative_prior(Uniform_prior)
             sbpl.break_energy.min_value = 1
-            sbpl.break_energy.prior = Log_uniform_prior(
-                lower_bound=1, upper_bound=1e4)
-            self._model = Model(PointSource(
-                "GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
+            sbpl.break_energy.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
+            self._model = Model(PointSource("GRB_sbpl", 0.0, 0.0, spectral_shape=sbpl))
 
         elif spectrum == "solar_flare":
-
             # broken powerlaw
             bpl = Broken_powerlaw()
-            bpl.K.max_value = 10 ** 5
-            bpl.K.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=10 ** 5)
+            bpl.K.max_value = 10**5
+            bpl.K.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=10**5)
             bpl.xb.prior = Log_uniform_prior(lower_bound=1, upper_bound=1e4)
             bpl.alpha.set_uninformative_prior(Uniform_prior)
             bpl.beta.set_uninformative_prior(Uniform_prior)
@@ -556,11 +517,9 @@ class MultinestFitTTE(object):
             tb = Thermal_bremsstrahlung_optical_thin()
             tb.K.max_value = 1e5
             tb.K.min_value = 1e-5
-            tb.K.prior = Log_uniform_prior(
-                lower_bound=1e-5, upper_bound=10 ** 5)
+            tb.K.prior = Log_uniform_prior(lower_bound=1e-5, upper_bound=10**5)
             tb.kT.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=1e4)
-            tb.Epiv.prior = Log_uniform_prior(
-                lower_bound=1e-3, upper_bound=1e4)
+            tb.Epiv.prior = Log_uniform_prior(lower_bound=1e-3, upper_bound=1e4)
 
             # combined
             total = bpl + tb
@@ -569,8 +528,7 @@ class MultinestFitTTE(object):
                 PointSource("Solar_flare", 0.0, 0.0, spectral_shape=total)
             )
         else:
-            raise Exception(
-                "Use valid model type: cpl, pl, sbpl, band or solar_flare")
+            raise Exception("Use valid model type: cpl, pl, sbpl, band or solar_flare")
 
     def fit(self):
         """
@@ -588,8 +546,7 @@ class MultinestFitTTE(object):
         self._temp_chains_dir = os.path.join(
             base_dir, self._grb_name, f"c_tte_{self._version}"
         )
-        chain_path = os.path.join(
-            self._temp_chains_dir, f"tte_{self._version}_")
+        chain_path = os.path.join(self._temp_chains_dir, f"tte_{self._version}_")
 
         # Make temp chains folder if it does not exists already
         if not os.path.exists(self._temp_chains_dir):
@@ -600,10 +557,9 @@ class MultinestFitTTE(object):
 
         self._bayes.set_sampler("multinest", share_spectrum=True)
 
-        self._bayes.sampler.setup(n_live_points=800,
-                                  chain_name=chain_path,
-                                  wrapped_params=wrap,
-                                  verbose=True)
+        self._bayes.sampler.setup(
+            n_live_points=800, chain_name=chain_path, wrapped_params=wrap, verbose=True
+        )
         self._bayes.sample()
 
     def save_fit_result(self):
@@ -678,7 +634,6 @@ class MultinestFitTTE(object):
 
         if using_mpi:
             if rank == 0:
-
                 if_dir_containing_file_not_existing_then_make(plot_path)
 
                 try:
@@ -687,17 +642,15 @@ class MultinestFitTTE(object):
                     )
                     ca = spectrum_plot.gca()
                     ylims = ca.get_ylims()
-                    if y_lims[0]<10e-5:
-                        y_lims_new = [10e-5,y_lims[1]]
+                    if y_lims[0] < 10e-5:
+                        y_lims_new = [10e-5, y_lims[1]]
                         ca.set_ylims(y_lims_new)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except:
-
                     print("No spectral plot possible...")
 
         else:
-
             if_dir_containing_file_not_existing_then_make(plot_path)
 
             try:
@@ -705,12 +658,11 @@ class MultinestFitTTE(object):
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
                 ca = spectrum_plot.gca()
-                ylims = ca.get_ylims()
-                if y_lims[0]<10e-5:
-                    y_lims_new = [10e-5,y_lims[1]]
-                    ca.set_ylims(y_lims_new)
+                ylims = ca.get_lims()
+                if y_lims[0] < 10e-5:
+                    y_lims_new = [10e-5, y_lims[1]]
+                    ca.set_lim(y_lims_new)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
-
                 print("No spectral plot possible...")
