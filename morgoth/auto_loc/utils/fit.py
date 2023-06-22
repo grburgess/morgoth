@@ -299,7 +299,7 @@ class MultinestFitTrigdat(object):
                     spectrum_plot = display_spectrum_model_counts(
                         self._bayes, data_colors=color_list, model_colors=color_list
                     )
-                    ca = spectrum_plot.gca()
+                    ca = spectrum_plot.get_axes()[0]
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-5:
                         print("Updating y-lims")
@@ -318,7 +318,7 @@ class MultinestFitTrigdat(object):
                 spectrum_plot = display_spectrum_model_counts(
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
-                ca = spectrum_plot.gca()
+                ca = spectrum_plot.get_axes()[0]
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-5:
                     y_lims_new = [10e-5, y_lims[1]]
@@ -641,7 +641,7 @@ class MultinestFitTTE(object):
                     spectrum_plot = display_spectrum_model_counts(
                         self._bayes, data_colors=color_list, model_colors=color_list
                     )
-                    ca = spectrum_plot.gca()
+                    ca = spectrum_plot.get_axes()[0]
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-5:
                         y_lims_new = [10e-5, y_lims[1]]
@@ -658,7 +658,7 @@ class MultinestFitTTE(object):
                 spectrum_plot = display_spectrum_model_counts(
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
-                ca = spectrum_plot.gca()
+                ca = spectrum_plot.get_axes()[0]
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-5:
                     print("Updating y_lims")
