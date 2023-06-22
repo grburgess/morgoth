@@ -301,9 +301,9 @@ class MultinestFitTrigdat(object):
                     )
                     ca = spectrum_plot.get_axes()[0]
                     y_lims = ca.get_ylim()
-                    if y_lims[0] < 10e-5:
+                    if y_lims[0] < 10e-6:
                         print("Updating y-lims")
-                        y_lims_new = [10e-5, y_lims[1]]
+                        y_lims_new = [10e-6, y_lims[1]]
                         ca.set_ylim(y_lims_new)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
@@ -320,8 +320,8 @@ class MultinestFitTrigdat(object):
                 )
                 ca = spectrum_plot.get_axes()[0]
                 y_lims = ca.get_ylim()
-                if y_lims[0] < 10e-5:
-                    y_lims_new = [10e-5, y_lims[1]]
+                if y_lims[0] < 10e-6:
+                    y_lims_new = [10e-6, y_lims[1]]
                     ca.set_ylim(y_lims_new)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
@@ -643,8 +643,8 @@ class MultinestFitTTE(object):
                     )
                     ca = spectrum_plot.get_axes()[0]
                     y_lims = ca.get_ylim()
-                    if y_lims[0] < 10e-5:
-                        y_lims_new = [10e-5, y_lims[1]]
+                    if y_lims[0] < 10e-6:
+                        y_lims_new = [10e-6, y_lims[1]]
                         ca.set_ylim(y_lims_new)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
@@ -660,9 +660,9 @@ class MultinestFitTTE(object):
                 )
                 ca = spectrum_plot.get_axes()[0]
                 y_lims = ca.get_ylim()
-                if y_lims[0] < 10e-5:
+                if y_lims[0] < 10e-6:
                     print("Updating y_lims")
-                    y_lims_new = [10e-5, y_lims[1]]
+                    y_lims_new = [10e-6, y_lims[1]]
                     ca.set_ylim(y_lims_new)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
