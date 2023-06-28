@@ -16,10 +16,10 @@ def handler(payload, root):
     """
     The pygcn handler
 
-    :param payload: 
-    :param root: 
-    :returns: 
-    :rtype: 
+    :param payload:
+    :param root:
+    :returns:
+    :rtype:
 
     """
 
@@ -34,16 +34,16 @@ def handler(payload, root):
 
     # launch luigi
     os.system(" ".join(cmd))
-    #subprocess.Popen(cmd)
+    # subprocess.Popen(cmd)
 
 
 def form_morgoth_cmd_string(grb):
     """
     makes the command string for luigi
 
-    :param grb: 
-    :returns: 
-    :rtype: 
+    :param grb:
+    :returns:
+    :rtype:
 
     """
 
@@ -51,7 +51,7 @@ def form_morgoth_cmd_string(grb):
 
     cmd = f"{base_cmd} CreateAllPages --grb-name {grb} "
 
-    cmd += f"--workers {n_workers} --scheduler-host localhost --log-level INFO"
+    cmd += f"--workers {n_workers} --scheduler-host localhost --log-level INFO &"
 
     cmd = shlex.split(cmd)
 
