@@ -588,7 +588,9 @@ class TimeSelectionBB(TimeSelection):
                         cps_temp[i] = 0
 
         # get the bin with the highest cps
-        id_max_cps_bb = np.argmax(cps_temp)
+        id_max_cps_bb = np.argmax(
+            np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
+        )
         # start length
         length_in = float(self._bayesian_block_widths_dict[det][id_max_cps_bb])
         id_l = int(id_max_cps_bb)  # index of the satrting bin
