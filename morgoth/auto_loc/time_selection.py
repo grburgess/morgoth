@@ -219,7 +219,13 @@ class TimeSelectionBB(TimeSelection):
     """Automatically sets active trigger time as well as neg and pos (before and after trigger) background"""
 
     def __init__(
-        self, grb_name, trigdat_file, fine=False, gamma=0.776, mean_factor=1.1
+        self,
+        grb_name,
+        trigdat_file,
+        fine=False,
+        gamma=0.776,
+        mean_factor=1.1,
+        significance_dets=4,
     ):
         """Starts Timeselection
 
@@ -263,6 +269,7 @@ class TimeSelectionBB(TimeSelection):
         # Mean Value Factor for elminiating too long selections - defaults to 1.0
         self._mean_factor = mean_factor
 
+        self._significance_dets = significance_dets
         # initialize dicts
         self._bayesian_block_edges_dict = {}
         self._bayesian_block_times_dict = {}
@@ -276,9 +283,7 @@ class TimeSelectionBB(TimeSelection):
         self.pos_bkg_dict = {}  # start/stop of bkg after trigger for each det
         self.neg_bkg_dict = {}  # start/stop of bkg before trigger for each det
         self._bkg_list_dict = {}  # lists containing pos and neg bkg for each det
-        self._significance_dict = (
-            {}
-        )
+        self._significance_dict = {}
 
         # used for selecting detectors for finalizing times
 
@@ -408,12 +413,13 @@ class TimeSelectionBB(TimeSelection):
             # calculate the significance during the trigger time
             self._getSignificance(det)
 
-    def fixSelections(self, significance_dets_nr=3):
+    def fixSelections(self):
         """Improves the timeselection by combining multiple detectors with the highest significance in the data
 
         Args:
             significance_dets_nr (int, optional): Number of detectors which will be used for combined timeselection. Defaults to 3.
         """
+        significance_dets_nr = self._significance_dets
         significance_max = {}
 
         for det, sign in self._significance_dict.items():
@@ -524,7 +530,9 @@ class TimeSelectionBB(TimeSelection):
         self._cps_dets = {}
         self._timebin_widths = {}
         for det_nr, det in enumerate(self.dets):
-            assert len(obs_dets[det_nr]) == len(self._times), "Length of times and values does not match!"
+            assert len(obs_dets[det_nr]) == len(
+                self._times
+            ), "Length of times and values does not match!"
             self._cps_dets[det] = obs_dets[det_nr]
             self._timebin_widths[det] = width[det_nr]
 
@@ -586,7 +594,7 @@ class TimeSelectionBB(TimeSelection):
         id_l = int(id_max_cps_bb)  # index of the satrting bin
         id_h = int(id_max_cps_bb)  # index of the stopping bin
 
-        #TODO
+        print(f"Lets mess things up for {det}")
         # iteratively get new length
         while True:
             length_out, id_l, id_h = self._getNewLength(length_in, id_l, id_h, det)
@@ -641,17 +649,17 @@ class TimeSelectionBB(TimeSelection):
         mask[min_id_start:min_id] = 1
         mask[max_id + 1 : max_id_stop] = 1
 
-        if np.sum(mask)!= 0:
+        if np.sum(mask) != 0:
             # caclulate the weighted average of the selected area
             try:
                 mean_cps_trigger_area = np.average(
-                    self._cps_dets[det] * mask, weights=self._timebin_widths[det[:2]] * mask
+                    self._cps_dets[det] * mask,
+                    weights=self._timebin_widths[det[:2]] * mask,
                 )
             except ZeroDivisionError:
-                mean_cps_trigger_area = np.mean(self._cps_dets[det]*mask)
+                mean_cps_trigger_area = np.mean(self._cps_dets[det] * mask)
         else:
-            mean_cps_trigger_area =  np.mean(
-                    self._cps_dets[det])
+            mean_cps_trigger_area = np.mean(self._cps_dets[det])
 
         cps_cond = mean_cps_trigger_area * self._mean_factor
 
@@ -659,8 +667,14 @@ class TimeSelectionBB(TimeSelection):
         length_l = length_in + self._bayesian_block_widths_dict[det][id_l - 1]
         cps_h = self._bayesian_block_cps_dict[det][id_h + 1]
         cps_l = self._bayesian_block_cps_dict[det][id_l - 1]
-        counts_l = self._bayesian_block_cps_dict[det][id_l-1] * self.bayesian_block_widths_dict[det][id_l-1]
-        counts_h = self._bayesian_block_cps_dict[det][id_h+1] * self._bayesian_block_widths_dict[det][id_h+1]
+        counts_l = (
+            self._bayesian_block_cps_dict[det][id_l - 1]
+            * self.bayesian_block_widths_dict[det][id_l - 1]
+        )
+        counts_h = (
+            self._bayesian_block_cps_dict[det][id_h + 1]
+            * self._bayesian_block_widths_dict[det][id_h + 1]
+        )
 
         length_r = length_in
         id_l_r = id_l
@@ -690,15 +704,43 @@ class TimeSelectionBB(TimeSelection):
                     cps_cond,
                 )
         elif cps_l >= cps_cond and cps_h < cps_cond:
-            if length_l <= self._max_trigger_length and self._bayesian_block_times_dict[det][id_l-1] >= self._lower_trigger_bound:
-                length_r = length_l
-                id_l_r = id_l - 1
-                id_h_r = id_h
+            if (
+                self._bayesian_block_times_dict[det][id_l - 1]
+                >= self._lower_trigger_bound
+            ):
+                if length_l <= self._max_trigger_length:
+                    length_r = length_l
+                    id_l_r = id_l - 1
+                    id_h_r = id_h
+                elif (
+                    length_l - self._bayesian_block_widths_dict[det][id_h]
+                    <= self._max_trigger_length
+                    and counts_l
+                    > self._bayesian_block_widths_dict[det][id_h]
+                    * self._bayesian_block_cps_dict[det][id_h]
+                ):
+                    length_r = length_l - self._bayesian_block_widths_dict[det][id_h]
+                    id_l_r = id_l - 1
+                    id_h_r = id_h - 1
         elif cps_h >= cps_cond and cps_l < cps_cond:
-            if length_h <= self._max_trigger_length and self._bayesian_block_times_dict[det][id_h+1] <= self._upper_trigger_bound:
-                length_r = length_h
-                id_l_r = id_l
-                id_h_r = id_h + 1
+            if (
+                self._bayesian_block_times_dict[det][id_h + 1]
+                <= self._upper_trigger_bound
+            ):
+                if length_h <= self._max_trigger_length:
+                    length_r = length_h
+                    id_l_r = id_l
+                    id_h_r = id_h + 1
+                elif (
+                    length_h - self._bayesian_block_widths_dict[det][id_l]
+                    <= self._max_trigger_length
+                    and counts_h
+                    > self._bayesian_block_widths_dict[det][id_l]
+                    * self._bayesian_block_cps_dict[det][id_l]
+                ):
+                    length_r = length_h - self._bayesian_block_widths_dict[det][id_l]
+                    id_l_r = id_l + 1
+                    id_h_r = id_h + 1
         else:
             # both directions possible form cps condition
             length_r, id_l_r, id_h_r = self._check_counts(
@@ -709,18 +751,21 @@ class TimeSelectionBB(TimeSelection):
     def _check_counts(
         self, length_h, length_l, counts_l, counts_h, length_in, id_l, id_h, det
     ):
+        # default return stopping the selection
         length_r = length_in
         id_l_r = id_l
         id_h_r = id_h
+
+        # if both next blocks are fully in the limit
         if (
-            length_h <= self._max_trigger_length
-            and length_l <= self._max_trigger_length
+            self._bayesian_block_times_dict[det][id_l - 1] >= self._lower_trigger_bound
+            and self._bayesian_block_times_dict[det][id_h + 1]
+            <= self._upper_trigger_bound
         ):
+            # if both dont exceed the max length
             if (
-                self._bayesian_block_times_dict[det][id_l - 1]
-                >= self._lower_trigger_bound
-                and self._bayesian_block_times_dict[det][id_h + 1]
-                <= self._upper_trigger_bound
+                length_l <= self._max_trigger_length
+                and length_h <= self._max_trigger_length
             ):
                 if counts_l >= counts_h:
                     length_r = length_l
@@ -730,47 +775,89 @@ class TimeSelectionBB(TimeSelection):
                     length_r = length_h
                     id_l_r = id_l
                     id_h_r = id_h + 1
-
+            # if the higher one exceeds the max length check if shift to higher would improve
             elif (
-                self._bayesian_block_times_dict[det][id_l - 1]
-                >= self._lower_trigger_bound
-                and self._bayesian_block_times_dict[det][id_h + 1]
-                > self._upper_trigger_bound
+                length_l <= self._max_trigger_length
+                and length_h > self._max_trigger_length
             ):
+                if (
+                    length_h - self._bayesian_block_widths_dict[det][id_l]
+                    <= self._max_trigger_length
+                ):
+                    if (
+                        counts_l
+                        >= self._bayesian_block_cps_dict[det][id_h]
+                        * self._bayesian_block_widths_dict[det][id_h]
+                    ):
+                        length_r = length_l
+                        id_l_r = id_l - 1
+                        id_h_r = id_h
+                    else:
+                        length_r = (
+                            length_h - self._bayesian_block_widths_dict[det][id_l]
+                        )
+                        id_l_r = id_l + 1
+                        id_h_r = id_h + 1
+                else:
+                    length_r = length_l
+                    id_l_r = id_l - 1
+                    id_h_r = id_h
+            # if the lower one exceeds the max length check if shift to lower would improve
+            elif (
+                length_l > self._max_trigger_length
+                and length_h <= self._max_trigger_length
+            ):
+                if (
+                    length_l - self._bayesian_block_widths_dict[det][id_h]
+                    <= self._max_trigger_length
+                ):
+                    if (
+                        counts_h
+                        > self._bayesian_block_cps_dict[det][id_l]
+                        * self._bayesian_block_widths_dict[det][id_l]
+                    ):
+                        length_r = length_h
+                        id_l_r = id_l
+                        id_h_r = id_h + 1
+                    else:
+                        length_r = (
+                            length_l - self._bayesian_block_widths_dict[det][id_h]
+                        )
+                        id_l_r = id_l - 1
+                        id_h_r = id_h - 1
+                else:
+                    length_r = length_h
+                    id_l_r = id_l_r
+                    id_h_r = id_h + 1
+            else:
+                length_r = length_in
+                id_l_r = id_l
+                id_h_r = id_h
+        # just lower block within allowed time
+        elif (
+            self._bayesian_block_times_dict[det][id_l - 1] >= self._lower_trigger_bound
+            and self._bayesian_block_times_dict[det][id_h + 1]
+            > self._upper_trigger_bound
+        ):
+            if length_l <= self._max_trigger_length:
                 length_r = length_l
                 id_l_r = id_l - 1
                 id_h_r = id_h
-            elif (
-                self._bayesian_block_times_dict[det][id_h + 1]
-                <= self._upper_trigger_bound
-                and self._bayesian_block_times_dict[det][id_l - 1]
-                < self._lower_trigger_bound
-            ):
-                length_r = length_h
-                id_l_r = id_l
-                id_h_r = id_h + 1
-
+        # just higher block within allowed time
         elif (
-            length_h > self._max_trigger_length
-            and length_l <= self._max_trigger_length
-            and self._bayesian_block_times_dict[det][id_l - 1]
-            >= self._lower_trigger_bound
-        ):
-            length_r = length_l
-            id_l_r = id_l - 1
-            id_h_r = id_h
-
-        elif (
-            length_h <= self._max_trigger_length
-            and length_l > self._max_trigger_length
+            self._bayesian_block_times_dict[det][id_l - 1] < self._lower_trigger_bound
             and self._bayesian_block_times_dict[det][id_h + 1]
             <= self._upper_trigger_bound
         ):
-            length_r = length_h
-            id_l_r = id_l
-            id_h_r = id_h + 1
+            if length_h <= self._max_trigger_length:
+                length_r = length_h
+                id_l_r = id_l
+                id_h_r = id_h + 1
+        # both blocks outside limit
         else:
-            pass
+            length_r = length_in
+            id_l_r = id_l
+            id_h_r = id_h
 
         return length_r, id_l_r, id_h_r
 
@@ -786,6 +873,7 @@ class TimeSelectionBB(TimeSelection):
         det,
         cps_cond,
     ):
+        # default returns stopping the selection
         length_r = length_in
         id_l_r = id_l
         id_h_r = id_h
@@ -794,65 +882,77 @@ class TimeSelectionBB(TimeSelection):
             self._bayesian_block_cps_dict[det][id_l - 2] >= cps_cond
             and self._bayesian_block_cps_dict[det][id_h + 2] >= cps_cond
         ):
-            if counts_l >= counts_h and length_l <= self._max_trigger_length:
+            if (
+                self._bayesian_block_times_dict[det][id_h + 2]
+                <= self._upper_trigger_bound
+                and self._bayesian_block_times_dict[det][id_l - 2]
+                >= self._lower_trigger_bound
+            ):
                 if (
-                    self._bayesian_block_times_dict[det][id_l - 1]
-                    >= self._lower_trigger_bound
+                    length_l + self._bayesian_block_widths_dict[det][id_l - 1]
+                    <= self._max_trigger_length
+                    and length_h + self._bayesian_block_widths_dict[det][id_h + 1]
+                    <= self._max_trigger_length
                 ):
-                    length_r = length_l
-                    id_l_r = id_l - 1
-                    id_h_r = id_h
-                elif (
-                    self._bayesian_block_times_dict[det][id_h + 1]
-                    <= self._upper_trigger_bound
-                    and length_h <= self._max_trigger_length
+                    if counts_l >= counts_h:
+                        length_r = length_l
+                        id_l_r = id_l - 1
+                        id_h_r = id_h
+                    else:
+                        length_r = length_h
+                        id_l_r = id_l
+                        id_h_r = id_h + 1
+            elif (
+                self._bayesian_block_times_dict[det][id_h + 2]
+                <= self._upper_trigger_bound
+                and self._bayesian_block_times_dict[det][id_l - 2]
+                < self._lower_trigger_bound
+            ):
+                if (
+                    length_h + self._bayesian_block_widths_dict[det][id_h + 1]
+                    <= self._max_trigger_length
                 ):
                     length_r = length_h
                     id_l_r = id_l
                     id_h_r = id_h + 1
-                else:
-                    pass
-            elif counts_h > counts_l and length_h <= self._max_trigger_length:
-                if (
-                    self._bayesian_block_times_dict[det][id_h + 1]
-                    <= self._upper_trigger_bound
-                ):
-                    length_r = length_h
-                    id_l_r = id_l
-                    id_h_r = id_h + 1
-                elif (
-                    self._bayesian_block_times_dict[det][id_l - 1]
-                    >= self._lower_trigger_bound
-                    and length_l <= self._max_trigger_length
-                ):
-                    length_r = length_l
-                    id_l_r = id_l - 1
-                    id_h_r = id_h
-            else:
-                length_r = length_in
-                id_l_r = id_l
-                id_h_r = id_h
 
+            elif (
+                self._bayesian_block_times_dict[det][id_h + 2]
+                > self._upper_trigger_bound
+                and self._bayesian_block_times_dict[det][id_l - 2]
+                >= self._lower_trigger_bound
+            ):
+                if (
+                    length_l + self._bayesian_block_widths_dict[det][id_l - 1]
+                    <= self._max_trigger_length
+                ):
+                    length_r = length_l
+                    id_l_r = id_l - 1
+                    id_h_r = id_h
         elif (
             self._bayesian_block_cps_dict[det][id_l - 2] < cps_cond
             and self._bayesian_block_cps_dict[det][id_h + 2] >= cps_cond
-            and self._bayesian_block_times_dict[det][id_h + 1]
+            and self._bayesian_block_times_dict[det][id_h + 2]
             <= self._upper_trigger_bound
+            and length_l + self._bayesian_block_widths_dict[det][id_h + 1]
+            <= self._max_trigger_length
         ):
-            length_r = length_h
-            id_l_r = id_l
-            id_h_r = id_h + 1
+            if length_h <= self._max_trigger_length:
+                length_r = length_h
+                id_l_r = id_l
+                id_h_r = id_h + 1
         elif (
             self._bayesian_block_widths_dict[det][id_l - 2] >= cps_cond
             and self._bayesian_block_times_dict[det][id_h + 2] < cps_cond
-            and self._bayesian_block_times_dict[det][id_l - 1]
+            and self._bayesian_block_times_dict[det][id_l - 2]
             >= self._lower_trigger_bound
+            and length_l + self._bayesian_block_widths_dict[det][id_l - 1]
+            <= self._max_trigger_length
         ):
-            length_r = length_l
-            id_l_r = id_l - 1
-            id_h_r = id_h
-        else:
-            pass
+            if length_l <= self._max_trigger_length:
+                length_r = length_l
+                id_l_r = id_l - 1
+                id_h_r = id_h
         return length_r, id_l_r, id_h_r
 
     def startStopToObsTimes(self, start_trigger, end_trigger):
