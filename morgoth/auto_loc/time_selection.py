@@ -437,10 +437,11 @@ class TimeSelectionBB(TimeSelection):
         # empty list and string for combination of detectors
         obs_combined = []
         det = ""
+        self._detector_selection_list = []
         for i in range(significance_dets_nr):
             det += list(significance_max.keys())[i]
+            self._detector_selection_list.append(list(significance_max.keys())[i])
             obs_combined.append(self._cps_dets[list(significance_max.keys())[i]])
-
         self._detector_selection = det
         print(
             f"The detecors {det} had the highest significance and are used to fix the selections"
@@ -594,10 +595,16 @@ class TimeSelectionBB(TimeSelection):
         self.trigreader_object.set_active_time_interval("0-5", det_sel=det)
 
         obs, bkg = self.trigreader_object.observed_and_background()
+        try:
+            bkg_temp = bkg[self.dets.index(det)]
+        except ValueError:
+            bkg_temp = np.zeros_like(bkg[0])
+            for det_sel in self._detector_selection_list:
+                bkg_temp += np.array(bkg[self.dets.index(det_sel)])
         cps_temp = cps_temp - np.array(
             bb_binner(
                 self._times,
-                bkg[self.dets.index(det)],
+                bkg_temp,
                 self._bayesian_block_edges_dict[det],
             )[1]
         )
