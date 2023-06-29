@@ -225,7 +225,7 @@ class TimeSelectionBB(TimeSelection):
         fine=False,
         gamma=0.776,
         mean_factor=1.1,
-        significance_dets=4,
+        significance_dets=3,
     ):
         """Starts Timeselection
 
