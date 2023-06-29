@@ -587,10 +587,23 @@ class TimeSelectionBB(TimeSelection):
                     ):
                         cps_temp[i] = 0
 
+        # will be set again afterwards, now just to get rough estimate on bkg
+        self.trigreader_object.set_background_selections(
+            "-200--80", "120-600", det_sel=det
+        )
+        self.trigreader_object.set_active_time_interval("0-5", det_sel=det)
+
+        obs, bkg = self.trigreader_object.observed_and_background()
+        cps_temp = cps_temp - np.array(bkg[self.dets.index(det)])
+        cps_temp[cps_temp < 0] = 0
         # get the bin with the highest cps
+        # if np.max(cps_temp) > 0:
         id_max_cps_bb = np.argmax(
             np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
         )
+        # else:
+        # id_max_cps_bb = np.argmax(cps_temp)
+
         # start length
         length_in = float(self._bayesian_block_widths_dict[det][id_max_cps_bb])
         id_l = int(id_max_cps_bb)  # index of the satrting bin
