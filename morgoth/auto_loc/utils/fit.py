@@ -303,8 +303,9 @@ class MultinestFitTrigdat(object):
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-6:
                         print("Updating y-lims")
-                        y_lims_new = [10e-6, y_lims[1]]
-                        ca.set_ylim(y_lims_new)
+                        # y_lims_new = [10e-6, y_lims[1]]
+                        ca.set_ylim(bottom=10e-6)
+                    spectrum_plot.tight_layout()
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except Exception as e:
@@ -321,8 +322,9 @@ class MultinestFitTrigdat(object):
                 ca = spectrum_plot.get_axes()[0]
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-6:
-                    y_lims_new = [10e-6, y_lims[1]]
-                    ca.set_ylim(y_lims_new)
+                    # y_lims_new = [10e-6, y_lims[1]]
+                    ca.set_ylim(bottom=10e-6)
+                spectrum_plot.tight_layout()
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
@@ -644,8 +646,9 @@ class MultinestFitTTE(object):
                     ca = spectrum_plot.get_axes()[0]
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-6:
-                        y_lims_new = [10e-6, y_lims[1]]
-                        ca.set_ylim(y_lims_new)
+                        # y_lims_new = [10e-6, y_lims[1]]
+                        ca.set_ylim(bottom=10e-6)
+                    spectrum_plot.tight_layout()
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except:
@@ -662,8 +665,9 @@ class MultinestFitTTE(object):
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-6:
                     print("Updating y_lims")
-                    y_lims_new = [10e-6, y_lims[1]]
-                    ca.set_ylim(y_lims_new)
+                    # y_lims_new = [10e-6, y_lims[1]]
+                    ca.set_ylim(bottom=10e-6)
+                spectrum_plot.tight_layout()
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
             except:
