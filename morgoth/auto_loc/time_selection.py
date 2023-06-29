@@ -594,7 +594,13 @@ class TimeSelectionBB(TimeSelection):
         self.trigreader_object.set_active_time_interval("0-5", det_sel=det)
 
         obs, bkg = self.trigreader_object.observed_and_background()
-        cps_temp = cps_temp - np.array(bkg[self.dets.index(det)])
+        cps_temp = cps_temp - np.array(
+            bb_binner(
+                cps[self.dets.index(det)],
+                bkg[self.dets.index(det)],
+                self._bayesian_block_edges_dict[det],
+            )[1]
+        )
         cps_temp[cps_temp < 0] = 0
         # get the bin with the highest cps
         # if np.max(cps_temp) > 0:
