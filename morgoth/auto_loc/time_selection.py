@@ -596,7 +596,7 @@ class TimeSelectionBB(TimeSelection):
         obs, bkg = self.trigreader_object.observed_and_background()
         cps_temp = cps_temp - np.array(
             bb_binner(
-                cps[self.dets.index(det)],
+                obs[self.dets.index(det)],
                 bkg[self.dets.index(det)],
                 self._bayesian_block_edges_dict[det],
             )[1]
