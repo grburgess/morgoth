@@ -380,9 +380,9 @@ class TimeSelectionBB(TimeSelection):
 
     def timeselection(
         self,
-        lower_trigger_bound=-10,
-        upper_trigger_bound=50,
-        max_trigger_length=10.25,
+        lower_trigger_bound=-20,
+        upper_trigger_bound=60,
+        max_trigger_length=10.5,
     ):
         """runs timeselection for each detector in self.dets individually
 
