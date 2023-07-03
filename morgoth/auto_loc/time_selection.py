@@ -956,6 +956,22 @@ class TimeSelectionBB(TimeSelection):
                 id_h_r = id_h
         return length_r, id_l_r, id_h_r
 
+    def viewBayesianBlockPlots(self, path):
+        base = self._trigreader_obj.view_lightcurve(return_plots=True)
+        for b in base:
+            det = b[0]
+            fig = b[1]
+            ax = fig.get_axes()[0]
+            ylim = ax.get_ylim()
+            ax.vlines(
+                self._bayesian_block_edges_dict[det],
+                0,
+                self._bayesian_block_cps_dict[det],
+            )
+            ax.set_ylim(ylim)
+            fig.tight_layout()
+            fig.savefig(path, f"bb_lightcurve_{det}.png")
+
     def startStopToObsTimes(self, start_trigger, end_trigger):
         """Converts start and end trigger times to id of times list
 
