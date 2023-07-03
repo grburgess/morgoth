@@ -964,7 +964,7 @@ class TimeSelectionBB(TimeSelection):
             ax = fig.get_axes()[0]
             ylim = ax.get_ylim()
             ax.vlines(
-                self._bayesian_block_edges_dict[det],
+                self._bayesian_block_edges_dict[det][:-1],
                 0,
                 self._bayesian_block_cps_dict[det],
                 color="magenta",
