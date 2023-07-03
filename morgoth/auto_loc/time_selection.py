@@ -967,6 +967,7 @@ class TimeSelectionBB(TimeSelection):
                 self._bayesian_block_edges_dict[det],
                 0,
                 self._bayesian_block_cps_dict[det],
+                color="magenta",
             )
             ax.set_ylim(ylim)
             fig.tight_layout()
