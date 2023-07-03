@@ -19,12 +19,19 @@ class TimeSelectionHandler(luigi.Task):
         if self.report_type == "trigdat":
             return DownloadTrigdat(grb_name=self.grb_name, version=self.version)
         elif self.report_type == "tte":
-            with open(GatherTrigdatDownload.output(), "r") as f:
-                trigdat_complete = yaml.safe_load(f)
-                trigdat_version = trigdat_complete[trigdat_version]
-            return TimeSelectionHandler(
-                grb_name=self.grb_name, version=trigdat_version, report_type="trigdat"
-            )
+            try:
+                with open(
+                    os.path.join(base_dir, "gather_trigdat_complete.yml"), "r"
+                ) as f:
+                    trigdat_complete = yaml.safe_load(f)
+                    trigdat_version = trigdat_complete[trigdat_version]
+                return TimeSelectionHandler(
+                    grb_name=self.grb_name,
+                    version=trigdat_version,
+                    report_type="trigdat",
+                )
+            except FileNotFoundError:
+                return GatherTrigdatDownload(grb_name=self.grb_name)
 
     def output(self):
         filename = f"time_selection_{self.version}.yml"
