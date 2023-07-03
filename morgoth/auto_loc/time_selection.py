@@ -971,7 +971,15 @@ class TimeSelectionBB(TimeSelection):
             )
             ax.set_ylim(ylim)
             fig.tight_layout()
-            fig.savefig(os.path.join(path, f"bb_lightcurve_{det}.png"))
+            try:
+                fig.savefig(
+                    os.path.join(path, "bb_lightcurves/", f"bb_lightcurve_{det}.png")
+                )
+            except FileNotFoundError:
+                os.makedirs(os.path.join(path, "bb_lightcurves/"))
+                fig.savefig(
+                    os.path.join(path, "bb_lightcurves/", f"bb_lightcurve_{det}.png")
+                )
 
     def startStopToObsTimes(self, start_trigger, end_trigger):
         """Converts start and end trigger times to id of times list
