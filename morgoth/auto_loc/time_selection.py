@@ -579,7 +579,8 @@ class TimeSelectionBB(TimeSelection):
             cps_temp = self._get_cps_temp(det, max_block_width, upper_bound=ub)
             id_max_cps_bb = np.argmax(cps_temp)
         if (
-            self._bayesian_block_times_dict[det][id_max_cps] - self._max_trigger_length
+            self._bayesian_block_times_dict[det][id_max_cps_bb]
+            - self._max_trigger_length
             < self._lower_trigger_bound
         ):
             lb = (
@@ -588,12 +589,13 @@ class TimeSelectionBB(TimeSelection):
             )
             cps_temp = self._get_cps_temp(det, max_block_width, lower_bound=lb)
             id_max_cps_bb = np.argmax(cps_temp)
+
         # start length
         length_in = float(self._bayesian_block_widths_dict[det][id_max_cps_bb])
         id_l = int(id_max_cps_bb)  # index of the satrting bin
         id_h = int(id_max_cps_bb)  # index of the stopping bin
 
-        print(f"Lets mess things up for {det}")
+        # print(f"Lets mess things up for {det}")
         # iteratively get new length
         while True:
             length_out, id_l, id_h = self._getNewLength(length_in, id_l, id_h, det)
