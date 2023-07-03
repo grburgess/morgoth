@@ -380,8 +380,8 @@ class TimeSelectionBB(TimeSelection):
 
     def timeselection(
         self,
-        lower_trigger_bound=-20,
-        upper_trigger_bound=60,
+        lower_trigger_bound=-10,
+        upper_trigger_bound=50,
         max_trigger_length=10.5,
     ):
         """runs timeselection for each detector in self.dets individually
@@ -554,7 +554,7 @@ class TimeSelectionBB(TimeSelection):
             self._times, self._cps_dets[det], self._bayesian_block_edges_dict[det]
         )
 
-    def _calcStartStopTrigger(self, det, max_block_width=10):
+    def _calcStartStopTrigger(self, det, max_block_width=10.24):
         """Calculates the start and stop time of the trigger
 
         Args:
@@ -565,34 +565,29 @@ class TimeSelectionBB(TimeSelection):
         start_trigger = 0
         end_trigger = 0
 
-        # copy cps to temp array for manipulation
-        cps_temp = np.copy(self._bayesian_block_cps_dict[det])
-        # setting first and last block to 0 (they are very small timely) as well as every block with a duration > 10s or if it's end is outside the set bounds
-
-        cps_temp[-1] = 0
-        cps_temp[0] = 0
-
-        for i, val in enumerate(self._bayesian_block_widths_dict[det]):
-            # check if count rate is already 0
-            if cps_temp[i] != 0:
-                # check if the width is greater than the max allowed
-                if val > max_block_width:
-                    cps_temp[i] = 0
-                else:
-                    # check if the block is inside the allowed time range
-                    if (
-                        self._bayesian_block_times_dict[det][i]
-                        < self._lower_trigger_bound
-                        or self._bayesian_block_times_dict[det][i]
-                        > self._upper_trigger_bound
-                    ):
-                        cps_temp[i] = 0
-
-        # id_max_counts_bb = np.argmax(
-        #    np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
-        # )
+        cps_temp = self._get_cps_temp(det, max_block_width)
         id_max_cps_bb = np.argmax(cps_temp)
-
+        if (
+            self._bayesian_block_times_dict[det][id_max_cps_bb]
+            + self._max_trigger_length
+            > self._upper_trigger_bound
+        ):
+            ub = (
+                self._bayesian_block_times_dict[det][id_max_cps_bb]
+                + self._max_trigger_length
+            )
+            cps_temp = self._get_cps_temp(det, max_block_width, upper_bound=ub)
+            id_max_cps_bb = np.argmax(cps_temp)
+        if (
+            self._bayesian_block_times_dict[det][id_max_cps] - self._max_trigger_length
+            < self._lower_trigger_bound
+        ):
+            lb = (
+                self._bayesian_block_times_dict[det][id_max_cps_bb]
+                - self._max_trigger_length
+            )
+            cps_temp = self._get_cps_temp(det, max_block_width, lower_bound=lb)
+            id_max_cps_bb = np.argmax(cps_temp)
         # start length
         length_in = float(self._bayesian_block_widths_dict[det][id_max_cps_bb])
         id_l = int(id_max_cps_bb)  # index of the satrting bin
@@ -990,6 +985,38 @@ class TimeSelectionBB(TimeSelection):
         self._significance_dict[det] = self._trigreader_obj.time_series[
             det
         ].significance_per_interval
+
+    def _get_cps_temp(self, det, max_block_width, lower_bound=None, upper_bound=None):
+        # copy cps to temp array for manipulation
+        cps_temp = np.copy(self._bayesian_block_cps_dict[det])
+        # setting first and last block to 0 (they are very small timely) as well as every block with a duration > 10s or if it's end is outside the set bounds
+
+        cps_temp[-1] = 0
+        cps_temp[0] = 0
+
+        if lower_bound is None:
+            lower_bound = self._lower_trigger_bound
+        if upper_bound is None:
+            upper_bound = self._upper_trigger_bound
+
+        for i, val in enumerate(self._bayesian_block_widths_dict[det]):
+            # check if count rate is already 0
+            if cps_temp[i] != 0:
+                # check if the width is greater than the max allowed
+                if val > max_block_width:
+                    cps_temp[i] = 0
+                else:
+                    # check if the block is inside the allowed time range
+                    if (
+                        self._bayesian_block_times_dict[det][i] < lower_bound
+                        or self._bayesian_block_times_dict[det][i] > upper_bound
+                    ):
+                        cps_temp[i] = 0
+
+        # id_max_counts_bb = np.argmax(
+        #    np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
+        # )
+        return cps_temp
 
 
 class BackgroundSelector:
