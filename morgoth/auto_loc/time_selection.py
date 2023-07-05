@@ -597,13 +597,17 @@ class TimeSelectionBB(TimeSelection):
 
         # print(f"Lets mess things up for {det}")
         # iteratively get new length
+        counter = 0
         while True:
+            # print(counter)
+            counter += 1
             length_out, id_l, id_h = self._getNewLength(length_in, id_l, id_h, det)
+            print(length_out)
             if length_in == length_out:
                 break
             else:
                 length_in = length_out
-
+        print(f"Total of {counter} iterations done")
         start_trigger = self._bayesian_block_times_dict[det][id_l]
         end_trigger = self._bayesian_block_times_dict[det][id_h + 1]
 
@@ -683,7 +687,9 @@ class TimeSelectionBB(TimeSelection):
 
         # check if the next blocks fullfill the cps condition again
 
+        # if both directions do not fulfill the cps cond
         if cps_l < cps_cond and cps_h < cps_cond:
+            # check if the upcoming ones do - if not end
             if (
                 self._bayesian_block_cps_dict[det][id_l - 2] < cps_cond
                 and self._bayesian_block_cps_dict[det][id_h + 2] < cps_cond
@@ -691,7 +697,7 @@ class TimeSelectionBB(TimeSelection):
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
-
+            # if at least one of the upcoming block fullfills cps cond
             else:
                 length_r, id_l_r, id_h_r = self._check_cps_cond(
                     length_h,
@@ -704,6 +710,7 @@ class TimeSelectionBB(TimeSelection):
                     det,
                     cps_cond,
                 )
+        # lower block fullfills - check length and position
         elif cps_l >= cps_cond and cps_h < cps_cond:
             if (
                 self._bayesian_block_times_dict[det][id_l - 1]
@@ -713,8 +720,10 @@ class TimeSelectionBB(TimeSelection):
                     length_r = length_l
                     id_l_r = id_l - 1
                     id_h_r = id_h
+
                 elif (
-                    length_l - self._bayesian_block_widths_dict[det][id_h]
+                    length_l > self._max_trigger_length
+                    and length_l - self._bayesian_block_widths_dict[det][id_h]
                     <= self._max_trigger_length
                     and counts_l
                     > self._bayesian_block_widths_dict[det][id_h]
@@ -733,7 +742,8 @@ class TimeSelectionBB(TimeSelection):
                     id_l_r = id_l
                     id_h_r = id_h + 1
                 elif (
-                    length_h - self._bayesian_block_widths_dict[det][id_l]
+                    length_h > self._max_trigger_length
+                    and length_h - self._bayesian_block_widths_dict[det][id_l]
                     <= self._max_trigger_length
                     and counts_h
                     > self._bayesian_block_widths_dict[det][id_l]
@@ -769,10 +779,12 @@ class TimeSelectionBB(TimeSelection):
                 and length_h <= self._max_trigger_length
             ):
                 if counts_l >= counts_h:
+                    print(1)
                     length_r = length_l
                     id_l_r = id_l - 1
                     id_h_r = id_h
                 else:
+                    print(2)
                     length_r = length_h
                     id_l_r = id_l
                     id_h_r = id_h + 1
@@ -790,16 +802,30 @@ class TimeSelectionBB(TimeSelection):
                         >= self._bayesian_block_cps_dict[det][id_h]
                         * self._bayesian_block_widths_dict[det][id_h]
                     ):
+                        print(3)
                         length_r = length_l
                         id_l_r = id_l - 1
                         id_h_r = id_h
-                    else:
+                    elif np.average(
+                        self._bayesian_block_cps_dict[det][id_l + 1 : id_h + 2],
+                        weights=self._bayesian_block_widths_dict[det][
+                            id_l + 1 : id_h + 2
+                        ],
+                    ) > np.average(
+                        self._bayesian_block_cps_dict[det][id_l : id_h + 1],
+                        weights=self._bayesian_block_widths_dict[det][id_l : id_h + 1],
+                    ):
+                        print(
+                            f"Counts_l {counts_l} - counts hig {self._bayesian_block_widths_dict[det][id_h]*self._bayesian_block_cps_dict[det][id_h]}"
+                        )
+
                         length_r = (
                             length_h - self._bayesian_block_widths_dict[det][id_l]
                         )
                         id_l_r = id_l + 1
                         id_h_r = id_h + 1
                 else:
+                    print(5)
                     length_r = length_l
                     id_l_r = id_l - 1
                     id_h_r = id_h
@@ -814,23 +840,35 @@ class TimeSelectionBB(TimeSelection):
                 ):
                     if (
                         counts_h
-                        > self._bayesian_block_cps_dict[det][id_l]
+                        >= self._bayesian_block_cps_dict[det][id_l]
                         * self._bayesian_block_widths_dict[det][id_l]
                     ):
+                        print(6)
                         length_r = length_h
                         id_l_r = id_l
                         id_h_r = id_h + 1
-                    else:
+                    elif np.average(
+                        self._bayesian_block_cps_dict[det][id_l - 1 : id_h],
+                        weights=self._bayesian_block_widths_dict[det][id_l - 1 : id_h],
+                    ) > np.average(
+                        self._bayesian_block_cps_dict[det][id_l : id_h + 1],
+                        weights=self._bayesian_block_widths_dict[det][id_l : id_h + 1],
+                    ):
+                        print(
+                            f"Counts_h {counts_h} - counts low {self._bayesian_block_widths_dict[det][id_l]*self._bayesian_block_cps_dict[det][id_l]}"
+                        )
                         length_r = (
                             length_l - self._bayesian_block_widths_dict[det][id_h]
                         )
                         id_l_r = id_l - 1
                         id_h_r = id_h - 1
                 else:
+                    print(8)
                     length_r = length_h
                     id_l_r = id_l_r
                     id_h_r = id_h + 1
             else:
+                print(9)
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
@@ -841,6 +879,7 @@ class TimeSelectionBB(TimeSelection):
             > self._upper_trigger_bound
         ):
             if length_l <= self._max_trigger_length:
+                print(10)
                 length_r = length_l
                 id_l_r = id_l - 1
                 id_h_r = id_h
@@ -851,11 +890,13 @@ class TimeSelectionBB(TimeSelection):
             <= self._upper_trigger_bound
         ):
             if length_h <= self._max_trigger_length:
+                print(11)
                 length_r = length_h
                 id_l_r = id_l
                 id_h_r = id_h + 1
         # both blocks outside limit
         else:
+            print(12)
             length_r = length_in
             id_l_r = id_l
             id_h_r = id_h
