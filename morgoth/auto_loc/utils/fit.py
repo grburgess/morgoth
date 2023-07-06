@@ -321,6 +321,8 @@ class MultinestFitTrigdat(object):
 
                 except Exception as e:
                     print(f"No spectral plot possible:\n{e}")
+                    with open("~/spectrum_plot_error.txt", "a+") as f:
+                        f.write(str(e) + "\n")
 
         else:
             if_dir_containing_file_not_existing_then_make(plot_path)
@@ -350,6 +352,8 @@ class MultinestFitTrigdat(object):
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
             except Exception as e:
                 print(f"No spectral plot plot possible:\n{e}")
+                with open("~/spectrum_plot_error.txt", "a+") as f:
+                    f.write(str(e) + "\n")
 
 
 class MultinestFitTTE(object):
@@ -685,6 +689,8 @@ class MultinestFitTTE(object):
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
                 except Exception as e:
                     print(f"No spectral plot possible:\n{e}")
+                    with open("~/spectrum_plot_error.txt", "a+") as f:
+                        f.write(str(e) + "\n")
 
         else:
             if_dir_containing_file_not_existing_then_make(plot_path)
@@ -714,3 +720,5 @@ class MultinestFitTTE(object):
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
             except Exception as e:
                 print(f"No spectral plot possible:\n{e}")
+                with open("~/spectrum_plot_error.txt", "a+") as f:
+                    f.write(str(e) + "\n")
