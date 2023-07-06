@@ -301,7 +301,7 @@ class MultinestFitTrigdat(object):
                     )
                     ca = spectrum_plot.get_axes()[0]
                     ls = ca.lines
-                    second_max_val = 0
+                    max_val = 0
                     print(f"Number of lines in plot {len(ls)}")
                     for l in ls:
                         if max(l.get_ydata()) > max_val:
@@ -321,7 +321,7 @@ class MultinestFitTrigdat(object):
 
                 except Exception as e:
                     print(f"No spectral plot possible:\n{e}")
-                    with open("~/spectrum_plot_error.txt", "a+") as f:
+                    with open("~/spectrum_plot_error.txt", "w+") as f:
                         f.write(str(e) + "\n")
 
         else:
@@ -333,7 +333,7 @@ class MultinestFitTrigdat(object):
                 )
                 ca = spectrum_plot.get_axes()[0]
                 ls = ca.lines
-                second_max_val = 0
+                max_val = 0
                 print(f"Number of lines in plot {len(ls)}")
                 for l in ls:
                     if max(l.get_ydata()) > max_val:
@@ -352,7 +352,7 @@ class MultinestFitTrigdat(object):
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
             except Exception as e:
                 print(f"No spectral plot plot possible:\n{e}")
-                with open("~/spectrum_plot_error.txt", "a+") as f:
+                with open("~/spectrum_plot_error.txt", "w+") as f:
                     f.write(str(e) + "\n")
 
 
@@ -670,7 +670,7 @@ class MultinestFitTTE(object):
                     )
                     ca = spectrum_plot.get_axes()[0]
                     ls = ca.lines
-                    second_max_val = 0
+                    max_val = 0
                     print(f"Number of lines in plot {len(ls)}")
                     for l in ls:
                         if max(l.get_ydata()) > max_val:
@@ -689,7 +689,7 @@ class MultinestFitTTE(object):
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
                 except Exception as e:
                     print(f"No spectral plot possible:\n{e}")
-                    with open("~/spectrum_plot_error.txt", "a+") as f:
+                    with open("~/spectrum_plot_error.txt", "w+") as f:
                         f.write(str(e) + "\n")
 
         else:
@@ -701,7 +701,7 @@ class MultinestFitTTE(object):
                 )
                 ca = spectrum_plot.get_axes()[0]
                 ls = ca.lines
-                second_max_val = 0
+                max_val = 0
                 print(f"Number of lines in plot {len(ls)}")
                 for l in ls:
                     if max(l.get_ydata()) > max_val:
@@ -720,5 +720,5 @@ class MultinestFitTTE(object):
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
             except Exception as e:
                 print(f"No spectral plot possible:\n{e}")
-                with open("~/spectrum_plot_error.txt", "a+") as f:
+                with open("~/spectrum_plot_error.txt", "w+") as f:
                     f.write(str(e) + "\n")
