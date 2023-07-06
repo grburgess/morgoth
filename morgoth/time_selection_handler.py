@@ -63,9 +63,6 @@ class TimeSelectionHandler(luigi.Task):
                     f"time_selection_{self.version}.yml",
                 )
             )
-            time_selection.viewBayesianBlockPlots(
-                os.path.join(base_dir, self.grb_name, self.report_type, "plots/")
-            )
         elif self.report_type == "tte":
             for tv in trigdat_versions:
                 try:
