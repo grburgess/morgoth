@@ -5,7 +5,12 @@ import luigi
 import yaml
 
 from morgoth.auto_loc.bkg_fit import BkgFittingTTE, BkgFittingTrigdat
-from morgoth.downloaders import DownloadCSPECFile, DownloadTTEFile, DownloadTrigdat, GatherTrigdatDownload
+from morgoth.downloaders import (
+    DownloadCSPECFile,
+    DownloadTTEFile,
+    DownloadTrigdat,
+    GatherTrigdatDownload,
+)
 from morgoth.time_selection_handler import TimeSelectionHandler
 
 base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
@@ -29,12 +34,15 @@ _gbm_detectors = (
 
 
 class BackgroundFitTTE(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
     def requires(self):
         return {
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version,report_type = "tte"),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="tte"
+            ),
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "tte_files": [
                 DownloadTTEFile(
@@ -100,6 +108,7 @@ class BackgroundFitTTE(luigi.Task):
 
 
 class BackgroundFitTrigdat(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
@@ -108,7 +117,9 @@ class BackgroundFitTrigdat(luigi.Task):
             "trigdat_file": DownloadTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "trigdat"),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="trigdat"
+            ),
         }
 
     def output(self):

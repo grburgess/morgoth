@@ -10,6 +10,7 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelectionHandler(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
     report_type = luigi.Parameter()

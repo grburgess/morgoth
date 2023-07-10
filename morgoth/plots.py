@@ -21,6 +21,7 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class CreateAllPlots(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -92,6 +93,7 @@ class CreateAllPlots(luigi.Task):
 
 
 class CreateAllLightcurves(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -202,6 +204,7 @@ class CreateAllLightcurves(luigi.Task):
 
 
 class CreateLightcurve(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     detector = luigi.Parameter()
@@ -225,6 +228,7 @@ class CreateLightcurve(luigi.Task):
 
 
 class CreateLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -261,6 +265,7 @@ class CreateLocationPlot(luigi.Task):
 
 
 class CreateCornerPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -297,6 +302,7 @@ class CreateCornerPlot(luigi.Task):
 
 
 class CreateMollLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -356,6 +362,7 @@ class CreateMollLocationPlot(luigi.Task):
 
 
 class CreateBrightObjectsLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -417,6 +424,7 @@ class CreateBrightObjectsLocationPlot(luigi.Task):
 
 
 class CreateSatellitePlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -478,6 +486,7 @@ class CreateSatellitePlot(luigi.Task):
 
 
 class CreateSpectrumPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -508,6 +517,7 @@ class CreateSpectrumPlot(luigi.Task):
 
 
 class Create3DLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -571,6 +581,7 @@ class Create3DLocationPlot(luigi.Task):
 
 
 class CreateBalrogSwiftPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
