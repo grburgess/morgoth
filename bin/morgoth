@@ -3,7 +3,6 @@ import os
 import gcn
 from morgoth.handler import handler
 from morgoth import morgoth_config
-from morgoth.test_listener import run
 
 
 luigi_config_path = f"{os.path.abspath(__file__)}/luigi.cfg"
