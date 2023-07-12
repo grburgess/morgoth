@@ -14,6 +14,7 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class GatherTrigdatDownload(luigi.Task):
+    priority = 50
     resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
 

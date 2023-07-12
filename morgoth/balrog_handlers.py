@@ -47,6 +47,10 @@ class ProcessFitResults(luigi.Task):
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    if report_type == "trigdat":
+        priority = 100
+    else:
+        priority = 0
 
     def requires(self):
         if self.report_type.lower() == "tte":
@@ -129,6 +133,7 @@ class RunBalrogTTE(ExternalProgramTask):
     resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 0
     always_log_stderr = True
 
     def requires(self):
@@ -190,6 +195,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
     resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 100
     always_log_stderr = True
 
     def requires(self):

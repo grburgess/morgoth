@@ -14,6 +14,10 @@ class TimeSelectionHandler(luigi.Task):
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
     report_type = luigi.Parameter()
+    if report_type == "trigdat":
+        priority = 100
+    else:
+        priority = 0
 
     def requires(self):
         # return GatherTrigdatDownload(grb_name=self.grb_name)

@@ -37,6 +37,7 @@ class BackgroundFitTTE(luigi.Task):
     resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 0
 
     def requires(self):
         return {
@@ -111,6 +112,7 @@ class BackgroundFitTrigdat(luigi.Task):
     resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 100
 
     def requires(self):
         return {
