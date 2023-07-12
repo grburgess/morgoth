@@ -1,13 +1,23 @@
 #!/usr/bin/env python
+import os
 import gcn
 from morgoth.handler import handler
 from morgoth import morgoth_config
+from morgoth.test_listener import run
 
-testing = True
+
+luigi_config_path = f"{os.path.abspath(__file__)}/luigi.cfg"
+print(
+    f"Setting luigi config path to {luigi_config_path} - if you haven't set it accordingly for the central scheduler process do so before the module gets started!"
+)
+os.environ["LUIGI_CONFIG_PATH"] = luigi_config_path
+
+testing = False
 if not testing:
     gcn.listen(handler=handler, port=morgoth_config["pygcn"]["port"])
 else:
     from lxml.etree import fromstring
     import pkg_resources
-    payload = pkg_resources.resource_string('morgoth', '/data/GRB230514996.xml')
+
+    payload = pkg_resources.resource_string("morgoth", "/data/GRB230514996.xml")
     handler(payload, fromstring(payload))
