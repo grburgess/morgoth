@@ -17,7 +17,7 @@ class GatherTrigdatDownload(luigi.Task):
     grb_name = luigi.Parameter()
 
     def requires(self):
-        return OpenGBMFile(grb=self.grb_name),
+        return OpenGBMFile(grb=self.grb_name)
 
     def output(self):
         return luigi.LocalTarget(
@@ -51,7 +51,6 @@ class GatherTrigdatDownload(luigi.Task):
         version_dict = {"trigdat_version": version}
 
         with self.output().open("w") as f:
-
             yaml.dump(version_dict, f, Dumper=yaml.SafeDumper, default_flow_style=False)
 
 
@@ -60,23 +59,21 @@ class DownloadTrigdat(luigi.Task):
     Downloads a Trigdat file of a given
     version
     """
+
     priority = 100
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
 
     def requires(self):
-
         return OpenGBMFile(grb=self.grb_name)
 
     def output(self):
-
         trigdat = f"glg_trigdat_all_bn{self.grb_name[3:]}_{self.version}.fit"
         return luigi.LocalTarget(
             os.path.join(base_dir, self.grb_name, "trigdat", trigdat)
         )
 
     def run(self):
-
         # get the info from the stored yaml file
         info = GBMTriggerFile.from_file(self.input())
 
@@ -111,24 +108,20 @@ class DownloadTTEFile(luigi.Task):
     detector = luigi.Parameter()
 
     def requires(self):
-
         return OpenGBMFile(grb=self.grb_name)
 
     def output(self):
-
         tte = f"glg_tte_{self.detector}_bn{self.grb_name[3:]}_{self.version}.fit"
         return luigi.LocalTarget(
             os.path.join(base_dir, self.grb_name, "tte", "data", tte)
         )
 
     def run(self):
-
         info = GBMTriggerFile.from_file(self.input())
 
         print(info)
 
         tte = f"glg_tte_{self.detector}_bn{self.grb_name[3:]}_{self.version}.fit"
-
         uri = os.path.join(info.uri, tte)
         print(uri)
 
@@ -156,18 +149,15 @@ class DownloadCSPECFile(luigi.Task):
     detector = luigi.Parameter()
 
     def requires(self):
-
         return OpenGBMFile(grb=self.grb_name)
 
     def output(self):
-
         cspec = f"glg_cspec_{self.detector}_bn{self.grb_name[3:]}_{self.version}.pha"
         return luigi.LocalTarget(
             os.path.join(base_dir, self.grb_name, "tte", "data", cspec)
         )
 
     def run(self):
-
         info = GBMTriggerFile.from_file(self.input())
 
         print(info)
