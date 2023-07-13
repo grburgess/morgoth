@@ -10,9 +10,14 @@ base_dir = os.environ.get("GBM_TRIGGER_DATA_DIR")
 
 
 class TimeSelectionHandler(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
     report_type = luigi.Parameter()
+    if report_type == "trigdat":
+        priority = 100
+    else:
+        priority = 0
 
     def requires(self):
         # return GatherTrigdatDownload(grb_name=self.grb_name)

@@ -14,6 +14,8 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class GatherTrigdatDownload(luigi.Task):
+    priority = 50
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
 
     def requires(self):
@@ -60,6 +62,7 @@ class DownloadTrigdat(luigi.Task):
     version
     """
 
+    resources = {"max_workers": 1}
     priority = 100
     grb_name = luigi.Parameter()
     version = luigi.Parameter()
@@ -102,6 +105,7 @@ class DownloadTrigdat(luigi.Task):
 
 
 class DownloadTTEFile(luigi.Task):
+    resources = {"max_workers": 1}
     priority = -100
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -143,6 +147,7 @@ class DownloadTTEFile(luigi.Task):
 
 
 class DownloadCSPECFile(luigi.Task):
+    resources = {"max_workers": 1}
     priority = -100
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v01")

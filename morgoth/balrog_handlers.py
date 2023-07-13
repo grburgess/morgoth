@@ -43,17 +43,23 @@ _gbm_detectors = (
 
 
 class ProcessFitResults(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    if report_type == "trigdat":
+        priority = 100
+    else:
+        priority = 0
 
     def requires(self):
-
         if self.report_type.lower() == "tte":
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "tte"),
+                "time_selection": TimeSelectionHandler(
+                    grb_name=self.grb_name, version=self.version, report_type="tte"
+                ),
                 "bkg_fit": BackgroundFitTTE(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -64,7 +70,9 @@ class ProcessFitResults(luigi.Task):
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version=self.version, report_type = "trigdat"),
+                "time_selection": TimeSelectionHandler(
+                    grb_name=self.grb_name, version=self.version, report_type="trigdat"
+                ),
                 "bkg_fit": BackgroundFitTrigdat(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -79,8 +87,7 @@ class ProcessFitResults(luigi.Task):
             )
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name,
-                                self.report_type, self.version)
+        base_job = os.path.join(base_dir, self.grb_name, self.report_type, self.version)
         result_name = f"{self.report_type}_{self.version}_fit_result.yml"
 
         return {
@@ -89,7 +96,6 @@ class ProcessFitResults(luigi.Task):
         }
 
     def run(self):
-
         if self.report_type.lower() == "tte":
             with self.input()["trigdat_version"].open() as f:
                 trigdat_version = yaml.safe_load(f)["trigdat_version"]
@@ -115,25 +121,28 @@ class ProcessFitResults(luigi.Task):
             trigger_file=self.input()["gbm_file"].path,
             time_selection_file=self.input()["time_selection"].path,
             background_file=self.input()["bkg_fit"]["bkg_fit_yml"].path,
-            post_equal_weights_file=self.input(
-            )["balrog"]["post_equal_weights"].path,
+            post_equal_weights_file=self.input()["balrog"]["post_equal_weights"].path,
             result_file=self.input()["balrog"]["fit_result"].path,
-            trigdat_file=trigdat_file
+            trigdat_file=trigdat_file,
         )
 
         result_reader.save_result_yml(self.output()["result_file"].path)
 
 
 class RunBalrogTTE(ExternalProgramTask):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 0
     always_log_stderr = True
 
     def requires(self):
         return {
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "bkg_fit": BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "tte"),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="tte"
+            ),
         }
 
     def output(self):
@@ -183,8 +192,10 @@ class RunBalrogTTE(ExternalProgramTask):
 
 
 class RunBalrogTrigdat(ExternalProgramTask):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 100
     always_log_stderr = True
 
     def requires(self):
@@ -195,12 +206,13 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "bkg_fit": BackgroundFitTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name,version = self.version, report_type = "trigdat"),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="trigdat"
+            ),
         }
 
     def output(self):
-        base_job = os.path.join(base_dir, self.grb_name,
-                                "trigdat", self.version)
+        base_job = os.path.join(base_dir, self.grb_name, "trigdat", self.version)
         fit_result_name = f"trigdat_{self.version}_loc_results.fits"
         spectral_plot_name = f"{self.grb_name}_spectrum_plot_trigdat_{self.version}.png"
 
