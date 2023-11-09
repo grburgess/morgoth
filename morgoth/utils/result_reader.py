@@ -727,7 +727,7 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
         alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
         if alpha > alpha_largest:
             alpha_largest = alpha
-    alpha_one_sigma = alpha
+    alpha_one_sigma = alpha_largest
 
     mask = val_contour < 0.95
     points = []
@@ -747,7 +747,7 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
         alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
         if alpha > alpha_largest:
             alpha_largest = alpha
-    alpha_two_sigma = alpha
+    alpha_two_sigma = alpha_largest
 
     return ra, ra_err, dec, dec_err, alpha_one_sigma, alpha_two_sigma
 
