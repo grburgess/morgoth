@@ -223,7 +223,7 @@ class TimeSelectionBB(TimeSelection):
         grb_name,
         trigdat_file,
         fine=False,
-        gamma=0.776,
+        p0=0.01,
         mean_factor=1.1,
         significance_dets=3,
     ):
@@ -233,7 +233,7 @@ class TimeSelectionBB(TimeSelection):
             trigdat_file (path like): path to trigdat file
             trigger_name (str): name of the trigger
             fine (bool, optional): Use fine data binning. Defaults to False.
-            gamma (float, optional): gamma value for bayesian blocks (influences number of blocks). Defaults to 0.776.
+            p0 (float, optional): p0 value for bayesian blocks (influences number of blocks). Defaults to 0.01.
             mean_factor (float, optional): factor scaling the mean cps rate used for ruling out too long selections
         """
         self._fine = fine
@@ -263,8 +263,8 @@ class TimeSelectionBB(TimeSelection):
         # GRB name
         self.trigger_name = grb_name
 
-        # Gamma Value for BB - default to 0.776
-        self._gamma = gamma
+        # p0 Value for BB - default to 0.01
+        self._p0 = p0
 
         # Mean Value Factor for elminiating too long selections - defaults to 1.0
         self._mean_factor = mean_factor
@@ -544,7 +544,7 @@ class TimeSelectionBB(TimeSelection):
             det (str): Name of detector (or multiple ones)
         """
         self._bayesian_block_edges_dict[det] = bayesian_blocks(
-            self._times, self._cps_dets[det], fitness="events", gamma=self._gamma
+            self._times, self._cps_dets[det], fitness="events", p0=self._p0
         )
         (
             self._bayesian_block_times_dict[det],
