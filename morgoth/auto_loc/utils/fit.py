@@ -300,17 +300,24 @@ class MultinestFitTrigdat(object):
                         self._bayes, data_colors=color_list, model_colors=color_list
                     )
                     ca = spectrum_plot.get_axes()[0]
+                    ls = ca.lines
+                    max_val = 0
+                    for l in ls:
+                        if max(l.get_ydata()) > max_val:
+                            max_val = sorted(l.get_ydata())[-2]
+
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-6:
-                        print("Updating y-lims")
-                        # y_lims_new = [10e-6, y_lims[1]]
                         ca.set_ylim(bottom=10e-6)
-                    spectrum_plot.tight_layout()
+                    if y_lims[1] > 10e6:
+                        if max_val <= 10e6:
+                            ca.set_ylim(top=max_val * 10)
+                        else:
+                            ca.set_ylim(top=max_val * 10e2)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
 
                 except Exception as e:
-                    print("No spectral plot possible...")
-                    print(e)
+                    print(f"No spectral plot possible:\n{e}")
 
         else:
             if_dir_containing_file_not_existing_then_make(plot_path)
@@ -320,15 +327,23 @@ class MultinestFitTrigdat(object):
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
                 ca = spectrum_plot.get_axes()[0]
+                ls = ca.lines
+                max_val = 0
+                for l in ls:
+                    if max(l.get_ydata()) > max_val:
+                        max_val = sorted(l.get_ydata())[-2]
+
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-6:
-                    # y_lims_new = [10e-6, y_lims[1]]
                     ca.set_ylim(bottom=10e-6)
-                spectrum_plot.tight_layout()
+                if y_lims[1] > 10e6:
+                    if max_val <= 10e6:
+                        ca.set_ylim(top=max_val * 10)
+                    else:
+                        ca.set_ylim(top=max_val * 10e2)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
-
-            except:
-                print("No spectral plot possible...")
+            except Exception as e:
+                print(f"No spectral plot plot possible:\n{e}")
 
 
 class MultinestFitTTE(object):
@@ -644,15 +659,23 @@ class MultinestFitTTE(object):
                         self._bayes, data_colors=color_list, model_colors=color_list
                     )
                     ca = spectrum_plot.get_axes()[0]
+                    ls = ca.lines
+                    max_val = 0
+                    for l in ls:
+                        if max(l.get_ydata()) > max_val:
+                            max_val = sorted(l.get_ydata())[-2]
+
                     y_lims = ca.get_ylim()
                     if y_lims[0] < 10e-6:
-                        # y_lims_new = [10e-6, y_lims[1]]
                         ca.set_ylim(bottom=10e-6)
-                    spectrum_plot.tight_layout()
+                    if y_lims[1] > 10e6:
+                        if max_val <= 10e6:
+                            ca.set_ylim(top=max_val * 10)
+                        else:
+                            ca.set_ylim(top=max_val * 10e2)
                     spectrum_plot.savefig(plot_path, bbox_inches="tight")
-
-                except:
-                    print("No spectral plot possible...")
+                except Exception as e:
+                    print(f"No spectral plot possible:\n{e}")
 
         else:
             if_dir_containing_file_not_existing_then_make(plot_path)
@@ -662,13 +685,20 @@ class MultinestFitTTE(object):
                     self._bayes, data_colors=color_list, model_colors=color_list
                 )
                 ca = spectrum_plot.get_axes()[0]
+                ls = ca.lines
+                max_val = 0
+                for l in ls:
+                    if max(l.get_ydata()) > max_val:
+                        max_val = sorted(l.get_ydata())[-2]
+
                 y_lims = ca.get_ylim()
                 if y_lims[0] < 10e-6:
-                    print("Updating y_lims")
-                    # y_lims_new = [10e-6, y_lims[1]]
                     ca.set_ylim(bottom=10e-6)
-                spectrum_plot.tight_layout()
+                if y_lims[1] > 10e6:
+                    if max_val <= 10e6:
+                        ca.set_ylim(top=max_val * 10)
+                    else:
+                        ca.set_ylim(top=max_val * 10e2)
                 spectrum_plot.savefig(plot_path, bbox_inches="tight")
-
-            except:
-                print("No spectral plot possible...")
+            except Exception as e:
+                print(f"No spectral plot possible:\n{e}")

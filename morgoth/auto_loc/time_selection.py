@@ -382,7 +382,7 @@ class TimeSelectionBB(TimeSelection):
         self,
         lower_trigger_bound=-10,
         upper_trigger_bound=50,
-        max_trigger_length=10.25,
+        max_trigger_length=10.5,
     ):
         """runs timeselection for each detector in self.dets individually
 
@@ -554,7 +554,7 @@ class TimeSelectionBB(TimeSelection):
             self._times, self._cps_dets[det], self._bayesian_block_edges_dict[det]
         )
 
-    def _calcStartStopTrigger(self, det, max_block_width=10):
+    def _calcStartStopTrigger(self, det, max_block_width=10.24):
         """Calculates the start and stop time of the trigger
 
         Args:
@@ -565,48 +565,47 @@ class TimeSelectionBB(TimeSelection):
         start_trigger = 0
         end_trigger = 0
 
-        # copy cps to temp array for manipulation
-        cps_temp = np.copy(self._bayesian_block_cps_dict[det])
-        # setting first and last block to 0 (they are very small timely) as well as every block with a duration > 10s or if it's end is outside the set bounds
-
-        cps_temp[-1] = 0
-        cps_temp[0] = 0
-
-        for i, val in enumerate(self._bayesian_block_widths_dict[det]):
-            # check if count rate is already 0
-            if cps_temp[i] != 0:
-                # check if the width is greater than the max allowed
-                if val > max_block_width:
-                    cps_temp[i] = 0
-                else:
-                    # check if the block is inside the allowed time range
-                    if (
-                        self._bayesian_block_times_dict[det][i]
-                        < self._lower_trigger_bound
-                        or self._bayesian_block_times_dict[det][i]
-                        > self._upper_trigger_bound
-                    ):
-                        cps_temp[i] = 0
-
-        # id_max_counts_bb = np.argmax(
-        #    np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
-        # )
+        cps_temp = self._get_cps_temp(det, max_block_width)
         id_max_cps_bb = np.argmax(cps_temp)
+        if (
+            self._bayesian_block_times_dict[det][id_max_cps_bb]
+            + self._max_trigger_length
+            > self._upper_trigger_bound
+        ):
+            ub = (
+                self._bayesian_block_times_dict[det][id_max_cps_bb]
+                + self._max_trigger_length
+            )
+            cps_temp = self._get_cps_temp(det, max_block_width, upper_bound=ub)
+            id_max_cps_bb = np.argmax(cps_temp)
+        if (
+            self._bayesian_block_times_dict[det][id_max_cps_bb]
+            - self._max_trigger_length
+            < self._lower_trigger_bound
+        ):
+            lb = (
+                self._bayesian_block_times_dict[det][id_max_cps_bb]
+                - self._max_trigger_length
+            )
+            cps_temp = self._get_cps_temp(det, max_block_width, lower_bound=lb)
+            id_max_cps_bb = np.argmax(cps_temp)
 
         # start length
         length_in = float(self._bayesian_block_widths_dict[det][id_max_cps_bb])
         id_l = int(id_max_cps_bb)  # index of the satrting bin
         id_h = int(id_max_cps_bb)  # index of the stopping bin
 
-        print(f"Lets mess things up for {det}")
+        # print(f"Lets mess things up for {det}")
         # iteratively get new length
+        counter = 0
         while True:
+            counter += 1
             length_out, id_l, id_h = self._getNewLength(length_in, id_l, id_h, det)
             if length_in == length_out:
                 break
             else:
                 length_in = length_out
-
+        print(f"Total of {counter} iterations for {det}")
         start_trigger = self._bayesian_block_times_dict[det][id_l]
         end_trigger = self._bayesian_block_times_dict[det][id_h + 1]
 
@@ -686,7 +685,9 @@ class TimeSelectionBB(TimeSelection):
 
         # check if the next blocks fullfill the cps condition again
 
+        # if both directions do not fulfill the cps cond
         if cps_l < cps_cond and cps_h < cps_cond:
+            # check if the upcoming ones do - if not end
             if (
                 self._bayesian_block_cps_dict[det][id_l - 2] < cps_cond
                 and self._bayesian_block_cps_dict[det][id_h + 2] < cps_cond
@@ -694,7 +695,7 @@ class TimeSelectionBB(TimeSelection):
                 length_r = length_in
                 id_l_r = id_l
                 id_h_r = id_h
-
+            # if at least one of the upcoming block fullfills cps cond
             else:
                 length_r, id_l_r, id_h_r = self._check_cps_cond(
                     length_h,
@@ -707,6 +708,7 @@ class TimeSelectionBB(TimeSelection):
                     det,
                     cps_cond,
                 )
+        # lower block fullfills - check length and position
         elif cps_l >= cps_cond and cps_h < cps_cond:
             if (
                 self._bayesian_block_times_dict[det][id_l - 1]
@@ -716,8 +718,10 @@ class TimeSelectionBB(TimeSelection):
                     length_r = length_l
                     id_l_r = id_l - 1
                     id_h_r = id_h
+
                 elif (
-                    length_l - self._bayesian_block_widths_dict[det][id_h]
+                    length_l > self._max_trigger_length
+                    and length_l - self._bayesian_block_widths_dict[det][id_h]
                     <= self._max_trigger_length
                     and counts_l
                     > self._bayesian_block_widths_dict[det][id_h]
@@ -736,7 +740,8 @@ class TimeSelectionBB(TimeSelection):
                     id_l_r = id_l
                     id_h_r = id_h + 1
                 elif (
-                    length_h - self._bayesian_block_widths_dict[det][id_l]
+                    length_h > self._max_trigger_length
+                    and length_h - self._bayesian_block_widths_dict[det][id_l]
                     <= self._max_trigger_length
                     and counts_h
                     > self._bayesian_block_widths_dict[det][id_l]
@@ -796,7 +801,15 @@ class TimeSelectionBB(TimeSelection):
                         length_r = length_l
                         id_l_r = id_l - 1
                         id_h_r = id_h
-                    else:
+                    elif np.average(
+                        self._bayesian_block_cps_dict[det][id_l + 1 : id_h + 2],
+                        weights=self._bayesian_block_widths_dict[det][
+                            id_l + 1 : id_h + 2
+                        ],
+                    ) > np.average(
+                        self._bayesian_block_cps_dict[det][id_l : id_h + 1],
+                        weights=self._bayesian_block_widths_dict[det][id_l : id_h + 1],
+                    ):
                         length_r = (
                             length_h - self._bayesian_block_widths_dict[det][id_l]
                         )
@@ -817,13 +830,19 @@ class TimeSelectionBB(TimeSelection):
                 ):
                     if (
                         counts_h
-                        > self._bayesian_block_cps_dict[det][id_l]
+                        >= self._bayesian_block_cps_dict[det][id_l]
                         * self._bayesian_block_widths_dict[det][id_l]
                     ):
                         length_r = length_h
                         id_l_r = id_l
                         id_h_r = id_h + 1
-                    else:
+                    elif np.average(
+                        self._bayesian_block_cps_dict[det][id_l - 1 : id_h],
+                        weights=self._bayesian_block_widths_dict[det][id_l - 1 : id_h],
+                    ) > np.average(
+                        self._bayesian_block_cps_dict[det][id_l : id_h + 1],
+                        weights=self._bayesian_block_widths_dict[det][id_l : id_h + 1],
+                    ):
                         length_r = (
                             length_l - self._bayesian_block_widths_dict[det][id_h]
                         )
@@ -959,6 +978,31 @@ class TimeSelectionBB(TimeSelection):
                 id_h_r = id_h
         return length_r, id_l_r, id_h_r
 
+    def viewBayesianBlockPlots(self, path):
+        base = self._trigreader_obj.view_lightcurve(return_plots=True)
+        for b in base:
+            det = b[0]
+            fig = b[1]
+            ax = fig.get_axes()[0]
+            ylim = ax.get_ylim()
+            ax.vlines(
+                self._bayesian_block_edges_dict[det][:-1],
+                0,
+                self._bayesian_block_cps_dict[det],
+                color="magenta",
+            )
+            ax.set_ylim(ylim)
+            fig.tight_layout()
+            try:
+                fig.savefig(
+                    os.path.join(path, "bb_lightcurves/", f"bb_lightcurve_{det}.png")
+                )
+            except FileNotFoundError:
+                os.makedirs(os.path.join(path, "bb_lightcurves/"))
+                fig.savefig(
+                    os.path.join(path, "bb_lightcurves/", f"bb_lightcurve_{det}.png")
+                )
+
     def startStopToObsTimes(self, start_trigger, end_trigger):
         """Converts start and end trigger times to id of times list
 
@@ -990,6 +1034,38 @@ class TimeSelectionBB(TimeSelection):
         self._significance_dict[det] = self._trigreader_obj.time_series[
             det
         ].significance_per_interval
+
+    def _get_cps_temp(self, det, max_block_width, lower_bound=None, upper_bound=None):
+        # copy cps to temp array for manipulation
+        cps_temp = np.copy(self._bayesian_block_cps_dict[det])
+        # setting first and last block to 0 (they are very small timely) as well as every block with a duration > 10s or if it's end is outside the set bounds
+
+        cps_temp[-1] = 0
+        cps_temp[0] = 0
+
+        if lower_bound is None:
+            lower_bound = self._lower_trigger_bound
+        if upper_bound is None:
+            upper_bound = self._upper_trigger_bound
+
+        for i, val in enumerate(self._bayesian_block_widths_dict[det]):
+            # check if count rate is already 0
+            if cps_temp[i] != 0:
+                # check if the width is greater than the max allowed
+                if val > max_block_width:
+                    cps_temp[i] = 0
+                else:
+                    # check if the block is inside the allowed time range
+                    if (
+                        self._bayesian_block_times_dict[det][i] < lower_bound
+                        or self._bayesian_block_times_dict[det][i] > upper_bound
+                    ):
+                        cps_temp[i] = 0
+
+        # id_max_counts_bb = np.argmax(
+        #    np.array(cps_temp) * np.array(self._bayesian_block_widths_dict[det])
+        # )
+        return cps_temp
 
 
 class BackgroundSelector:

@@ -1,13 +1,15 @@
 #!/usr/bin/env python
+import os
 import gcn
 from morgoth.handler import handler
 from morgoth import morgoth_config
 
-testing = True
+testing = False
 if not testing:
     gcn.listen(handler=handler, port=morgoth_config["pygcn"]["port"])
 else:
     from lxml.etree import fromstring
     import pkg_resources
-    payload = pkg_resources.resource_string('morgoth', '/data/GRB230514996.xml')
+
+    payload = pkg_resources.resource_string("morgoth", "/data/GRB230514996.xml")
     handler(payload, fromstring(payload))
