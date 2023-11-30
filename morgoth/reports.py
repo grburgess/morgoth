@@ -8,7 +8,9 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class CreateAllPages(luigi.WrapperTask):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
+
     def requires(self):
         return {
             "tte_v00": CreateReportTTE(grb_name=self.grb_name),
@@ -19,6 +21,7 @@ class CreateAllPages(luigi.WrapperTask):
 
 
 class CreateReportTTE(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
@@ -32,7 +35,7 @@ class CreateReportTTE(luigi.Task):
             ),
             "upload_all_data_files": UploadAllDataFiles(
                 grb_name=self.grb_name, report_type="tte", version=self.version
-            )
+            ),
         }
 
     def output(self):
@@ -44,6 +47,7 @@ class CreateReportTTE(luigi.Task):
 
 
 class CreateReportTrigdat(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
@@ -57,7 +61,7 @@ class CreateReportTrigdat(luigi.Task):
             ),
             "upload_all_data_files": UploadAllDataFiles(
                 grb_name=self.grb_name, report_type="trigdat", version=self.version
-            )
+            ),
         }
 
     def output(self):

@@ -69,7 +69,6 @@ most_likely_lookup = {
 
 
 def parse_trigger_file_and_write(root, payload):
-
     tmp = root.find(".//{*}ISOTime").text
     trigger_time = tmp + "Z"
     yy, mm, dd = re.match(
@@ -114,13 +113,12 @@ def parse_trigger_file_and_write(root, payload):
 
     # Trigger number
     trigger_number = root.find(".//Param[@name='TrigID']").attrib["value"]
-    
+
     # now we want to store the folder directory
 
     main_ftp_directory = os.path.join("/".join(lc_file.split("/")[:-2]), "current")
 
     if "https" not in main_ftp_directory:
-
         main_ftp_directory = main_ftp_directory.replace("http", "https")
 
     uri = main_ftp_directory
@@ -143,7 +141,6 @@ def parse_trigger_file_and_write(root, payload):
     if_directory_not_existing_then_make(directory)
 
     with open(os.path.join(directory, "gbm_flight_voe.xml"), "wb") as f:
-
         f.write(payload)
 
     out_file_writer.write(os.path.join(directory, "grb_parameters.yml"))
@@ -157,7 +154,6 @@ def parse_trigger_file_and_write(root, payload):
     # tree = etree.XML(payload)
 
     with open(os.path.join(directory, "gbm_flight_voe.xml"), "wb") as f:
-
         f.write(payload)
 
     return burst_name
@@ -178,7 +174,6 @@ class GBMTriggerFile(object):
         most_likely_2,
         most_likely_prob_2,
     ):
-
         self._params = dict(
             trigger_number=trigger_number,
             trigger_time=trigger_time,
@@ -205,16 +200,12 @@ class GBMTriggerFile(object):
         self.most_likely_prob_2 = most_likely_prob_2
 
     def write(self, file_name):
-
         with open(file_name, "w") as f:
-
             yaml.dump(self._params, f, Dumper=yaml.SafeDumper, default_flow_style=False)
 
     @classmethod
     def from_file(cls, file_name):
-
         with file_name.open("r") as f:
-
             stuff = yaml.load(f, Loader=yaml.SafeLoader)
 
         return cls(
@@ -233,11 +224,10 @@ class GBMTriggerFile(object):
 
 
 class OpenGBMFile(luigi.Task):
-
+    resources = {"max_workers": 1}
     grb = luigi.Parameter()
 
     def requires(self):
-
         return None
 
     def output(self):

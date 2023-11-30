@@ -3,6 +3,7 @@ import pytz
 import urllib
 
 import astropy.io.fits as fits
+import astropy.time as astro_time
 import numpy as np
 import yaml
 from chainconsumer import ChainConsumer
@@ -17,6 +18,15 @@ from morgoth.utils.swift_check import check_swift
 from gbmgeometry.gbm_frame import GBMFrame
 from astropy.coordinates import SkyCoord
 import astropy.units as unit
+
+from astropy.table import Table
+from astropy.coordinates import Angle
+import pandas as pd
+import os, ssl
+import requests
+
+from gbmgeometry import *
+
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
@@ -51,6 +61,10 @@ class ResultReader(object):
         self._beta = None
         self._beta_err = None
 
+        # sun separation
+        self._sun_sep_center = None
+        self._sun_sep_error = None
+
         # read trigger output
         self._read_trigger(trigger_file)
 
@@ -74,6 +88,12 @@ class ResultReader(object):
             trigger_number=self._trigger_number, grb_name=self.grb_name
         )
 
+        # Check catalog of bright gamma sources and get separation to GRB position
+        self._sep_bright_sources()
+
+        # Check catalog of SGRs and get separation to GRB position
+        self._sep_SGRs()
+
         # Create a report containing all the results of the pipeline
         self._build_report()
 
@@ -88,7 +108,7 @@ class ResultReader(object):
         if ra_center > np.pi:
             ra_center = ra_center - 2 * np.pi
 
-        if type(trigdat_file)==str:
+        if type(trigdat_file) == str:
             with fits.open(trigdat_file) as f:
                 quat = f["TRIGRATE"].data["SCATTITD"][0]
                 sc_pos = f["TRIGRATE"].data["EIC"][0]
@@ -142,8 +162,27 @@ class ResultReader(object):
         self._phi_sat = phi_sat.value
         self._theta_sat = theta_sat.value
 
-    def _read_fit_result(self, result_file):
+        # calculating sun separation from center
+        grb_center = SkyCoord(ra=self._ra, dec=self._dec, unit="deg", frame="icrs")
+        sun = gbm_detector_list["n0"](
+            quaternion=quat,
+            sc_pos=sc_pos,
+            time=astro_time.Time(GBMTime.from_MET(times).time.fits),
+        ).sun_position_icrs
+        self._sun_sep_center = sun.separation(grb_center).deg
 
+        # check if sun is within error of localization
+        ra_distance = self._ra - sun.ra.deg
+        dec_distance = self._dec - sun.dec.deg
+        if (
+            np.abs(ra_distance) <= self._ra_err
+            and np.abs(dec_distance) <= self._dec_err
+        ):
+            self._sun_sep_error = True
+        else:
+            self._sun_sep_error = False
+
+    def _read_fit_result(self, result_file):
         with fits.open(result_file) as f:
             values = f["ANALYSIS_RESULTS"].data["VALUE"]
             pos_error = f["ANALYSIS_RESULTS"].data["POSITIVE_ERROR"]
@@ -278,7 +317,6 @@ class ResultReader(object):
             self._used_detectors = data["use_dets"]
 
     def _read_post_equal_weights_file(self, post_equal_weights_file):
-
         # Sometimes chainconsumer does not give an error - In this case we will need the errors from the
         # 3ml fits files
         (
@@ -295,6 +333,115 @@ class ResultReader(object):
 
         if dec_err is not None:
             self._dec_err = dec_err
+
+    def _sep_bright_sources(self):
+        # for the case of certification errror
+        if not os.environ.get("PYTHONHTTPSVERIFY", "") and getattr(
+            ssl, "_create_unverified_context", None
+        ):
+            ssl._create_default_https_context = ssl._create_unverified_context
+
+        # read in table from website
+        url = "https://swift.gsfc.nasa.gov/results/transients/BAT_current.html"
+        table_MN = pd.read_html(url)
+        df = table_MN[0]
+
+        # delete unwanted string
+        df.rename(columns={"Peak*": "Peak"}, inplace=True)
+
+        # filter by peak value
+        df = df.drop(df[df.Peak == "-"].index)
+        df = df.astype({"Peak": int})
+        df_filtered = df[df["Peak"] > 400]
+
+        # for table of catalog
+        table = Table.from_pandas(df_filtered)
+        # table.show_in_browser(jsviewer=True)
+
+        # transform input in SkyCoord
+        position = SkyCoord(self._ra * unit.deg, self._dec * unit.deg, frame="icrs")
+
+        # transform table data in SkyCoord
+        coords = []
+        for i in range(len(df_filtered["RA J2000 Degs"])):
+            ra = table[i]["RA J2000 Degs"]
+            dec = table[i]["Dec J2000 Degs"]
+            coords.append(SkyCoord(ra * unit.deg, dec * unit.deg, frame="icrs"))
+
+        # get separation value
+        separations = []
+        for i in coords:
+            z = i.separation(position)
+            separations.append(z.to(unit.deg))
+
+        # for table of separations
+        table["Separation Degs"] = separations
+        table.round(3)
+        table.sort("Separation Degs")
+        # table.show_in_browser(jsviewer=True)
+
+        # create dictionary
+        dic = {}
+        for i in range(3):
+            # dic[table[i]['Source Name']]={"ra":table[i]['RA J2000 Degs'],
+            # "dec":table[i]['Dec J2000 Degs'], "separation":table[i]["Separation Degs"]}
+            dic[str(table[i]["Source Name"])] = {
+                "ra": float(table[i]["RA J2000 Degs"]),
+                "dec": float(table[i]["Dec J2000 Degs"]),
+                "separation": float(table[i]["Separation Degs"]),
+            }
+
+        self._dic_bright_sources = dic
+
+    def _sep_SGRs(self):
+        try:
+            # get csv data from website
+            url = "http://www.physics.mcgill.ca/~pulsar/magnetar/TabO1.csv"
+            r = requests.get(url, allow_redirects=True)
+            open("SGRList.csv", "wb").write(r.content)
+        except Exception as e:
+            print(f"Could not load SGR csv from {url} and failed with {e}")
+            pass
+        df = pd.read_csv("SGRList.csv")
+
+        # for table of catalog
+        table = Table.from_pandas(df)
+
+        # transform table data in SkyCoord
+        coords = []
+        for i in range(len(df["RA"])):
+            hour_ra = Angle(table[i]["RA"] + " hours")
+            ra = hour_ra.to(unit.deg)
+            arc_dec = table[i]["Decl"]
+            dec = Angle(tuple(map(float, arc_dec.split(" "))), unit=unit.deg)
+            coords.append(SkyCoord(ra, dec, frame="icrs"))
+
+        # transform input in SkyCoord
+        position = SkyCoord(self._ra * unit.deg, self._dec * unit.deg, frame="icrs")
+
+        # get separation value
+        separations = []
+        for i in coords:
+            z = i.separation(position)
+            separations.append(z.to(unit.deg))
+
+        # for table of separations
+        table["Separation Degs"] = separations
+        table["Coords Degs"] = coords
+        table.round(3)
+        table.sort("Separation Degs")
+        # table.show_in_browser(jsviewer=True)
+
+        # create dictionary
+        dic = {}
+        for i in range(3):
+            dic[str(table[i]["Name"])] = {
+                "ra": float(round(table[i]["Coords Degs"].ra.degree, 3)),
+                "dec": float(round(table[i]["Coords Degs"].dec.degree, 3)),
+                "separation": float(table[i]["Separation Degs"]),
+            }
+
+        self._dic_SGRs = dic
 
     def _build_report(self):
         self._report = {
@@ -349,6 +496,14 @@ class ResultReader(object):
                 "active_time_stop": self._active_time_stop,
                 "used_detectors": self._used_detectors,
             },
+            "separation_values": {
+                "bright_sources": self._dic_bright_sources,
+                "SGRs": self._dic_SGRs,
+                "Sun": {
+                    "sun_separation": convert_to_float(self._sun_sep_center),
+                    "sun_within_error": bool(self._sun_sep_error),
+                },
+            },
         }
 
     def save_result_yml(self, file_path):
@@ -365,47 +520,38 @@ class ResultReader(object):
 
     @property
     def ra(self):
-
         return self._ra, self._ra_err
 
     @property
     def dec(self):
-
         return self._dec, self._dec_err
 
     @property
     def K(self):
-
         return self._K, self._K_err
 
     @property
     def alpha(self):
-
         return self._alpha, self._alpha_err
 
     @property
     def xp(self):
-
         return self._xp, self._xp_err
 
     @property
     def beta(self):
-
         return self._beta, self._beta_err
 
     @property
     def index(self):
-
         return self._index, self._index_err
 
     @property
     def xc(self):
-
         return self._xc, self._xc_err
 
     @property
     def model(self):
-
         return self._model
 
 
@@ -453,7 +599,6 @@ def check_letter(trigger_number, grb_name):
 
                 # Check if its a Fermi GBM GCN
                 if "Fermi GBM" in line_str:
-
                     # Open the GCN and check if its the same trigger_number
                     gcn = urllib.request.urlopen(
                         "https://gcn.gsfc.nasa.gov/gcn3/{}.gcn3".format(gcn_id)
@@ -478,7 +623,6 @@ def check_letter(trigger_number, grb_name):
         final_name = "???"
 
     if final_name == "???":
-
         # Check if there have been GRBs during that day
         if len(used_names) > 0:
             # Get unique values by converting to set and back to list
@@ -583,7 +727,7 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
         alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
         if alpha > alpha_largest:
             alpha_largest = alpha
-    alpha_one_sigma = alpha
+    alpha_one_sigma = alpha_largest
 
     mask = val_contour < 0.95
     points = []
@@ -603,7 +747,7 @@ def get_best_fit_with_errors(post_equal_weigts_file, model):
         alpha = np.arccos(np.dot(point_2_vec, best_fit_point_vec)) * 180 / np.pi
         if alpha > alpha_largest:
             alpha_largest = alpha
-    alpha_two_sigma = alpha
+    alpha_two_sigma = alpha_largest
 
     return ra, ra_err, dec, dec_err, alpha_one_sigma, alpha_two_sigma
 
@@ -620,3 +764,12 @@ def convert_to_float(value):
         return float(value)
     else:
         return None
+
+
+def utc(met):
+    """
+    get utc time from met time
+    :return:
+    """
+    time = GBMTime.from_MET(met)
+    return time.time.fits

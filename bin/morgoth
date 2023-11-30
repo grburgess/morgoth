@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 import gcn
 from morgoth.handler import handler
 from morgoth import morgoth_config
@@ -9,6 +10,6 @@ if not testing:
 else:
     from lxml.etree import fromstring
     import pkg_resources
-    payload = pkg_resources.resource_string('morgoth', '/data/gbm_flt.xml')
-    handler(payload, fromstring(payload))
 
+    payload = pkg_resources.resource_string("morgoth", "/data/GRB230514996.xml")
+    handler(payload, fromstring(payload))

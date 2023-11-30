@@ -15,6 +15,9 @@ from morgoth.time_selection_handler import TimeSelectionHandler
 from morgoth.trigger import OpenGBMFile
 from morgoth.utils.env import get_env_value
 from morgoth.utils.result_reader import ResultReader
+from threeML import loud_mode
+
+loud_mode()
 
 base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 n_cores_multinest = morgoth_config["multinest"]["n_cores"]
@@ -40,17 +43,23 @@ _gbm_detectors = (
 
 
 class ProcessFitResults(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    if report_type == "trigdat":
+        priority = 100
+    else:
+        priority = 0
 
     def requires(self):
-
         if self.report_type.lower() == "tte":
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+                "time_selection": TimeSelectionHandler(
+                    grb_name=self.grb_name, version=self.version, report_type="tte"
+                ),
                 "bkg_fit": BackgroundFitTTE(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -61,7 +70,9 @@ class ProcessFitResults(luigi.Task):
             return {
                 "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
                 "gbm_file": OpenGBMFile(grb=self.grb_name),
-                "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+                "time_selection": TimeSelectionHandler(
+                    grb_name=self.grb_name, version=self.version, report_type="trigdat"
+                ),
                 "bkg_fit": BackgroundFitTrigdat(
                     grb_name=self.grb_name, version=self.version
                 ),
@@ -85,7 +96,6 @@ class ProcessFitResults(luigi.Task):
         }
 
     def run(self):
-        
         if self.report_type.lower() == "tte":
             with self.input()["trigdat_version"].open() as f:
                 trigdat_version = yaml.safe_load(f)["trigdat_version"]
@@ -104,7 +114,6 @@ class ProcessFitResults(luigi.Task):
                 f"The report_type '{self.report_type}' is not valid!"
             )
 
-        
         result_reader = ResultReader(
             grb_name=self.grb_name,
             report_type=self.report_type,
@@ -114,22 +123,26 @@ class ProcessFitResults(luigi.Task):
             background_file=self.input()["bkg_fit"]["bkg_fit_yml"].path,
             post_equal_weights_file=self.input()["balrog"]["post_equal_weights"].path,
             result_file=self.input()["balrog"]["fit_result"].path,
-            trigdat_file=trigdat_file
+            trigdat_file=trigdat_file,
         )
 
         result_reader.save_result_yml(self.output()["result_file"].path)
 
 
 class RunBalrogTTE(ExternalProgramTask):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 0
     always_log_stderr = True
 
     def requires(self):
         return {
             "trigdat_version": GatherTrigdatDownload(grb_name=self.grb_name),
             "bkg_fit": BackgroundFitTTE(grb_name=self.grb_name, version=self.version),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="tte"
+            ),
         }
 
     def output(self):
@@ -144,7 +157,7 @@ class RunBalrogTTE(ExternalProgramTask):
                     base_job, "chains", f"tte_{self.version}_post_equal_weights.dat"
                 )
             ),
-            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            # 'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
@@ -164,6 +177,8 @@ class RunBalrogTTE(ExternalProgramTask):
             "mpiexec",
             f"-n",
             f"{n_cores_multinest}",
+            f"--bind-to",
+            f"core",
             f"{path_to_python}",
             f"{fit_script_path}",
             f"{self.grb_name}",
@@ -177,8 +192,10 @@ class RunBalrogTTE(ExternalProgramTask):
 
 
 class RunBalrogTrigdat(ExternalProgramTask):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     version = luigi.Parameter(default="v00")
+    priority = 100
     always_log_stderr = True
 
     def requires(self):
@@ -189,7 +206,9 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "bkg_fit": BackgroundFitTrigdat(
                 grb_name=self.grb_name, version=self.version
             ),
-            "time_selection": TimeSelectionHandler(grb_name=self.grb_name),
+            "time_selection": TimeSelectionHandler(
+                grb_name=self.grb_name, version=self.version, report_type="trigdat"
+            ),
         }
 
     def output(self):
@@ -204,7 +223,7 @@ class RunBalrogTrigdat(ExternalProgramTask):
                     base_job, "chains", f"trigdat_{self.version}_post_equal_weights.dat"
                 )
             ),
-            #'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
+            # 'spectral_plot': luigi.LocalTarget(os.path.join(base_job, 'plots', spectral_plot_name))
         }
 
     def program_args(self):
@@ -216,6 +235,8 @@ class RunBalrogTrigdat(ExternalProgramTask):
             "mpiexec",
             f"-n",
             f"{n_cores_multinest}",
+            f"--bind-to",
+            f"core",
             f"{path_to_python}",
             f"{fit_script_path}",
             f"{self.grb_name}",

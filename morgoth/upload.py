@@ -11,13 +11,11 @@ from morgoth.plots import (
     CreateLightcurve,
     CreateLocationPlot,
     CreateMollLocationPlot,
+    CreateBrightObjectsLocationPlot,
     CreateSatellitePlot,
-    CreateSpectrumPlot
+    CreateSpectrumPlot,
 )
-from morgoth.data_files import (
-    CreateHealpixSysErr,
-    CreateHealpix
-)
+from morgoth.data_files import CreateHealpixSysErr, CreateHealpix
 from morgoth.configuration import morgoth_config
 from morgoth.utils.file_utils import if_dir_containing_file_not_existing_then_make
 from morgoth.utils.env import get_env_value
@@ -27,6 +25,7 @@ base_dir = get_env_value("GBM_TRIGGER_DATA_DIR")
 
 
 class UploadReport(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter()
@@ -51,12 +50,8 @@ class UploadReport(luigi.Task):
         report = upload_grb_report(
             grb_name=self.grb_name,
             result=result,
-            wait_time=float(
-                morgoth_config["upload"]["report"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["report"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["report"]["interval"]),
+            max_time=float(morgoth_config["upload"]["report"]["max_time"]),
         )
 
         report_name = f"{self.report_type}_{self.version}_report.yml"
@@ -67,12 +62,13 @@ class UploadReport(luigi.Task):
         with open(report_path, "w") as f:
             yaml.dump(report, f, default_flow_style=False)
 
+
 class UploadAllDataFiles(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
 
-    
     def requires(self):
         return {
             "healpix": UploadHealpix(
@@ -109,7 +105,9 @@ class UploadAllDataFiles(luigi.Task):
         if_dir_containing_file_not_existing_then_make(tmp)
         os.system(f"touch {tmp}")
 
+
 class UploadHealpix(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -142,25 +140,22 @@ class UploadHealpix(luigi.Task):
         )
 
     def run(self):
-        
         upload_datafile(
             grb_name=self.grb_name,
             report_type=self.report_type,
             data_file=self.input()["data_file"].path,
             file_type="healpix",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         if_dir_containing_file_not_existing_then_make(self.output().path)
         os.system(f"touch {self.output().path}")
 
+
 class UploadHealpixSysErr(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -193,19 +188,14 @@ class UploadHealpixSysErr(luigi.Task):
         )
 
     def run(self):
-
         upload_datafile(
             grb_name=self.grb_name,
             report_type=self.report_type,
             data_file=self.input()["data_file"].path,
             file_type="healpixSysErr",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
@@ -216,7 +206,9 @@ class UploadHealpixSysErr(luigi.Task):
         if_dir_containing_file_not_existing_then_make(self.output().path)
         os.system(f"touch {self.output().path}")
 
+
 class UploadAllPlots(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -239,6 +231,11 @@ class UploadAllPlots(luigi.Task):
                 version=self.version,
             ),
             "molllocation": UploadMollLocationPlot(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "brightobjects": UploadBrightObjectsLocationPlot(
                 grb_name=self.grb_name,
                 report_type=self.report_type,
                 version=self.version,
@@ -289,6 +286,7 @@ class UploadAllPlots(luigi.Task):
 
 
 class UploadAllLightcurves(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -405,6 +403,7 @@ class UploadAllLightcurves(luigi.Task):
 
 
 class UploadLightcurve(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     detector = luigi.Parameter()
@@ -439,19 +438,14 @@ class UploadLightcurve(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="lightcurve",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
             det_name=self.detector,
         )
 
@@ -465,6 +459,7 @@ class UploadLightcurve(luigi.Task):
 
 
 class UploadLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -497,19 +492,14 @@ class UploadLocationPlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="location",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_location.done"
@@ -522,6 +512,7 @@ class UploadLocationPlot(luigi.Task):
 
 
 class UploadCornerPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -554,19 +545,14 @@ class UploadCornerPlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="allcorner",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_corner.done"
@@ -579,6 +565,7 @@ class UploadCornerPlot(luigi.Task):
 
 
 class UploadMollLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -617,12 +604,8 @@ class UploadMollLocationPlot(luigi.Task):
             plot_file=self.input()["plot_file"].path,
             plot_type="molllocation",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_molllocation.done"
@@ -634,7 +617,61 @@ class UploadMollLocationPlot(luigi.Task):
         os.system(f"touch {tmp}")
 
 
+class UploadBrightObjectsLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
+    grb_name = luigi.Parameter()
+    report_type = luigi.Parameter()
+    version = luigi.Parameter(default="v00")
+
+    def requires(self):
+        return {
+            "create_report": UploadReport(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+            "plot_file": CreateBrightObjectsLocationPlot(
+                grb_name=self.grb_name,
+                report_type=self.report_type,
+                version=self.version,
+            ),
+        }
+
+    def output(self):
+        filename = f"{self.report_type}_{self.version}_upload_plot_brightobjects.done"
+        return luigi.LocalTarget(
+            os.path.join(
+                base_dir,
+                self.grb_name,
+                self.report_type,
+                self.version,
+                "upload",
+                filename,
+            )
+        )
+
+    def run(self):
+        upload_plot(
+            grb_name=self.grb_name,
+            report_type=self.report_type,
+            plot_file=self.input()["plot_file"].path,
+            plot_type="brightobjects",
+            version=self.version,
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
+        )
+
+        filename = f"{self.report_type}_{self.version}_upload_plot_brightobjects.done"
+        tmp = os.path.join(
+            base_dir, self.grb_name, self.report_type, self.version, "upload", filename
+        )
+
+        if_dir_containing_file_not_existing_then_make(tmp)
+        os.system(f"touch {tmp}")
+
+
 class UploadSatellitePlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -667,19 +704,14 @@ class UploadSatellitePlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="satellite",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_satellite.done"
@@ -692,6 +724,7 @@ class UploadSatellitePlot(luigi.Task):
 
 
 class UploadSpectrumPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -724,19 +757,14 @@ class UploadSpectrumPlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="spectrum",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_spectrum.done"
@@ -749,6 +777,7 @@ class UploadSpectrumPlot(luigi.Task):
 
 
 class Upload3DLocationPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -781,19 +810,14 @@ class Upload3DLocationPlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="3dlocation",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_3dlocation.done"
@@ -806,6 +830,7 @@ class Upload3DLocationPlot(luigi.Task):
 
 
 class UploadBalrogSwiftPlot(luigi.Task):
+    resources = {"max_workers": 1}
     grb_name = luigi.Parameter()
     report_type = luigi.Parameter()
     version = luigi.Parameter(default="v00")
@@ -838,19 +863,14 @@ class UploadBalrogSwiftPlot(luigi.Task):
         )
 
     def run(self):
-
         upload_plot(
             grb_name=self.grb_name,
             report_type=self.report_type,
             plot_file=self.input()["plot_file"].path,
             plot_type="balrogswift",
             version=self.version,
-            wait_time=float(
-                morgoth_config["upload"]["plot"]["interval"]
-            ),
-            max_time=float(
-                morgoth_config["upload"]["plot"]["max_time"]
-            ),
+            wait_time=float(morgoth_config["upload"]["plot"]["interval"]),
+            max_time=float(morgoth_config["upload"]["plot"]["max_time"]),
         )
 
         filename = f"{self.report_type}_{self.version}_upload_plot_balrogswift.done"
